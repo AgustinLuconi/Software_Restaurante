@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../dominio/repositorios/notificacion_repositorio.dart';
+import '../../service_locator.dart';
 import 'pantalla_restaurante_cubit.dart';
 import 'pantalla_restaurante_estados_de_cubit.dart';
 
@@ -33,6 +35,55 @@ class _PantallaRestauranteView extends StatelessWidget {
         ),
         title: const Text('Sistema de Reservas'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          // Botón de notificaciones con badge
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications),
+                onPressed: () {
+                  // Por ahora usamos un ID de cliente por defecto
+                  context.go('/notificaciones/cliente_123');
+                },
+                tooltip: 'Notificaciones',
+              ),
+              // Badge de notificaciones no leídas
+              Positioned(
+                right: 8,
+                top: 8,
+                child: FutureBuilder<int>(
+                  future: _getNotificacionesNoLeidas(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data! > 0) {
+                      return Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          '${snapshot.data! > 9 ? '9+' : snapshot.data}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: BlocBuilder<PantallaRestauranteCubit, PantallaRestauranteState>(
         builder: (context, state) {
@@ -212,5 +263,15 @@ class _PantallaRestauranteView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<int> _getNotificacionesNoLeidas() async {
+    // Consultar el repositorio de notificaciones
+    try {
+      final notificacionRepo = getIt<NotificacionRepositorio>();
+      return await notificacionRepo.contarNotificacionesNoLeidas('cliente_123');
+    } catch (e) {
+      return 0;
+    }
   }
 }

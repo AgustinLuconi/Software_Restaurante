@@ -12,7 +12,7 @@ class HistoriaScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/restaurante'),
         ),
       ),
       body: SingleChildScrollView(
@@ -106,7 +106,7 @@ class HistoriaScreen extends StatelessWidget {
                 width: 200,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/'),
+                  onPressed: () => context.go('/restaurante'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3498DB),
                     foregroundColor: Colors.white,
@@ -115,7 +115,7 @@ class HistoriaScreen extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Volver al Inicio',
+                    'Volver al Restaurante',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

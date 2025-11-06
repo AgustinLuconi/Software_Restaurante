@@ -6,6 +6,7 @@ import 'dominio/entidades/negocio.dart';
 import 'presentacion/disponibilidad/disponibilidad_screen.dart';
 import 'presentacion/historia/historia_screen.dart';
 import 'presentacion/mis_reservas/mis_reservas_screen.dart';
+import 'presentacion/notificaciones/notificaciones_screen.dart';
 import 'presentacion/pantalla_dueno/pantalla_dueno_cubit.dart';
 import 'presentacion/pantalla_dueno/pantalla_dueno_screen.dart';
 import 'presentacion/pantalla_inicio/pantalla_inicio_cubit.dart';
@@ -47,6 +48,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const MisReservasScreen(),
     ),
     GoRoute(
+      path: '/notificaciones/:usuarioId',
+      name: 'notificaciones',
+      builder: (context, state) {
+        final usuarioId = state.pathParameters['usuarioId'] ?? 'cliente_123';
+        return NotificacionesScreen(usuarioId: usuarioId);
+      },
+    ),
+    GoRoute(
       path: '/dueno',
       name: 'dueno',
       builder: (context, state) {
@@ -71,3 +80,4 @@ final GoRouter appRouter = GoRouter(
     ),
   ),
 );
+

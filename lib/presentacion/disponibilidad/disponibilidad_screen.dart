@@ -38,7 +38,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/restaurante'),
         ),
       ),
       body: SingleChildScrollView(
@@ -48,6 +48,60 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
           children: [
             // Horarios del restaurante
             _buildHorariosCard(),
+            const SizedBox(height: 16),
+            
+            // Info sobre intervalos de reserva
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3498DB).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF3498DB).withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3498DB).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.schedule,
+                      color: Color(0xFF3498DB),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Reservas por intervalos de 1 hora',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Cada mesa se reserva por 1 hora. Si una mesa está reservada, no estará disponible en ese horario.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Título sección de búsqueda
@@ -333,6 +387,11 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             setState(() {
               _fechaSeleccionada = fecha;
             });
+            
+            // Si ya hay una hora seleccionada, revalidar el horario
+            if (_horaSeleccionada != null && mounted) {
+              await _validarHorarioSeleccionado(_horaSeleccionada!);
+            }
           }
         },
       ),
@@ -369,6 +428,11 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             setState(() {
               _horaSeleccionada = hora;
             });
+            
+            // Validar horario inmediatamente después de seleccionar
+            if (_fechaSeleccionada != null && mounted) {
+              await _validarHorarioSeleccionado(hora);
+            }
           }
         },
       ),
@@ -491,30 +555,93 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   }
 
   Widget _buildErrorCard(String message) {
+    // Determinar si es un error de horario cerrado
+    final esErrorHorario = message.contains('horario') || 
+                           message.contains('cerrado') || 
+                           message.contains('Lunes') ||
+                           message.contains('Martes') ||
+                           message.contains('Miércoles') ||
+                           message.contains('Jueves') ||
+                           message.contains('Viernes') ||
+                           message.contains('Sábado') ||
+                           message.contains('Domingo');
+    
     return Card(
-      elevation: 2,
-      color: Colors.red.shade50,
+      elevation: 3,
+      color: esErrorHorario ? Colors.orange.shade50 : Colors.red.shade50,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: esErrorHorario ? Colors.orange.shade300 : Colors.red.shade300,
+          width: 2,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 48,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: esErrorHorario 
+                    ? Colors.orange.shade100 
+                    : Colors.red.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                esErrorHorario ? Icons.access_time_filled : Icons.error_outline,
+                color: esErrorHorario ? Colors.orange.shade700 : Colors.red.shade700,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              esErrorHorario ? 'Horario No Disponible' : 'Error',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: esErrorHorario ? Colors.orange.shade900 : Colors.red.shade900,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.red,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: esErrorHorario ? Colors.orange.shade900 : Colors.red.shade900,
               ),
             ),
+            if (esErrorHorario) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.blue.shade200,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Por favor, selecciona un horario dentro del horario de atención del restaurante.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -656,27 +783,118 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     TimeOfDay hora,
     int numeroPersonas,
   ) {
+    // Primer diálogo: Solicitar contacto y nombre
+    final contactoController = TextEditingController();
+    final nombreController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirmar Reserva'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
           children: [
-            Text('Mesa: ${mesa.nombre}'),
-            const SizedBox(height: 8),
-            Text('Fecha: ${fecha.day}/${fecha.month}/${fecha.year}'),
-            const SizedBox(height: 8),
-            Text('Hora: ${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}'),
-            const SizedBox(height: 8),
-            Text('Personas: $numeroPersonas'),
-            const SizedBox(height: 16),
-            const Text(
-              '¿Deseas confirmar esta reserva?',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Icon(Icons.contact_mail, color: Color(0xFF3498DB)),
+            const SizedBox(width: 12),
+            const Text('Datos de Contacto'),
           ],
+        ),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Resumen de tu reserva:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildInfoRow(Icons.table_restaurant, 'Mesa', mesa.nombre),
+                _buildInfoRow(Icons.calendar_today, 'Fecha', '${fecha.day}/${fecha.month}/${fecha.year}'),
+                _buildInfoRow(Icons.access_time, 'Hora', '${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}'),
+                _buildInfoRow(Icons.people, 'Personas', '$numeroPersonas'),
+                const Divider(height: 24),
+                const Text(
+                  'Para confirmar tu reserva, necesitamos:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF7F8C8D),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Campo de nombre
+                TextFormField(
+                  controller: nombreController,
+                  decoration: const InputDecoration(
+                    labelText: 'Tu nombre *',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                    hintText: 'Ej: Juan Pérez',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Por favor ingresa tu nombre';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                
+                // Campo de contacto (email o teléfono)
+                TextFormField(
+                  controller: contactoController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email o Teléfono *',
+                    prefixIcon: Icon(Icons.alternate_email),
+                    border: OutlineInputBorder(),
+                    hintText: 'Ej: correo@mail.com o +54 261 123-4567',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Por favor ingresa tu email o teléfono';
+                    }
+                    // Validación básica
+                    final esEmail = value.contains('@');
+                    final esTelefono = value.replaceAll(RegExp(r'[^\d]'), '').length >= 8;
+                    
+                    if (!esEmail && !esTelefono) {
+                      return 'Ingresa un email o teléfono válido';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3498DB).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, size: 20, color: Color(0xFF3498DB)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: const Text(
+                          'Te enviaremos un código de verificación para confirmar tu reserva',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF2C3E50)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -684,37 +902,357 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              
-              // Crear fecha y hora combinadas
-              final fechaHora = DateTime(
-                fecha.year,
-                fecha.month,
-                fecha.day,
-                hora.hour,
-                hora.minute,
-              );
-              
-              // Cliente ID por defecto (en producción vendría del usuario autenticado)
-              const clienteId = 'cliente_123';
-              
-              context.read<DisponibilidadCubit>().crearReserva(
-                clienteId,
-                mesa.id,
-                fecha,
-                fechaHora,
-                numeroPersonas,
-              );
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final contacto = contactoController.text.trim();
+                final nombre = nombreController.text.trim();
+                
+                Navigator.of(dialogContext).pop();
+                
+                // Enviar código de verificación
+                await context.read<DisponibilidadCubit>().enviarCodigoVerificacion(contacto);
+                
+                // Mostrar diálogo para ingresar el código
+                _showVerificacionDialog(context, contacto, nombre, mesa, fecha, hora, numeroPersonas);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF27AE60),
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('Confirmar'),
+            child: const Text('Enviar Código'),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF7F8C8D)),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF7F8C8D),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2C3E50),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showVerificacionDialog(
+    BuildContext context,
+    String contacto,
+    String nombre,
+    Mesa mesa,
+    DateTime fecha,
+    TimeOfDay hora,
+    int numeroPersonas,
+  ) {
+    final codigoController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // No se puede cerrar tocando fuera
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.verified_user, color: Color(0xFF27AE60)),
+            const SizedBox(width: 12),
+            const Text('Verificación'),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF27AE60).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF27AE60).withOpacity(0.3),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.mark_email_read,
+                      size: 48,
+                      color: Color(0xFF27AE60),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Código enviado a:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      contacto,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Ingresa el código de 6 dígitos:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: codigoController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 8,
+                ),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  counterText: '',
+                  hintText: '000000',
+                  prefixIcon: const Icon(Icons.pin),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                ),
+                validator: (value) {
+                  if (value == null || value.length != 6) {
+                    return 'Ingresa los 6 dígitos';
+                  }
+                  if (!RegExp(r'^\d+$').hasMatch(value)) {
+                    return 'Solo números';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.timer, size: 16, color: Color(0xFFE67E22)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'El código expira en 10 minutos',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Reenviar código
+              await context.read<DisponibilidadCubit>().enviarCodigoVerificacion(contacto);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✉️ Código reenviado'),
+                  backgroundColor: Color(0xFF3498DB),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text('Reenviar Código'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final codigo = codigoController.text.trim();
+                
+                Navigator.of(dialogContext).pop();
+                
+                // Crear fecha y hora combinadas
+                final fechaHora = DateTime(
+                  fecha.year,
+                  fecha.month,
+                  fecha.day,
+                  hora.hour,
+                  hora.minute,
+                );
+                
+                // Crear reserva con verificación
+                await context.read<DisponibilidadCubit>().crearReservaConVerificacion(
+                  contacto: contacto,
+                  codigo: codigo,
+                  nombreCliente: nombre,
+                  mesaId: mesa.id,
+                  fecha: fecha,
+                  hora: fechaHora,
+                  numeroPersonas: numeroPersonas,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF27AE60),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Verificar y Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Valida el horario seleccionado y muestra alerta si no está disponible
+  Future<void> _validarHorarioSeleccionado(TimeOfDay hora) async {
+    if (_fechaSeleccionada == null) return;
+
+    final fechaHora = DateTime(
+      _fechaSeleccionada!.year,
+      _fechaSeleccionada!.month,
+      _fechaSeleccionada!.day,
+      hora.hour,
+      hora.minute,
+    );
+
+    final mensajeError = await context
+        .read<DisponibilidadCubit>()
+        .validarHorarioApertura(_fechaSeleccionada!, fechaHora);
+
+    if (mensajeError != null && mounted) {
+      // Mostrar diálogo de error de horario
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: Colors.orange.shade50,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.access_time_filled,
+                  color: Colors.orange.shade700,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Horario No Disponible',
+                  style: TextStyle(
+                    color: Colors.orange.shade900,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                mensajeError,
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.5,
+                  color: Colors.orange.shade900,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.blue.shade200,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Por favor, selecciona un horario válido dentro del horario de atención.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Entendido'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                // Limpiar hora seleccionada
+                setState(() {
+                  _horaSeleccionada = null;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange.shade700,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Seleccionar Otra Hora'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

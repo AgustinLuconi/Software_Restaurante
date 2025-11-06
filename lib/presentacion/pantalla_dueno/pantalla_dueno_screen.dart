@@ -255,6 +255,18 @@ class _PantallaDuenoView extends StatelessWidget {
                   
                   _buildOpcionCard(
                     context,
+                    icono: Icons.bar_chart,
+                    titulo: 'Métricas y Análisis',
+                    descripcion: 'Estadísticas de reservas y rendimiento',
+                    color: const Color(0xFF9B59B6),
+                    onTap: () {
+                      _mostrarMetricas(context, negocio);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  _buildOpcionCard(
+                    context,
                     icono: Icons.event_note,
                     titulo: 'Ver Reservas',
                     descripcion: 'Gestiona las reservas de tu negocio',
@@ -715,101 +727,433 @@ class _PantallaDuenoView extends StatelessWidget {
 
   void _mostrarReservas(BuildContext context, negocio) async {
     final cubit = context.read<PantallaDuenoCubit>();
+    
+    // Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Cargando reservas...'),
+            ],
+          ),
+        );
+      },
+    );
+
     final reservas = await cubit.obtenerReservasDelNegocio(negocio.id);
+    final mesas = await cubit.obtenerMesasDelNegocio(negocio.id);
+    Navigator.pop(context); // Cerrar diálogo de carga
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              const Icon(Icons.event_note, color: Color(0xFF3498DB)),
-              const SizedBox(width: 12),
-              Text('Reservas de ${negocio.nombre}'),
-            ],
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 400,
-            child: reservas.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.event_busy, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          'No hay reservas registradas',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Filtrar reservas
+            final reservasPendientes = reservas.where((r) => r.estado == EstadoReserva.pendiente).toList();
+            final reservasConfirmadas = reservas.where((r) => r.estado == EstadoReserva.confirmada).toList();
+            final reservasCanceladas = reservas.where((r) => r.estado == EstadoReserva.cancelada).toList();
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: MediaQuery.of(dialogContext).size.width * 0.9,
+                constraints: const BoxConstraints(maxWidth: 700, maxHeight: 600),
+                child: Column(
+                  children: [
+                    // Encabezado
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF3498DB),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: reservas.length,
-                    itemBuilder: (context, index) {
-                      final reserva = reservas[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xFF3498DB).withOpacity(0.1),
-                            child: const Icon(Icons.person, color: Color(0xFF3498DB)),
-                          ),
-                          title: Text(
-                            'Cliente ID: ${reserva.clienteId}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text('📅 ${reserva.fechaHora.day}/${reserva.fechaHora.month}/${reserva.fechaHora.year}'),
-                              Text('🕐 ${reserva.fechaHora.hour}:${reserva.fechaHora.minute.toString().padLeft(2, '0')}'),
-                              Text('👥 ${reserva.numeroPersonas} personas'),
-                              Text('🪑 Mesa ${reserva.mesaId}'),
-                              Text(
-                                '📊 Estado: ${reserva.estado.name}',
-                                style: TextStyle(
-                                  color: reserva.estado == EstadoReserva.confirmada
-                                      ? Colors.green
-                                      : reserva.estado == EstadoReserva.cancelada
-                                          ? Colors.red
-                                          : Colors.orange,
-                                  fontWeight: FontWeight.bold,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.event_note, color: Colors.white, size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Administrar Reservas',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  negocio.nombre,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          trailing: reserva.estado != EstadoReserva.cancelada
-                              ? IconButton(
-                                  icon: const Icon(Icons.cancel, color: Colors.red),
-                                  onPressed: () {
-                                    // Aquí podrías agregar funcionalidad para cancelar reserva
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Función de cancelación próximamente'),
-                                      ),
-                                    );
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(dialogContext),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Estadísticas rápidas
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: Colors.grey[100],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildEstadisticaChip('Pendientes', reservasPendientes.length, Colors.orange),
+                          _buildEstadisticaChip('Confirmadas', reservasConfirmadas.length, Colors.green),
+                          _buildEstadisticaChip('Canceladas', reservasCanceladas.length, Colors.red),
+                        ],
+                      ),
+                    ),
+
+                    // Lista de reservas
+                    Expanded(
+                      child: reservas.isEmpty
+                          ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.event_busy, size: 64, color: Colors.grey),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'No hay reservas registradas',
+                                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: reservas.length,
+                              itemBuilder: (context, index) {
+                                final reserva = reservas[index];
+                                final mesa = mesas.firstWhere(
+                                  (m) => m.id == reserva.mesaId,
+                                  orElse: () => Mesa(id: '', nombre: 'Desconocida', capacidad: 0, negocioId: ''),
+                                );
+                                
+                                return _buildReservaCardAdmin(
+                                  context,
+                                  reserva,
+                                  mesa,
+                                  cubit,
+                                  () async {
+                                    // Recargar reservas
+                                    final nuevasReservas = await cubit.obtenerReservasDelNegocio(negocio.id);
+                                    setState(() {
+                                      reservas.clear();
+                                      reservas.addAll(nuevasReservas);
+                                    });
                                   },
-                                )
-                              : null,
+                                );
+                              },
+                            ),
+                    ),
+
+                    // Botón cerrar
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3498DB),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Cerrar'),
                         ),
-                      );
-                    },
-                  ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cerrar'),
-            ),
-          ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildEstadisticaChip(String label, int count, Color color) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Text(
+            '$count',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[700],
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReservaCardAdmin(
+    BuildContext context,
+    Reserva reserva,
+    Mesa mesa,
+    PantallaDuenoCubit cubit,
+    VoidCallback onUpdate,
+  ) {
+    Color getEstadoColor(EstadoReserva estado) {
+      switch (estado) {
+        case EstadoReserva.confirmada:
+          return const Color(0xFF27AE60);
+        case EstadoReserva.pendiente:
+          return const Color(0xFFF39C12);
+        case EstadoReserva.cancelada:
+          return const Color(0xFFE74C3C);
+      }
+    }
+
+    IconData getEstadoIcono(EstadoReserva estado) {
+      switch (estado) {
+        case EstadoReserva.confirmada:
+          return Icons.check_circle;
+        case EstadoReserva.pendiente:
+          return Icons.schedule;
+        case EstadoReserva.cancelada:
+          return Icons.cancel;
+      }
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: getEstadoColor(reserva.estado).withOpacity(0.3), width: 2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Encabezado con estado
+            Row(
+              children: [
+                Icon(
+                  getEstadoIcono(reserva.estado),
+                  color: getEstadoColor(reserva.estado),
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Reserva #${reserva.id.substring(0, 8)}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: getEstadoColor(reserva.estado).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    reserva.estado.name.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: getEstadoColor(reserva.estado),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+
+            // Información de la reserva
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoRowSmall(Icons.person, 'Cliente', reserva.clienteId),
+                      const SizedBox(height: 8),
+                      _buildInfoRowSmall(Icons.calendar_today, 'Fecha', 
+                        '${reserva.fechaHora.day}/${reserva.fechaHora.month}/${reserva.fechaHora.year}'),
+                      const SizedBox(height: 8),
+                      _buildInfoRowSmall(Icons.access_time, 'Hora',
+                        '${reserva.fechaHora.hour.toString().padLeft(2, '0')}:${reserva.fechaHora.minute.toString().padLeft(2, '0')}'),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoRowSmall(Icons.table_restaurant, 'Mesa', mesa.nombre),
+                      const SizedBox(height: 8),
+                      _buildInfoRowSmall(Icons.people, 'Personas', '${reserva.numeroPersonas}'),
+                      const SizedBox(height: 8),
+                      _buildInfoRowSmall(Icons.chair, 'Capacidad mesa', '${mesa.capacidad}'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Botones de acción
+            if (reserva.estado != EstadoReserva.cancelada) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (reserva.estado == EstadoReserva.pendiente)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final exito = await cubit.confirmarReserva(reserva.id);
+                          if (exito) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✅ Reserva confirmada'),
+                                backgroundColor: Color(0xFF27AE60),
+                              ),
+                            );
+                            onUpdate();
+                          }
+                        },
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('Confirmar', style: TextStyle(fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF27AE60),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                  if (reserva.estado == EstadoReserva.pendiente) const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _mostrarConfirmarCancelarReserva(context, reserva.id, cubit, onUpdate);
+                      },
+                      icon: const Icon(Icons.cancel, size: 18),
+                      label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFE74C3C),
+                        side: const BorderSide(color: Color(0xFFE74C3C)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRowSmall(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF7F8C8D)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            '$label: $value',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF2C3E50),
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _mostrarConfirmarCancelarReserva(
+    BuildContext context,
+    String reservaId,
+    PantallaDuenoCubit cubit,
+    VoidCallback onUpdate,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cancelar Reserva'),
+        content: const Text(
+          '¿Estás seguro de que deseas cancelar esta reserva?\n\n'
+          'El cliente será notificado de la cancelación.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('No, mantener'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final exito = await cubit.cancelarReservaAdmin(reservaId);
+              if (exito) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Reserva cancelada correctamente'),
+                    backgroundColor: Color(0xFFE74C3C),
+                  ),
+                );
+                onUpdate();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE74C3C),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Sí, cancelar'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -820,7 +1164,7 @@ class _PantallaDuenoView extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (statefulContext, setState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -837,7 +1181,7 @@ class _PantallaDuenoView extends StatelessWidget {
                 height: 400,
                 child: FutureBuilder<List<Mesa>>(
                   future: cubit.obtenerMesasDelNegocio(negocio.id),
-                  builder: (context, snapshot) {
+                  builder: (statefulContext, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
@@ -862,7 +1206,7 @@ class _PantallaDuenoView extends StatelessWidget {
 
                     return ListView.builder(
                       itemCount: mesas.length,
-                      itemBuilder: (context, index) {
+                      itemBuilder: (statefulContext, index) {
                         final mesa = mesas[index];
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -890,7 +1234,7 @@ class _PantallaDuenoView extends StatelessWidget {
                                   icon: const Icon(Icons.delete, color: Colors.red),
                                   onPressed: () async {
                                     final confirmar = await showDialog<bool>(
-                                      context: context,
+                                      context: statefulContext,
                                       builder: (ctx) => AlertDialog(
                                         title: const Text('Confirmar eliminación'),
                                         content: Text('¿Eliminar ${mesa.nombre}?'),
@@ -942,6 +1286,7 @@ class _PantallaDuenoView extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(dialogContext);
+                    // Usar el context original que tiene acceso al cubit
                     _mostrarAgregarMesa(context, negocio);
                   },
                   icon: const Icon(Icons.add),
@@ -961,6 +1306,8 @@ class _PantallaDuenoView extends StatelessWidget {
   void _mostrarAgregarMesa(BuildContext context, negocio) {
     final nombreController = TextEditingController();
     final capacidadController = TextEditingController();
+    // Capturar el cubit FUERA del diálogo
+    final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
@@ -1032,20 +1379,22 @@ class _PantallaDuenoView extends StatelessWidget {
                   return;
                 }
 
-                final cubit = context.read<PantallaDuenoCubit>();
+                // Cerrar el diálogo
+                Navigator.pop(dialogContext);
+                
+                // Ejecutar la acción (usando el cubit capturado arriba)
                 final nuevaMesa = await cubit.agregarMesa(negocio.id, nombre, capacidad);
 
-                Navigator.pop(dialogContext);
-
-                if (nuevaMesa != null) {
+                if (nuevaMesa != null && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('✅ ${nuevaMesa.nombre} agregada correctamente'),
                       backgroundColor: const Color(0xFF27AE60),
                     ),
                   );
+                  // Reabrir el diálogo de gestión de mesas
                   _mostrarGestionMesas(context, negocio);
-                } else {
+                } else if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('❌ Error al agregar mesa'),
@@ -1068,6 +1417,8 @@ class _PantallaDuenoView extends StatelessWidget {
   void _mostrarEditarMesa(BuildContext context, negocio, Mesa mesa, StateSetter setState) {
     final nombreController = TextEditingController(text: mesa.nombre);
     final capacidadController = TextEditingController(text: mesa.capacidad.toString());
+    // Capturar el cubit FUERA del diálogo
+    final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
@@ -1142,20 +1493,22 @@ class _PantallaDuenoView extends StatelessWidget {
                   capacidad: capacidad,
                 );
 
-                final cubit = context.read<PantallaDuenoCubit>();
+                // Cerrar el diálogo
+                Navigator.pop(dialogContext);
+                
+                // Ejecutar la acción (usando el cubit capturado arriba)
                 final exito = await cubit.actualizarMesa(mesaActualizada);
 
-                Navigator.pop(dialogContext);
-
-                if (exito) {
+                if (exito && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('✅ Mesa actualizada correctamente'),
                       backgroundColor: Color(0xFF27AE60),
                     ),
                   );
+                  // Reabrir el diálogo de gestión de mesas
                   _mostrarGestionMesas(context, negocio);
-                } else {
+                } else if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('❌ Error al actualizar mesa'),
@@ -1174,4 +1527,377 @@ class _PantallaDuenoView extends StatelessWidget {
       },
     );
   }
+
+  // Método para mostrar métricas y análisis
+  void _mostrarMetricas(BuildContext context, negocio) async {
+    final cubit = context.read<PantallaDuenoCubit>();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              const Text('Cargando métricas...'),
+            ],
+          ),
+        );
+      },
+    );
+
+    final metricas = await cubit.obtenerMetricasReservas(negocio.id);
+    Navigator.pop(context); // Cerrar diálogo de carga
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(dialogContext).size.width * 0.9,
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Encabezado
+                    Row(
+                      children: [
+                        const Icon(Icons.bar_chart, color: Color(0xFF9B59B6), size: 32),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Métricas y Análisis',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
+                              Text(
+                                negocio.nombre,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF7F8C8D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(dialogContext),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 32),
+
+                    // Resumen general
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetricaCard(
+                            'Total Reservas',
+                            '${metricas['totalReservas'] ?? 0}',
+                            Icons.event,
+                            const Color(0xFF3498DB),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildMetricaCard(
+                            'Reservas Hoy',
+                            '${metricas['reservasHoy'] ?? 0}',
+                            Icons.today,
+                            const Color(0xFF27AE60),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildMetricaCard(
+                            'Este Mes',
+                            '${metricas['reservasMesActual'] ?? 0}',
+                            Icons.calendar_month,
+                            const Color(0xFFE67E22),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Reservas por día (últimos 7 días)
+                    const Text(
+                      'Reservas por Día (Últimos 7 días)',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildGraficaBarras(metricas['reservasPorDia'] ?? {}),
+                    const SizedBox(height: 24),
+
+                    // Reservas por mes
+                    const Text(
+                      'Reservas por Mes',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildGraficaBarras(metricas['reservasPorMes'] ?? {}),
+                    const SizedBox(height: 24),
+
+                    // Horarios pico y poco movimiento
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '🔥 Horarios Pico',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFE74C3C),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ..._buildListaHorarios(
+                                metricas['horariosPico'] ?? [],
+                                const Color(0xFFE74C3C),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '📉 Poco Movimiento',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF95A5A6),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ..._buildListaHorarios(
+                                metricas['horariosPocoMovimiento'] ?? [],
+                                const Color(0xFF95A5A6),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Botón cerrar
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF9B59B6),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Cerrar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMetricaCard(String titulo, String valor, IconData icono, Color color) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Icon(icono, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              valor,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              titulo,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF7F8C8D),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGraficaBarras(Map<String, int> datos) {
+    if (datos.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'No hay datos disponibles',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    final maxValor = datos.values.reduce((a, b) => a > b ? a : b);
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: datos.entries.map((entry) {
+            final porcentaje = maxValor > 0 ? (entry.value / maxValor) : 0.0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 60,
+                    child: Text(
+                      entry.key,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Container(
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        FractionallySizedBox(
+                          widthFactor: porcentaje,
+                          child: Container(
+                            height: 24,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 30,
+                    child: Text(
+                      '${entry.value}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildListaHorarios(List<dynamic> horarios, Color color) {
+    if (horarios.isEmpty) {
+      return [
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text(
+            'Sin datos',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ),
+      ];
+    }
+
+    return horarios.map((h) {
+      return Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: ListTile(
+          dense: true,
+          leading: Icon(Icons.access_time, color: color, size: 20),
+          title: Text(
+            h['hora'],
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '${h['reservas']}',
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
 }
+

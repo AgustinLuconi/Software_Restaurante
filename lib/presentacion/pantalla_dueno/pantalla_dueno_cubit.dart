@@ -5,17 +5,20 @@ import '../../dominio/entidades/reserva.dart';
 import '../../dominio/repositorios/mesa_repositorio.dart';
 import '../../dominio/repositorios/negocio_repositorio.dart';
 import '../../dominio/repositorios/reserva_repositorio.dart';
+import '../../dominio/servicios/servicio_notificaciones.dart';
 import 'pantalla_dueno_estados_de_cubit.dart';
 
 class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
   final NegocioRepositorio negocioRepositorio;
   final MesaRepositorio mesaRepositorio;
   final ReservaRepositorio reservaRepositorio;
+  final ServicioNotificaciones servicioNotificaciones;
 
   PantallaDuenoCubit(
     this.negocioRepositorio,
     this.mesaRepositorio,
     this.reservaRepositorio,
+    this.servicioNotificaciones,
   ) : super(const PantallaDuenoInitial());
 
   // Método para establecer un negocio autenticado directamente
@@ -148,4 +151,137 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       return [];
     }
   }
+
+  // Métodos para administrar reservas
+  Future<bool> confirmarReserva(String reservaId) async {
+    try {
+      final reservas = await reservaRepositorio.obtenerReserva();
+      final reserva = reservas.firstWhere((r) => r.id == reservaId);
+      reserva.confirmar();
+      
+      // Notificar al cliente
+      await servicioNotificaciones.notificarReservaConfirmada(reserva.clienteId, reserva);
+      
+      return true;
+    } catch (e) {
+      emit(PantallaDuenoError('Error al confirmar reserva: $e'));
+      return false;
+    }
+  }
+
+  Future<bool> cancelarReservaAdmin(String reservaId) async {
+    try {
+      final reservas = await reservaRepositorio.obtenerReserva();
+      final reserva = reservas.firstWhere((r) => r.id == reservaId);
+      
+      await reservaRepositorio.cancelarReserva(reservaId);
+      
+      // Notificar al cliente que el negocio canceló la reserva
+      await servicioNotificaciones.notificarReservaCancelada(
+        reserva.clienteId,
+        reserva,
+        porNegocio: true,
+      );
+      
+      return true;
+    } catch (e) {
+      emit(PantallaDuenoError('Error al cancelar reserva: $e'));
+      return false;
+    }
+  }
+
+  // Métodos para métricas
+  Future<Map<String, dynamic>> obtenerMetricasReservas(String negocioId) async {
+    try {
+      final reservas = await obtenerReservasDelNegocio(negocioId);
+      final ahora = DateTime.now();
+      
+      // Filtrar solo reservas confirmadas y no canceladas para métricas
+      final reservasActivas = reservas.where((r) => r.estado != EstadoReserva.cancelada).toList();
+      
+      // Reservas por día (últimos 7 días)
+      Map<String, int> reservasPorDia = {};
+      for (int i = 6; i >= 0; i--) {
+        final fecha = ahora.subtract(Duration(days: i));
+        final fechaStr = '${fecha.day}/${fecha.month}';
+        reservasPorDia[fechaStr] = reservasActivas.where((r) {
+          return r.fechaHora.year == fecha.year &&
+                 r.fechaHora.month == fecha.month &&
+                 r.fechaHora.day == fecha.day;
+        }).length;
+      }
+      
+      // Reservas por mes (últimos 6 meses)
+      Map<String, int> reservasPorMes = {};
+      for (int i = 5; i >= 0; i--) {
+        final fecha = DateTime(ahora.year, ahora.month - i, 1);
+        final mesNombre = _obtenerNombreMes(fecha.month);
+        reservasPorMes[mesNombre] = reservasActivas.where((r) {
+          return r.fechaHora.year == fecha.year && r.fechaHora.month == fecha.month;
+        }).length;
+      }
+      
+      // Horarios pico (agrupar por hora)
+      Map<int, int> reservasPorHora = {};
+      for (var reserva in reservasActivas) {
+        final hora = reserva.fechaHora.hour;
+        reservasPorHora[hora] = (reservasPorHora[hora] ?? 0) + 1;
+      }
+      
+      // Ordenar horarios por cantidad de reservas
+      final horariosOrdenados = reservasPorHora.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      
+      List<Map<String, dynamic>> horariosPico = [];
+      List<Map<String, dynamic>> horariosPocoMovimiento = [];
+      
+      if (horariosOrdenados.isNotEmpty) {
+        // Top 3 horarios pico
+        horariosPico = horariosOrdenados.take(3).map((e) => {
+          'hora': '${e.key.toString().padLeft(2, '0')}:00',
+          'reservas': e.value,
+        }).toList();
+        
+        // Top 3 horarios con poco movimiento (invertir orden)
+        horariosPocoMovimiento = horariosOrdenados.reversed.take(3).map((e) => {
+          'hora': '${e.key.toString().padLeft(2, '0')}:00',
+          'reservas': e.value,
+        }).toList();
+      }
+      
+      // Total de reservas
+      final totalReservas = reservasActivas.length;
+      final reservasHoy = reservasActivas.where((r) {
+        return r.fechaHora.year == ahora.year &&
+               r.fechaHora.month == ahora.month &&
+               r.fechaHora.day == ahora.day;
+      }).length;
+      
+      final reservasMesActual = reservasActivas.where((r) {
+        return r.fechaHora.year == ahora.year && r.fechaHora.month == ahora.month;
+      }).length;
+      
+      return {
+        'reservasPorDia': reservasPorDia,
+        'reservasPorMes': reservasPorMes,
+        'horariosPico': horariosPico,
+        'horariosPocoMovimiento': horariosPocoMovimiento,
+        'totalReservas': totalReservas,
+        'reservasHoy': reservasHoy,
+        'reservasMesActual': reservasMesActual,
+      };
+    } catch (e) {
+      emit(PantallaDuenoError('Error al obtener métricas: $e'));
+      return {};
+    }
+  }
+
+  String _obtenerNombreMes(int mes) {
+    const meses = [
+      '', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    ];
+    return meses[mes];
+  }
 }
+

@@ -1,9 +1,12 @@
 import 'package:get_it/get_it.dart';
 
-import 'adaptadores/adaptador_en_memoria_mesa.dart';
-import 'adaptadores/adaptador_en_memoria_reserva.dart';
-import 'adaptadores/lista_espera_repositorio_memoria.dart';
-import 'adaptadores/negocio_repositorio_memoria.dart';
+import 'adaptadores/adaptador_memoria_mesa.dart';
+import 'adaptadores/adaptador_memoria_reserva.dart';
+import 'adaptadores/adaptador_memoria_codigo_verificacion.dart';
+import 'adaptadores/adaptador_memoria_horario_apertura.dart';
+import 'adaptadores/adaptador_memoria_lista_espera.dart';
+import 'adaptadores/adaptador_memoria_negocio.dart';
+import 'adaptadores/adaptador_memoria_notificacion.dart';
 import 'adaptadores/servicio_notificaciones_consola.dart';
 import 'aplicacion/agregar_a_lista_de_espera.dart';
 import 'aplicacion/cancelar_reserva.dart';
@@ -13,11 +16,15 @@ import 'aplicacion/obtener_reserva.dart';
 import 'aplicacion/procesar_lista_de_espera.dart';
 import 'aplicacion/ver_reserva.dart';
 import 'dominio/entidades/mesa.dart';
+import 'dominio/repositorios/codigo_verificacion_repositorio.dart';
+import 'dominio/repositorios/horario_apertura_repositorio.dart';
 import 'dominio/repositorios/lista_espera_repositorio.dart';
 import 'dominio/repositorios/mesa_repositorio.dart';
 import 'dominio/repositorios/negocio_repositorio.dart';
+import 'dominio/repositorios/notificacion_repositorio.dart';
 import 'dominio/repositorios/reserva_repositorio.dart';
 import 'dominio/servicios/servicio_notificaciones.dart';
+import 'presentacion/notificaciones/notificaciones_cubit.dart';
 import 'presentacion/pantalla_dueno/pantalla_dueno_cubit.dart';
 import 'presentacion/pantalla_inicio/pantalla_inicio_cubit.dart';
 
@@ -38,7 +45,10 @@ void setupServiceLocator() {
   );
 
   getIt.registerLazySingleton<MesaRepositorio>(
-    () => MesaRepositorioMemoria(mesasEjemplo),
+    () => MesaRepositorioMemoria(
+      mesasEjemplo,
+      reservaRepositorio: getIt<ReservaRepositorio>(),
+    ),
   );
 
   getIt.registerLazySingleton<ListaEsperaRepositorio>(
@@ -49,13 +59,28 @@ void setupServiceLocator() {
     () => NegocioRepositorioMemoria(),
   );
 
+  getIt.registerLazySingleton<NotificacionRepositorio>(
+    () => NotificacionRepositorioMemoria(),
+  );
+
+  getIt.registerLazySingleton<CodigoVerificacionRepositorio>(
+    () => CodigoVerificacionRepositorioMemoria(),
+  );
+
+  getIt.registerLazySingleton<HorarioAperturaRepositorio>(
+    () => HorarioAperturaRepositorioMemoria(),
+  );
+
   // Registrar servicios
   getIt.registerLazySingleton<ServicioNotificaciones>(
-    () => ServicioNotificacionesConsola(),
+    () => ServicioNotificacionesConsola(getIt<NotificacionRepositorio>()),
   );
 
   // Registrar casos de uso
-  getIt.registerFactory(() => CrearReserva(getIt<ReservaRepositorio>()));
+  getIt.registerFactory(() => CrearReserva(
+        getIt<ReservaRepositorio>(),
+        horarioAperturaRepositorio: getIt<HorarioAperturaRepositorio>(),
+      ));
   
   // CancelarReserva con ProcesarListaDeEspera
   getIt.registerFactory(() => CancelarReserva(
@@ -82,6 +107,9 @@ void setupServiceLocator() {
         getIt<NegocioRepositorio>(),
         getIt<MesaRepositorio>(),
         getIt<ReservaRepositorio>(),
+        getIt<ServicioNotificaciones>(),
       ));
   getIt.registerFactory(() => PantallaInicioCubit(getIt<NegocioRepositorio>()));
+  getIt.registerFactory(() => NotificacionesCubit(getIt<NotificacionRepositorio>()));
 }
+
