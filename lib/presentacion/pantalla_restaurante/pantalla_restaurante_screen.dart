@@ -33,8 +33,7 @@ class _PantallaRestauranteView extends StatelessWidget {
           },
           tooltip: 'Volver a restaurantes',
         ),
-        title: const Text('Sistema de Reservas'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Chiringuito'),
         actions: [
           // Botón de notificaciones con badge
           Stack(
@@ -87,25 +86,25 @@ class _PantallaRestauranteView extends StatelessWidget {
       ),
       body: BlocBuilder<PantallaRestauranteCubit, PantallaRestauranteState>(
         builder: (context, state) {
-          if (state is PantallaRestauranteLoading) {
+          if (state is PantallaRestauranteCargando) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
-          if (state is PantallaRestauranteError) {
+          if (state is PantallaRestauranteConError) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    state.message,
+                    state.mensaje,
                     style: const TextStyle(color: Colors.red, fontSize: 16),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<PantallaRestauranteCubit>().reset();
+                      context.read<PantallaRestauranteCubit>().reiniciar();
                     },
                     child: const Text('Reintentar'),
                   ),
@@ -114,7 +113,7 @@ class _PantallaRestauranteView extends StatelessWidget {
             );
           }
 
-          if (state is PantallaRestauranteSuccess) {
+          if (state is PantallaRestauranteExitoso) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +125,7 @@ class _PantallaRestauranteView extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    state.message,
+                    state.mensaje,
                     style: const TextStyle(fontSize: 18),
                   ),
                 ],
@@ -135,132 +134,379 @@ class _PantallaRestauranteView extends StatelessWidget {
           }
 
           // Estado inicial
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Nombre del restaurante
-                  const Text(
-                    'Chiringuito',
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                      color: Color(0xFF2C3E50),
-                      fontFamily: 'serif',
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2, 2),
-                          blurRadius: 3,
-                          color: Color.fromARGB(100, 0, 0, 0),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Restaurante de Mar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontStyle: FontStyle.italic,
-                      color: Color(0xFF7F8C8D),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-                  
-                  // Botón Ver disponibilidad
-                  SizedBox(
-                    width: 250,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.go('/disponibilidad');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3498DB),
-                        foregroundColor: Colors.white,
-                        elevation: 5,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Ver Disponibilidad',
-                        style: TextStyle(
-                          fontSize: 18,
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header con imagen de fondo
+                _buildHeader(context),
+                
+                // Contenido principal
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Botón principal - Reservar Mesa
+                      _buildPrimaryButton(context),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Sección de título
+                      Text(
+                        'Explora',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Grid de opciones secundarias
+                      _buildSecondaryOptions(context),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Información de contacto
+                      _buildContactInfo(context),
+                      
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  
-                  // Botón Nuestra Historia
-                  SizedBox(
-                    width: 250,
-                    height: 55,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        context.go('/historia');
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF2C3E50),
-                        side: const BorderSide(
-                          color: Color(0xFF2C3E50),
-                          width: 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Nuestra Historia',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Botón Mis Reservas
-                  SizedBox(
-                    width: 250,
-                    height: 55,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        context.go('/mis-reservas');
-                      },
-                      icon: const Icon(Icons.event_note),
-                      label: const Text(
-                        'Mis Reservas',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF27AE60),
-                        side: const BorderSide(
-                          color: Color(0xFF27AE60),
-                          width: 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      height: 220,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/restaurant_header.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Container(
+        // Overlay oscuro sobre la imagen
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withOpacity(0.3),
+              Colors.black.withOpacity(0.6),
+            ],
+          ),
+        ),
+        child: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo circular
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.restaurant,
+                size: 40,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Nombre del restaurante
+            Text(
+              'Chiringuito',
+              style: theme.textTheme.displaySmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Subtítulo
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Restaurante de Mar',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      ), // Cierre del Container con gradient overlay
+    );
+  }
+
+  Widget _buildPrimaryButton(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return SizedBox(
+      height: 64,
+      child: ElevatedButton(
+        onPressed: () => context.go('/disponibilidad'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.event_available, size: 28),
+            const SizedBox(width: 12),
+            Text(
+              'Reservar Mesa',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryOptions(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildOptionCard(
+            context,
+            icon: Icons.event_note,
+            title: 'Mis Reservas',
+            onTap: () => context.go('/mis-reservas'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildOptionCard(
+            context,
+            icon: Icons.menu_book,
+            title: 'Historia',
+            onTap: () => context.go('/historia'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildOptionCard(
+            context,
+            icon: Icons.contact_phone,
+            title: 'Contacto',
+            onTap: () => _showContactDialog(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOptionCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 28,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactInfo(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(Icons.schedule, color: Colors.blue.shade700, size: 24),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Horario de Atención',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2C3E50),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Lun - Dom: 08:00 - 15:00 | 19:00 - 23:00',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF7F8C8D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.red.shade700, size: 24),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ubicación',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2C3E50),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Frente al mar • Vista panorámica',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF7F8C8D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showContactDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.purple.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.phone,
+                color: Colors.purple.shade700,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Contacto'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '📞 Teléfono:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text('+54 261 123-4567'),
+            const SizedBox(height: 16),
+            const Text(
+              '📧 Email:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text('chiringuito@restaurant.com'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cerrar'),
+          ),
+        ],
       ),
     );
   }

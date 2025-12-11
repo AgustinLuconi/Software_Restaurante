@@ -12,26 +12,26 @@ class MisReservasCubit extends Cubit<MisReservasState> {
   MisReservasCubit()
       : _obtenerReserva = getIt<ObtenerReserva>(),
         _cancelarReserva = getIt<CancelarReserva>(),
-        super(MisReservasInitial());
+        super(MisReservasInicial());
 
   Future<void> cargarReservas() async {
     try {
-      emit(MisReservasLoading());
-      final reservas = await _obtenerReserva.execute();
-      emit(MisReservasSuccess(reservas));
+      emit(MisReservasCargando());
+      final reservas = await _obtenerReserva.ejecutar();
+      emit(MisReservasExitoso(reservas));
     } catch (e) {
-      emit(MisReservasError('Error al cargar las reservas: ${e.toString()}'));
+      emit(MisReservasConError('Error al cargar las reservas: ${e.toString()}'));
     }
   }
 
   Future<void> cancelarReserva(String reservaId) async {
     try {
-      await _cancelarReserva.execute(reservaId);
+      await _cancelarReserva.ejecutar(reservaId);
       emit(ReservaCancelada('Reserva cancelada exitosamente'));
       // Recargar las reservas
       await cargarReservas();
     } catch (e) {
-      emit(MisReservasError('Error al cancelar la reserva: ${e.toString()}'));
+      emit(MisReservasConError('Error al cancelar la reserva: ${e.toString()}'));
     }
   }
 }

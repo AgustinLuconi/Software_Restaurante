@@ -1,17 +1,20 @@
 import '../dominio/entidades/reserva.dart';
 import '../dominio/repositorios/horario_apertura_repositorio.dart';
+import '../dominio/repositorios/mesa_repositorio.dart';
 import '../dominio/repositorios/reserva_repositorio.dart';
 
 class CrearReserva {
   final ReservaRepositorio reservaRepositorio;
+  final MesaRepositorio? mesaRepositorio;
   final HorarioAperturaRepositorio? horarioAperturaRepositorio;
 
   CrearReserva(
     this.reservaRepositorio, {
+    this.mesaRepositorio,
     this.horarioAperturaRepositorio,
   });
 
-  Future<Reserva> execute(
+  Future<Reserva> ejecutar(
     String clienteId,
     String mesaId,
     DateTime fecha,
@@ -27,8 +30,44 @@ class CrearReserva {
     if (fechaHora.isBefore(now)) {
       throw Exception('La fecha y hora deben ser futuras.');
     }
+    
+    // Validar que la reserva no sea mayor a 2 semanas (14 días)
+    final maximoFechaReserva = now.add(const Duration(days: 14));
+    if (fechaHora.isAfter(maximoFechaReserva)) {
+      throw Exception('Solo se pueden hacer reservas hasta dentro de 2 semanas como máximo.');
+    }
+    
     if (numeroPersonas <= 0) {
       throw Exception('El número de personas debe ser mayor a cero.');
+    }
+    
+    // Validar que la mesa tenga capacidad adecuada para el número de personas
+    if (mesaRepositorio != null) {
+      final mesa = await mesaRepositorio!.obtenerMesaPorId(mesaId);
+      
+      if (mesa == null) {
+        throw Exception('La mesa seleccionada no existe.');
+      }
+      
+      // Verificar que la mesa puede acomodar al grupo
+      if (!mesa.puedeAcomodar(numeroPersonas)) {
+        // Determinar el mensaje específico según el problema
+        if (mesa.capacidad < numeroPersonas) {
+          throw Exception(
+            'La mesa seleccionada tiene capacidad para ${mesa.capacidad} persona${mesa.capacidad > 1 ? 's' : ''}, '
+            'pero has indicado ${numeroPersonas} personas. '
+            'Por favor, selecciona una mesa con mayor capacidad.'
+          );
+        } else {
+          // La mesa es demasiado grande (diferencia > 3)
+          final diferencia = mesa.capacidad - numeroPersonas;
+          throw Exception(
+            'La mesa seleccionada tiene capacidad para ${mesa.capacidad} personas, '
+            'pero solo necesitas ${numeroPersonas}. La diferencia es de $diferencia lugares. '
+            'Por favor, selecciona una mesa más adecuada (máximo +3 lugares de diferencia).'
+          );
+        }
+      }
     }
     
     // Verificar que el restaurante esté abierto en ese horario

@@ -6,7 +6,7 @@ class VerReserva {
 
   VerReserva(this.reservaRepositorio);
 
-  Future<List<Reserva>> execute(String clienteId) async {
+  Future<List<Reserva>> ejecutar(String clienteId) async {
     try {
       final reservas = await reservaRepositorio.obtenerReserva();
       return reservas.where((r) => r.clienteId == clienteId).toList();

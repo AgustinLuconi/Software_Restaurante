@@ -24,7 +24,7 @@ class _PantallaDuenoView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<PantallaDuenoCubit, PantallaDuenoState>(
       listener: (context, state) {
-        if (state is PantallaDuenoError) {
+        if (state is PantallaDuenoConError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.mensaje),
@@ -107,17 +107,19 @@ class _PantallaDuenoView extends StatelessWidget {
   }
 
   Widget _buildPanelDueno(BuildContext context, negocio) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            context.read<PantallaDuenoCubit>().cerrarSesion();
-            context.go('/');
+            _mostrarConfirmacionCerrarSesion(context);
           },
+          tooltip: 'Cerrar sesión',
         ),
         title: Text('Panel de ${negocio.nombre}'),
-        backgroundColor: const Color(0xFF27AE60),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -129,196 +131,264 @@ class _PantallaDuenoView extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header con información del negocio
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF27AE60),
-                    const Color(0xFF229954),
-                  ],
-                ),
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Column(
+            // Header con bienvenida
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
                   children: [
                     Container(
-                      width: 100,
-                      height: 100,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colorScheme.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 3,
-                        ),
                       ),
                       child: const Icon(
                         Icons.restaurant,
-                        size: 50,
-                        color: Color(0xFF27AE60),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      negocio.nombre,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                        size: 40,
                         color: Colors.white,
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      negocio.nombreResponsable,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70,
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '¡Bienvenido!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF7F8C8D),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            negocio.nombre,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2C3E50),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.person_outline,
+                                size: 16,
+                                color: Color(0xFF7F8C8D),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  negocio.nombreResponsable,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF7F8C8D),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-
-            // Información del negocio
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Información del Negocio',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C3E50),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  _buildInfoCard(
-                    icon: Icons.email,
-                    titulo: 'Correo Electrónico',
-                    valor: negocio.email,
-                    color: const Color(0xFF3498DB),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildInfoCard(
-                    icon: Icons.phone,
-                    titulo: 'Teléfono',
-                    valor: negocio.telefono,
-                    color: const Color(0xFF27AE60),
-                    editable: true,
-                    onEdit: () => _mostrarEditarTelefono(context, negocio),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildInfoCard(
-                    icon: Icons.location_on,
-                    titulo: 'Dirección',
-                    valor: negocio.direccion,
-                    color: const Color(0xFFE67E22),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildInfoCard(
-                    icon: Icons.restaurant_menu,
-                    titulo: 'Especialidad',
-                    valor: negocio.especialidad,
-                    color: const Color(0xFF9B59B6),
-                    editable: true,
-                    onEdit: () => _mostrarEditarEspecialidad(context, negocio),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Opciones de gestión
-                  const Text(
-                    'Gestión del Negocio',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C3E50),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  _buildOpcionCard(
-                    context,
-                    icono: Icons.bar_chart,
-                    titulo: 'Métricas y Análisis',
-                    descripcion: 'Estadísticas de reservas y rendimiento',
-                    color: const Color(0xFF9B59B6),
-                    onTap: () {
-                      _mostrarMetricas(context, negocio);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildOpcionCard(
-                    context,
-                    icono: Icons.event_note,
-                    titulo: 'Ver Reservas',
-                    descripcion: 'Gestiona las reservas de tu negocio',
-                    color: const Color(0xFF3498DB),
-                    onTap: () {
-                      _mostrarReservas(context, negocio);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildOpcionCard(
-                    context,
-                    icono: Icons.table_bar,
-                    titulo: 'Gestionar Mesas',
-                    descripcion: 'Configura las mesas disponibles',
-                    color: const Color(0xFF27AE60),
-                    onTap: () {
-                      _mostrarGestionMesas(context, negocio);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildOpcionCard(
-                    context,
-                    icono: Icons.schedule,
-                    titulo: 'Horarios',
-                    descripcion: 'Define tus horarios de atención',
-                    color: const Color(0xFFE67E22),
-                    onTap: () {
-                      _mostrarGestionHorarios(context, negocio);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _buildOpcionCard(
-                    context,
-                    icono: Icons.settings,
-                    titulo: 'Configuración',
-                    descripcion: 'Ajusta los datos de tu negocio',
-                    color: const Color(0xFF95A5A6),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('🚧 Función próximamente disponible'),
+            
+            const SizedBox(height: 24),
+            
+            // Título de acciones rápidas
+            Text(
+              'Acciones Rápidas',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Lista horizontal de opciones principales
+            SizedBox(
+                  height: 180,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    children: [
+                      _buildDashboardCard(
+                        context,
+                        icon: Icons.event_note,
+                        title: 'Reservas',
+                        subtitle: 'Gestionar',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
                         ),
-                      );
-                    },
+                        onTap: () => _mostrarReservas(context, negocio),
+                      ),
+                      const SizedBox(width: 16),
+                      _buildDashboardCard(
+                        context,
+                        icon: Icons.table_bar,
+                        title: 'Mesas',
+                        subtitle: 'Configurar',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF27AE60), Color(0xFF229954)],
+                        ),
+                        onTap: () => _mostrarGestionMesas(context, negocio),
+                      ),
+                      const SizedBox(width: 16),
+                      _buildDashboardCard(
+                        context,
+                        icon: Icons.schedule,
+                        title: 'Horarios',
+                        subtitle: 'Definir',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE67E22), Color(0xFFD35400)],
+                        ),
+                        onTap: () => _mostrarGestionHorarios(context, negocio),
+                      ),
+                      const SizedBox(width: 16),
+                      _buildDashboardCard(
+                        context,
+                        icon: Icons.bar_chart,
+                        title: 'Métricas',
+                        subtitle: 'Análisis',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF9B59B6), Color(0xFF8E44AD)],
+                        ),
+                        onTap: () => _mostrarMetricas(context, negocio),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                  ),
+                ),
+            
+            const SizedBox(height: 24),
+            
+            // Información del negocio
+            Text(
+              'Información del Negocio',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            _buildInfoCard(
+              icon: Icons.email,
+              titulo: 'Correo Electrónico',
+              valor: negocio.email,
+              color: colorScheme.primary,
+            ),
+            const SizedBox(height: 12),
+            
+            _buildInfoCard(
+              icon: Icons.phone,
+              titulo: 'Teléfono',
+              valor: negocio.telefono,
+              color: colorScheme.secondary,
+              editable: true,
+              onEdit: () => _mostrarEditarTelefono(context, negocio),
+            ),
+            const SizedBox(height: 12),
+            
+            _buildInfoCard(
+              icon: Icons.location_on,
+              titulo: 'Dirección',
+              valor: negocio.direccion,
+              color: colorScheme.tertiary,
+            ),
+            const SizedBox(height: 12),
+            
+            _buildInfoCard(
+              icon: Icons.restaurant_menu,
+              titulo: 'Especialidad',
+              valor: negocio.especialidad,
+              color: const Color(0xFF9B59B6),
+              editable: true,
+              onEdit: () => _mostrarEditarEspecialidad(context, negocio),
+            ),
+            
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: 150,
+      child: Card(
+        elevation: 8,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 36,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -381,70 +451,6 @@ class _PantallaDuenoView extends StatelessWidget {
                 tooltip: 'Editar',
               ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOpcionCard(
-    BuildContext context, {
-    required IconData icono,
-    required String titulo,
-    required String descripcion,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icono, color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      descripcion,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: color,
-                size: 20,
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -859,11 +865,18 @@ class _PantallaDuenoView extends StatelessWidget {
                                   cubit,
                                   () async {
                                     // Recargar reservas
-                                    final nuevasReservas = await cubit.obtenerReservasDelNegocio(negocio.id);
-                                    setState(() {
-                                      reservas.clear();
-                                      reservas.addAll(nuevasReservas);
-                                    });
+                                    try {
+                                      final nuevasReservas = await cubit.obtenerReservasDelNegocio(negocio.id);
+                                      // Verificar que el contexto todavía está montado
+                                      if (context.mounted) {
+                                        setState(() {
+                                          reservas.clear();
+                                          reservas.addAll(nuevasReservas);
+                                        });
+                                      }
+                                    } catch (e) {
+                                      print('Error recargando reservas: $e');
+                                    }
                                   },
                                 );
                               },
@@ -1129,21 +1142,44 @@ class _PantallaDuenoView extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('No, mantener'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(dialogContext);
+              Navigator.of(dialogContext).pop();
+              
+              // Mostrar indicador de carga
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (loadingContext) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+              
               final exito = await cubit.cancelarReservaAdmin(reservaId);
-              if (exito) {
+              
+              // Cerrar indicador de carga
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+              
+              if (exito && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Reserva cancelada correctamente'),
-                    backgroundColor: Color(0xFFE74C3C),
+                    content: Text('✅ Reserva cancelada correctamente. Cliente notificado.'),
+                    backgroundColor: Color(0xFF27AE60),
                   ),
                 );
                 onUpdate();
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('❌ Error al cancelar la reserva'),
+                    backgroundColor: Color(0xFFE74C3C),
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(

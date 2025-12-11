@@ -7,14 +7,14 @@ import 'pantalla_inicio_estados_de_cubit.dart';
 class PantallaInicioCubit extends Cubit<PantallaInicioState> {
   final NegocioRepositorio negocioRepositorio;
 
-  PantallaInicioCubit(this.negocioRepositorio) : super(const PantallaInicioInitial()) {
+  PantallaInicioCubit(this.negocioRepositorio) : super(const PantallaInicioInicial()) {
     _cargarNegocios();
   }
 
   // Cargar negocios existentes
   Future<void> _cargarNegocios() async {
     final negocios = await negocioRepositorio.obtenerTodosLosNegocios();
-    emit(PantallaInicioInitial(negocios: negocios));
+    emit(PantallaInicioInicial(negocios: negocios));
   }
 
   // Agregar un nuevo negocio
@@ -51,19 +51,19 @@ class PantallaInicioCubit extends Cubit<PantallaInicioState> {
   // Ejemplo de método que cambia el estado
   Future<void> cargarDatos() async {
     try {
-      emit(PantallaInicioLoading(negocios: state.negocios));
+      emit(PantallaInicioCargando(negocios: state.negocios));
       
       // Simular carga de datos
       await Future.delayed(const Duration(seconds: 1));
       
-      emit(PantallaInicioSuccess('Datos cargados correctamente', negocios: state.negocios));
+      emit(PantallaInicioExitoso('Datos cargados correctamente', negocios: state.negocios));
     } catch (e) {
-      emit(PantallaInicioError('Error al cargar los datos: $e', negocios: state.negocios));
+      emit(PantallaInicioConError('Error al cargar los datos: $e', negocios: state.negocios));
     }
   }
 
   // Reiniciar al estado inicial manteniendo los negocios
-  void reset() {
-    emit(PantallaInicioInitial(negocios: state.negocios));
+  void reiniciar() {
+    emit(PantallaInicioInicial(negocios: state.negocios));
   }
 }

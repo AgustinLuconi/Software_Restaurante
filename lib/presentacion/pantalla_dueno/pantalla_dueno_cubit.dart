@@ -19,7 +19,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     this.mesaRepositorio,
     this.reservaRepositorio,
     this.servicioNotificaciones,
-  ) : super(const PantallaDuenoInitial());
+  ) : super(const PantallaDuenoInicial());
 
   // Método para establecer un negocio autenticado directamente
   void establecerNegocioAutenticado(Negocio negocio) {
@@ -28,7 +28,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
 
   Future<void> autenticar(String email, String password) async {
     try {
-      emit(const PantallaDuenoLoading());
+      emit(const PantallaDuenoCargando());
 
       final negocio = await negocioRepositorio.autenticarNegocio(
         email: email,
@@ -38,19 +38,19 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       if (negocio != null) {
         emit(PantallaDuenoAutenticado(negocio));
       } else {
-        emit(const PantallaDuenoError('Email o contraseña incorrectos'));
+        emit(const PantallaDuenoConError('Email o contraseña incorrectos'));
       }
     } catch (e) {
-      emit(PantallaDuenoError('Error al autenticar: $e'));
+      emit(PantallaDuenoConError('Error al autenticar: $e'));
     }
   }
 
   void cerrarSesion() {
-    emit(const PantallaDuenoInitial());
+    emit(const PantallaDuenoInicial());
   }
 
   void limpiarError() {
-    emit(const PantallaDuenoInitial());
+    emit(const PantallaDuenoInicial());
   }
 
   Future<bool> actualizarTelefono(Negocio negocio, String nuevoTelefono) async {
@@ -64,7 +64,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       
       return exito;
     } catch (e) {
-      emit(PantallaDuenoError('Error al actualizar teléfono: $e'));
+      emit(PantallaDuenoConError('Error al actualizar teléfono: $e'));
       return false;
     }
   }
@@ -80,7 +80,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       
       return exito;
     } catch (e) {
-      emit(PantallaDuenoError('Error al actualizar especialidad: $e'));
+      emit(PantallaDuenoConError('Error al actualizar especialidad: $e'));
       return false;
     }
   }
@@ -93,7 +93,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     try {
       return await negocioRepositorio.actualizarHorariosServicio(negocioId, horarios);
     } catch (e) {
-      emit(PantallaDuenoError('Error al actualizar horarios: $e'));
+      emit(PantallaDuenoConError('Error al actualizar horarios: $e'));
       return false;
     }
   }
@@ -113,7 +113,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       );
       return await mesaRepositorio.agregarMesa(nuevaMesa);
     } catch (e) {
-      emit(PantallaDuenoError('Error al agregar mesa: $e'));
+      emit(PantallaDuenoConError('Error al agregar mesa: $e'));
       return null;
     }
   }
@@ -122,7 +122,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     try {
       return await mesaRepositorio.actualizarMesa(mesa);
     } catch (e) {
-      emit(PantallaDuenoError('Error al actualizar mesa: $e'));
+      emit(PantallaDuenoConError('Error al actualizar mesa: $e'));
       return false;
     }
   }
@@ -131,7 +131,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     try {
       return await mesaRepositorio.eliminarMesa(mesaId);
     } catch (e) {
-      emit(PantallaDuenoError('Error al eliminar mesa: $e'));
+      emit(PantallaDuenoConError('Error al eliminar mesa: $e'));
       return false;
     }
   }
@@ -147,7 +147,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       final todasReservas = await reservaRepositorio.obtenerReserva();
       return todasReservas.where((r) => mesaIds.contains(r.mesaId)).toList();
     } catch (e) {
-      emit(PantallaDuenoError('Error al obtener reservas: $e'));
+      emit(PantallaDuenoConError('Error al obtener reservas: $e'));
       return [];
     }
   }
@@ -164,7 +164,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       
       return true;
     } catch (e) {
-      emit(PantallaDuenoError('Error al confirmar reserva: $e'));
+      emit(PantallaDuenoConError('Error al confirmar reserva: $e'));
       return false;
     }
   }
@@ -174,18 +174,34 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       final reservas = await reservaRepositorio.obtenerReserva();
       final reserva = reservas.firstWhere((r) => r.id == reservaId);
       
+      print('🔍 Cancelando reserva: ${reserva.id}');
+      print('🔍 Cliente ID: ${reserva.clienteId}');
+      print('🔍 Contacto Cliente: ${reserva.contactoCliente}');
+      
       await reservaRepositorio.cancelarReserva(reservaId);
       
       // Notificar al cliente que el negocio canceló la reserva
+      // Usar contactoCliente en lugar de clienteId
+      final clienteNotificacion = reserva.contactoCliente ?? reserva.clienteId;
       await servicioNotificaciones.notificarReservaCancelada(
-        reserva.clienteId,
+        clienteNotificacion,
         reserva,
         porNegocio: true,
       );
       
+      // También enviar a cliente_123 para que aparezca en el panel general
+      await servicioNotificaciones.notificarReservaCancelada(
+        'cliente_123',
+        reserva,
+        porNegocio: true,
+      );
+      
+      print('✅ Notificación enviada a: $clienteNotificacion y a cliente_123');
+      
       return true;
     } catch (e) {
-      emit(PantallaDuenoError('Error al cancelar reserva: $e'));
+      print('❌ Error al cancelar reserva: $e');
+      emit(PantallaDuenoConError('Error al cancelar reserva: $e'));
       return false;
     }
   }
@@ -271,7 +287,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
         'reservasMesActual': reservasMesActual,
       };
     } catch (e) {
-      emit(PantallaDuenoError('Error al obtener métricas: $e'));
+      emit(PantallaDuenoConError('Error al obtener métricas: $e'));
       return {};
     }
   }

@@ -6,7 +6,7 @@ class ObtenerMesasDisponibles {
 
   ObtenerMesasDisponibles(this.mesaRepositorio);
 
-  Future<List<Mesa>> execute(DateTime fecha, DateTime hora, int numeroPersonas) async {
+  Future<List<Mesa>> ejecutar(DateTime fecha, DateTime hora, int numeroPersonas) async {
     final now = DateTime.now();
     final fechaHora = DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute);
     if (fechaHora.isBefore(now)) {

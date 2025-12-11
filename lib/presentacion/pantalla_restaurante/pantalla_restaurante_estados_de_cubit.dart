@@ -5,21 +5,21 @@ import 'package:flutter/foundation.dart';
 abstract class PantallaRestauranteState {}
 
 // Estado inicial
-class PantallaRestauranteInitial extends PantallaRestauranteState {}
+class PantallaRestauranteInicial extends PantallaRestauranteState {}
 
 // Estado de carga
-class PantallaRestauranteLoading extends PantallaRestauranteState {}
+class PantallaRestauranteCargando extends PantallaRestauranteState {}
 
 // Estado de éxito
-class PantallaRestauranteSuccess extends PantallaRestauranteState {
-  final String message;
+class PantallaRestauranteExitoso extends PantallaRestauranteState {
+  final String mensaje;
 
-  PantallaRestauranteSuccess(this.message);
+  PantallaRestauranteExitoso(this.mensaje);
 }
 
 // Estado de error
-class PantallaRestauranteError extends PantallaRestauranteState {
-  final String message;
+class PantallaRestauranteConError extends PantallaRestauranteState {
+  final String mensaje;
 
-  PantallaRestauranteError(this.message);
+  PantallaRestauranteConError(this.mensaje);
 }

@@ -5,21 +5,21 @@ import 'notificaciones_estados_de_cubit.dart';
 class NotificacionesCubit extends Cubit<NotificacionesState> {
   final NotificacionRepositorio notificacionRepositorio;
 
-  NotificacionesCubit(this.notificacionRepositorio) : super(const NotificacionesInitial());
+  NotificacionesCubit(this.notificacionRepositorio) : super(const NotificacionesInicial());
 
   Future<void> cargarNotificaciones(String usuarioId) async {
     try {
-      emit(const NotificacionesLoading());
+      emit(const NotificacionesCargando());
       
       final notificaciones = await notificacionRepositorio.obtenerNotificacionesPorUsuario(usuarioId);
       final noLeidas = await notificacionRepositorio.contarNotificacionesNoLeidas(usuarioId);
       
-      emit(NotificacionesLoaded(
+      emit(NotificacionesCargadas(
         notificaciones: notificaciones,
         noLeidas: noLeidas,
       ));
     } catch (e) {
-      emit(NotificacionesError('Error al cargar notificaciones: $e'));
+      emit(NotificacionesConError('Error al cargar notificaciones: $e'));
     }
   }
 
@@ -29,7 +29,7 @@ class NotificacionesCubit extends Cubit<NotificacionesState> {
       // Recargar notificaciones
       await cargarNotificaciones(usuarioId);
     } catch (e) {
-      emit(NotificacionesError('Error al marcar notificación: $e'));
+      emit(NotificacionesConError('Error al marcar notificación: $e'));
     }
   }
 
@@ -39,7 +39,7 @@ class NotificacionesCubit extends Cubit<NotificacionesState> {
       // Recargar notificaciones
       await cargarNotificaciones(usuarioId);
     } catch (e) {
-      emit(NotificacionesError('Error al marcar notificaciones: $e'));
+      emit(NotificacionesConError('Error al marcar notificaciones: $e'));
     }
   }
 
@@ -49,7 +49,7 @@ class NotificacionesCubit extends Cubit<NotificacionesState> {
       // Recargar notificaciones
       await cargarNotificaciones(usuarioId);
     } catch (e) {
-      emit(NotificacionesError('Error al eliminar notificación: $e'));
+      emit(NotificacionesConError('Error al eliminar notificación: $e'));
     }
   }
 

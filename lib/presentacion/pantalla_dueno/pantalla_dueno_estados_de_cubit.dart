@@ -4,12 +4,12 @@ abstract class PantallaDuenoState {
   const PantallaDuenoState();
 }
 
-class PantallaDuenoInitial extends PantallaDuenoState {
-  const PantallaDuenoInitial();
+class PantallaDuenoInicial extends PantallaDuenoState {
+  const PantallaDuenoInicial();
 }
 
-class PantallaDuenoLoading extends PantallaDuenoState {
-  const PantallaDuenoLoading();
+class PantallaDuenoCargando extends PantallaDuenoState {
+  const PantallaDuenoCargando();
 }
 
 class PantallaDuenoAutenticado extends PantallaDuenoState {
@@ -18,8 +18,8 @@ class PantallaDuenoAutenticado extends PantallaDuenoState {
   const PantallaDuenoAutenticado(this.negocio);
 }
 
-class PantallaDuenoError extends PantallaDuenoState {
+class PantallaDuenoConError extends PantallaDuenoState {
   final String mensaje;
 
-  const PantallaDuenoError(this.mensaje);
+  const PantallaDuenoConError(this.mensaje);
 }

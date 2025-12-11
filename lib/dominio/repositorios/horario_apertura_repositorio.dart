@@ -9,4 +9,8 @@ abstract class HorarioAperturaRepositorio {
   
   /// Obtiene el mensaje de error cuando el negocio está cerrado
   Future<String> obtenerMensajeHorarioCerrado(String negocioId, DateTime fecha);
+  
+  /// Obtiene los intervalos de horarios disponibles para una fecha específica
+  /// Retorna una lista de horarios en formato "HH:00 - HH:00" (intervalos de 1 hora)
+  Future<List<String>> obtenerIntervalosDisponibles(String negocioId, DateTime fecha);
 }

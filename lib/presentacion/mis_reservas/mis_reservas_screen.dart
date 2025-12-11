@@ -24,10 +24,12 @@ class _MisReservasView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Reservas'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/restaurante'),
@@ -38,20 +40,22 @@ class _MisReservasView extends StatelessWidget {
           if (state is ReservaCancelada) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(state.mensaje),
                 backgroundColor: Colors.green,
               ),
             );
           }
         },
         builder: (context, state) {
-          if (state is MisReservasLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
+          if (state is MisReservasCargando) {
+            return Center(
+              child: CircularProgressIndicator(
+                color: colorScheme.primary,
+              ),
             );
           }
 
-          if (state is MisReservasError) {
+          if (state is MisReservasConError) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -60,16 +64,17 @@ class _MisReservasView extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.error_outline,
-                      color: Colors.red,
+                      color: Color(0xFFE74C3C),
                       size: 64,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      state.message,
+                      state.mensaje,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 16,
-                        color: Colors.red,
+                        color: Color(0xFF2C3E50),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -77,6 +82,10 @@ class _MisReservasView extends StatelessWidget {
                       onPressed: () {
                         context.read<MisReservasCubit>().cargarReservas();
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF27AE60),
+                        foregroundColor: Colors.white,
+                      ),
                       child: const Text('Reintentar'),
                     ),
                   ],
@@ -85,7 +94,7 @@ class _MisReservasView extends StatelessWidget {
             );
           }
 
-          if (state is MisReservasSuccess) {
+          if (state is MisReservasExitoso) {
             if (state.reservas.isEmpty) {
               return Center(
                 child: Padding(
@@ -93,10 +102,10 @@ class _MisReservasView extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.event_busy,
                         size: 80,
-                        color: Color(0xFF7F8C8D),
+                        color: const Color(0xFF27AE60).withOpacity(0.5),
                       ),
                       const SizedBox(height: 24),
                       const Text(
@@ -120,7 +129,7 @@ class _MisReservasView extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () => context.go('/disponibilidad'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3498DB),
+                          backgroundColor: const Color(0xFF27AE60),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 32,

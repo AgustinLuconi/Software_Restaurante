@@ -31,12 +31,27 @@ import 'presentacion/pantalla_inicio/pantalla_inicio_cubit.dart';
 final getIt = GetIt.instance;
 
 void setupServiceLocator() {
+  // Evitar registrar dos veces (puede pasar en hot reload)
+  if (getIt.isRegistered<ReservaRepositorio>()) {
+    return;
+  }
+
   // Datos de ejemplo para mesas del restaurante Chiringuito (negocio_1)
+  // Ahora con zonas asignadas
   final mesasEjemplo = [
-    Mesa(id: '1', nombre: 'Mesa 1', capacidad: 2, negocioId: 'negocio_1'),
-    Mesa(id: '2', nombre: 'Mesa 2', capacidad: 4, negocioId: 'negocio_1'),
-    Mesa(id: '3', nombre: 'Mesa 3', capacidad: 6, negocioId: 'negocio_1'),
-    Mesa(id: '4', nombre: 'Mesa 4', capacidad: 8, negocioId: 'negocio_1'),
+    // Terraza - 3 mesas
+    Mesa(id: '1', nombre: 'Terraza 1', capacidad: 2, negocioId: 'negocio_1', zona: ZonaMesa.terraza),
+    Mesa(id: '2', nombre: 'Terraza 2', capacidad: 4, negocioId: 'negocio_1', zona: ZonaMesa.terraza),
+    Mesa(id: '3', nombre: 'Terraza 3', capacidad: 6, negocioId: 'negocio_1', zona: ZonaMesa.terraza),
+    // Salón - 3 mesas
+    Mesa(id: '4', nombre: 'Salón 1', capacidad: 2, negocioId: 'negocio_1', zona: ZonaMesa.salon),
+    Mesa(id: '5', nombre: 'Salón 2', capacidad: 4, negocioId: 'negocio_1', zona: ZonaMesa.salon),
+    Mesa(id: '6', nombre: 'Salón 3', capacidad: 8, negocioId: 'negocio_1', zona: ZonaMesa.salon),
+    // Jardín - 2 mesas
+    Mesa(id: '7', nombre: 'Jardín 1', capacidad: 4, negocioId: 'negocio_1', zona: ZonaMesa.jardin),
+    Mesa(id: '8', nombre: 'Jardín 2', capacidad: 6, negocioId: 'negocio_1', zona: ZonaMesa.jardin),
+    // VIP - 1 mesa
+    Mesa(id: '9', nombre: 'VIP Premium', capacidad: 10, negocioId: 'negocio_1', zona: ZonaMesa.vip),
   ];
 
   // Registrar repositorios como singletons
@@ -79,6 +94,7 @@ void setupServiceLocator() {
   // Registrar casos de uso
   getIt.registerFactory(() => CrearReserva(
         getIt<ReservaRepositorio>(),
+        mesaRepositorio: getIt<MesaRepositorio>(),
         horarioAperturaRepositorio: getIt<HorarioAperturaRepositorio>(),
       ));
   

@@ -6,10 +6,12 @@ class HistoriaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nuestra Historia'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/restaurante'),
@@ -18,116 +20,116 @@ class HistoriaScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Título principal
-            const Center(
-              child: Text(
-                'Chiringuito',
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Título principal
+              Center(
+                child: Text(
+                  'Chiringuito',
+                  style: TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                    fontFamily: 'serif',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Center(
+                child: Text(
+                  'Tradición y Sabor del Mar',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFF7F8C8D),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              
+              // Historia (aquí irá el texto que proporciones)
+              const Text(
+                'Nuestra Historia',
                 style: TextStyle(
-                  fontSize: 42,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF2C3E50),
-                  fontFamily: 'serif',
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                'Tradición y Sabor del Mar',
+              const SizedBox(height: 16),
+              const Text(
+                'Aquí irá la historia del restaurante que proporcionarás más adelante...',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontStyle: FontStyle.italic,
-                  color: Color(0xFF7F8C8D),
+                  fontSize: 16,
+                  height: 1.6,
+                  color: Color(0xFF34495E),
                 ),
               ),
-            ),
-            const SizedBox(height: 40),
-            
-            // Historia (aquí irá el texto que proporciones)
-            const Text(
-              'Nuestra Historia',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2C3E50),
+              const SizedBox(height: 40),
+              
+              // Nuestras Comidas
+              const Text(
+                'Nuestras Especialidades',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFE67E22),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Aquí irá la historia del restaurante que proporcionarás más adelante...',
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.6,
-                color: Color(0xFF34495E),
+              const SizedBox(height: 20),
+              
+              // Lista de comidas (ejemplo, puedes personalizarla)
+              _buildComidaItem(
+                Icons.set_meal,
+                'Paella Marinera',
+                'Arroz con frutos del mar frescos',
               ),
-            ),
-            const SizedBox(height: 40),
-            
-            // Nuestras Comidas
-            const Text(
-              'Nuestras Especialidades',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2C3E50),
+              _buildComidaItem(
+                Icons.dinner_dining,
+                'Pescado a la Plancha',
+                'Pescado fresco del día con guarnición',
               ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Lista de comidas (ejemplo, puedes personalizarla)
-            _buildComidaItem(
-              Icons.set_meal,
-              'Paella Marinera',
-              'Arroz con frutos del mar frescos',
-            ),
-            _buildComidaItem(
-              Icons.dinner_dining,
-              'Pescado a la Plancha',
-              'Pescado fresco del día con guarnición',
-            ),
-            _buildComidaItem(
-              Icons.restaurant,
-              'Mariscos Frescos',
-              'Selección de mariscos de la región',
-            ),
-            _buildComidaItem(
-              Icons.local_dining,
-              'Tapas Variadas',
-              'Auténticas tapas españolas',
-            ),
-            
-            const SizedBox(height: 40),
-            
-            // Botón volver
-            Center(
-              child: SizedBox(
-                width: 200,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () => context.go('/restaurante'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3498DB),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              _buildComidaItem(
+                Icons.restaurant,
+                'Mariscos Frescos',
+                'Selección de mariscos de la región',
+              ),
+              _buildComidaItem(
+                Icons.local_dining,
+                'Tapas Variadas',
+                'Auténticas tapas españolas',
+              ),
+              
+              const SizedBox(height: 40),
+              
+              // Botón volver
+              Center(
+                child: SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => context.go('/restaurante'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE67E22),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Volver al Restaurante',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    child: const Text(
+                      'Volver al Restaurante',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
-      ),
     );
   }
 
@@ -152,13 +154,13 @@ class HistoriaScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF3498DB).withOpacity(0.1),
+              color: const Color(0xFFE67E22).withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               size: 32,
-              color: const Color(0xFF3498DB),
+              color: const Color(0xFFE67E22),
             ),
           ),
           const SizedBox(width: 16),

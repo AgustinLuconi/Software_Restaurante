@@ -32,10 +32,12 @@ class _NotificacionesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notificaciones'),
-        backgroundColor: const Color(0xFF3498DB),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/restaurante'),
@@ -43,15 +45,15 @@ class _NotificacionesView extends StatelessWidget {
         actions: [
           BlocBuilder<NotificacionesCubit, NotificacionesState>(
             builder: (context, state) {
-              if (state is NotificacionesLoaded && state.noLeidas > 0) {
+              if (state is NotificacionesCargadas && state.noLeidas > 0) {
                 return TextButton.icon(
                   onPressed: () {
                     context.read<NotificacionesCubit>().marcarTodasComoLeidas(usuarioId);
                   },
-                  icon: const Icon(Icons.done_all, color: Colors.white),
-                  label: const Text(
+                  icon: Icon(Icons.done_all, color: colorScheme.onSurface),
+                  label: Text(
                     'Marcar todas',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold),
                   ),
                 );
               }
@@ -62,7 +64,7 @@ class _NotificacionesView extends StatelessWidget {
       ),
       body: BlocConsumer<NotificacionesCubit, NotificacionesState>(
         listener: (context, state) {
-          if (state is NotificacionesError) {
+          if (state is NotificacionesConError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.mensaje),
@@ -72,39 +74,34 @@ class _NotificacionesView extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          if (state is NotificacionesLoading) {
+          if (state is NotificacionesCargando) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
-          if (state is NotificacionesLoaded) {
+          if (state is NotificacionesCargadas) {
             if (state.notificaciones.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.notifications_none,
+                      Icons.notifications_off,
                       size: 100,
-                      color: Colors.grey[400],
+                      color: colorScheme.primary.withOpacity(0.3),
                     ),
                     const SizedBox(height: 24),
                     Text(
                       'No tienes notificaciones',
-                      style: TextStyle(
-                        fontSize: 20,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[600],
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Aquí aparecerán las actualizaciones importantes',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[500],
-                      ),
+                      style: theme.textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
                   ],

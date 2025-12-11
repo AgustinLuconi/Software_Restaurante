@@ -5,24 +5,24 @@ import '../../dominio/entidades/reserva.dart';
 @immutable
 abstract class MisReservasState {}
 
-class MisReservasInitial extends MisReservasState {}
+class MisReservasInicial extends MisReservasState {}
 
-class MisReservasLoading extends MisReservasState {}
+class MisReservasCargando extends MisReservasState {}
 
-class MisReservasSuccess extends MisReservasState {
+class MisReservasExitoso extends MisReservasState {
   final List<Reserva> reservas;
 
-  MisReservasSuccess(this.reservas);
+  MisReservasExitoso(this.reservas);
 }
 
-class MisReservasError extends MisReservasState {
-  final String message;
+class MisReservasConError extends MisReservasState {
+  final String mensaje;
 
-  MisReservasError(this.message);
+  MisReservasConError(this.mensaje);
 }
 
 class ReservaCancelada extends MisReservasState {
-  final String message;
+  final String mensaje;
 
-  ReservaCancelada(this.message);
+  ReservaCancelada(this.mensaje);
 }

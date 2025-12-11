@@ -5,24 +5,32 @@ import '../../dominio/entidades/mesa.dart';
 @immutable
 abstract class DisponibilidadState {}
 
-class DisponibilidadInitial extends DisponibilidadState {}
+class DisponibilidadInicial extends DisponibilidadState {}
 
-class DisponibilidadLoading extends DisponibilidadState {}
+class DisponibilidadCargando extends DisponibilidadState {}
 
-class DisponibilidadSuccess extends DisponibilidadState {
+class DisponibilidadExitosa extends DisponibilidadState {
   final List<Mesa> mesasDisponibles;
 
-  DisponibilidadSuccess(this.mesasDisponibles);
+  DisponibilidadExitosa(this.mesasDisponibles);
 }
 
-class DisponibilidadError extends DisponibilidadState {
-  final String message;
+class DisponibilidadConError extends DisponibilidadState {
+  final String mensaje;
 
-  DisponibilidadError(this.message);
+  DisponibilidadConError(this.mensaje);
 }
 
 class ReservaCreada extends DisponibilidadState {
-  final String message;
+  final String mensaje;
 
-  ReservaCreada(this.message);
+  ReservaCreada(this.mensaje);
+}
+
+/// Estado cuando se encuentra una mesa disponible en la zona seleccionada
+class MesaEncontrada extends DisponibilidadState {
+  final Mesa mesa;
+  final ZonaMesa zona;
+
+  MesaEncontrada(this.mesa, this.zona);
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../dominio/entidades/negocio.dart';
 import '../../service_locator.dart';
+import '../widgets_comunes/registro_negocio_stepper.dart';
 import 'pantalla_inicio_cubit.dart';
 import 'pantalla_inicio_estados_de_cubit.dart';
 
@@ -24,46 +24,53 @@ class _PantallaInicioView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sistema de Reservas'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(
+          'Sistema de Reservas',
+          style: theme.appBarTheme.titleTextStyle,
+        ),
         actions: [
           // Botón de login para negocios
-          TextButton.icon(
-            onPressed: () {
-              _mostrarOpcionesNegocio(context);
-            },
-            icon: const Icon(Icons.business, color: Colors.white),
-            label: const Text(
-              '¿Tienes un negocio?',
-              style: TextStyle(color: Colors.white),
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _mostrarOpcionesNegocio(context);
+              },
+              icon: Icon(Icons.business, size: 18, color: colorScheme.primary),
+              label: Text(
+                '¿Tienes un negocio?',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colorScheme.primary),
+              ),
             ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: BlocBuilder<PantallaInicioCubit, PantallaInicioState>(
         builder: (context, state) {
-          if (state is PantallaInicioLoading) {
+          if (state is PantallaInicioCargando) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
-          if (state is PantallaInicioError) {
+          if (state is PantallaInicioConError) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    state.message,
+                    state.mensaje,
                     style: const TextStyle(color: Colors.red, fontSize: 16),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<PantallaInicioCubit>().reset();
+                      context.read<PantallaInicioCubit>().reiniciar();
                     },
                     child: const Text('Reintentar'),
                   ),
@@ -72,7 +79,7 @@ class _PantallaInicioView extends StatelessWidget {
             );
           }
 
-          if (state is PantallaInicioSuccess) {
+          if (state is PantallaInicioExitoso) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -84,7 +91,7 @@ class _PantallaInicioView extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    state.message,
+                    state.mensaje,
                     style: const TextStyle(fontSize: 18),
                   ),
                 ],
@@ -94,146 +101,151 @@ class _PantallaInicioView extends StatelessWidget {
 
           // Estado inicial - Lista de restaurantes
           return Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(24.0),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF3498DB),
-                      const Color(0xFF2980B9),
-                    ],
-                  ),
-                ),
-                child: SafeArea(
-                  bottom: false,
+              children: [
+                // Header mejorado
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                   child: Column(
                     children: [
-                      const Icon(
-                        Icons.restaurant_menu,
-                        size: 48,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Restaurantes Disponibles',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                      // Logo circular
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.restaurant_menu,
+                          size: 50,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Selecciona un restaurante para hacer tu reserva',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
+                      const SizedBox(height: 20),
+                      Text(
+                        'Restaurantes Disponibles',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Selecciona tu restaurante favorito',
+                        style: theme.textTheme.bodyMedium,
                       ),
                     ],
                   ),
                 ),
-              ),
-              
-              // Lista de restaurantes
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: [
-                    // Negocios registrados por usuarios (incluyendo Chiringuito)
-                    ...state.negocios.map((negocio) {
-                      // El Chiringuito tiene funcionalidad completa
-                      final esChiringuito = negocio.id == 'negocio_1';
-                      
-                      return Column(
-                        children: [
-                          _buildRestauranteCard(
-                            context,
-                            nombre: negocio.nombre,
-                            descripcion: negocio.descripcion.isEmpty 
-                                ? 'Nuevo restaurante' 
-                                : negocio.descripcion,
-                            especialidad: negocio.especialidad.isEmpty 
-                                ? negocio.direccion 
-                                : negocio.especialidad,
-                            icono: esChiringuito ? Icons.sailing : Icons.restaurant,
-                            color: esChiringuito 
-                                ? const Color(0xFF3498DB) 
-                                : const Color(0xFF9B59B6),
-                            onTap: () {
-                              if (esChiringuito) {
-                                context.go('/restaurante');
-                              } else {
-                                _mostrarProximamente(context);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                      );
-                    }).toList(),
-                    
-                    // Restaurantes de relleno visual
-                    _buildRestauranteCard(
-                      context,
-                      nombre: 'La Parrilla',
-                      descripcion: 'Asador Argentino',
-                      especialidad: 'Carnes a la parrilla y vinos selectos',
-                      icono: Icons.local_fire_department,
-                      color: const Color(0xFFE74C3C),
-                      onTap: () {
-                        _mostrarProximamente(context);
-                      },
+                
+                // Lista de restaurantes
+                Expanded(
+                  child: ListView(
+                      padding: const EdgeInsets.all(20.0),
+                      children: [
+                        const SizedBox(height: 10),
+                        // Negocios registrados por usuarios (incluyendo Chiringuito)
+                        ...state.negocios.map((negocio) {
+                          // El Chiringuito tiene funcionalidad completa
+                          final esChiringuito = negocio.id == 'negocio_1';
+                          
+                          return Column(
+                            children: [
+                              _buildRestauranteCard(
+                                context,
+                                nombre: negocio.nombre,
+                                descripcion: negocio.descripcion.isEmpty 
+                                    ? 'Nuevo restaurante' 
+                                    : negocio.descripcion,
+                                especialidad: negocio.especialidad.isEmpty 
+                                    ? negocio.direccion 
+                                    : negocio.especialidad,
+                                icono: esChiringuito ? Icons.sailing : Icons.restaurant,
+                                color: esChiringuito 
+                                    ? const Color(0xFF3498DB) 
+                                    : const Color(0xFF9B59B6),
+                                destacado: esChiringuito,
+                                onTap: () {
+                                  if (esChiringuito) {
+                                    context.go('/restaurante');
+                                  } else {
+                                    _mostrarProximamente(context);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          );
+                        }).toList(),
+                        
+                        // Restaurantes de relleno visual
+                        _buildRestauranteCard(
+                          context,
+                          nombre: 'La Parrilla',
+                          descripcion: 'Asador Argentino',
+                          especialidad: 'Carnes a la parrilla y vinos selectos',
+                          icono: Icons.local_fire_department,
+                          color: const Color(0xFFE74C3C),
+                          destacado: false,
+                          onTap: () {
+                            _mostrarProximamente(context);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        _buildRestauranteCard(
+                          context,
+                          nombre: 'Trattoria Bella',
+                          descripcion: 'Cocina Italiana',
+                          especialidad: 'Pastas caseras y pizzas al horno de leña',
+                          icono: Icons.local_pizza,
+                          color: const Color(0xFF27AE60),
+                          destacado: false,
+                          onTap: () {
+                            _mostrarProximamente(context);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        _buildRestauranteCard(
+                          context,
+                          nombre: 'Sushi Zen',
+                          descripcion: 'Restaurante Japonés',
+                          especialidad: 'Sushi, sashimi y cocina oriental',
+                          icono: Icons.set_meal,
+                          color: const Color(0xFFE67E22),
+                          destacado: false,
+                          onTap: () {
+                            _mostrarProximamente(context);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        _buildRestauranteCard(
+                          context,
+                          nombre: 'El Jardín Verde',
+                          descripcion: 'Restaurante Vegano',
+                          especialidad: 'Comida saludable y orgánica',
+                          icono: Icons.eco,
+                          color: const Color(0xFF16A085),
+                          destacado: false,
+                          onTap: () {
+                            _mostrarProximamente(context);
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    
-                    _buildRestauranteCard(
-                      context,
-                      nombre: 'Trattoria Bella',
-                      descripcion: 'Cocina Italiana',
-                      especialidad: 'Pastas caseras y pizzas al horno de leña',
-                      icono: Icons.local_pizza,
-                      color: const Color(0xFF27AE60),
-                      onTap: () {
-                        _mostrarProximamente(context);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    _buildRestauranteCard(
-                      context,
-                      nombre: 'Sushi Zen',
-                      descripcion: 'Restaurante Japonés',
-                      especialidad: 'Sushi, sashimi y cocina oriental',
-                      icono: Icons.set_meal,
-                      color: const Color(0xFFE67E22),
-                      onTap: () {
-                        _mostrarProximamente(context);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    _buildRestauranteCard(
-                      context,
-                      nombre: 'El Jardín Verde',
-                      descripcion: 'Restaurante Vegano',
-                      especialidad: 'Comida saludable y orgánica',
-                      icono: Icons.eco,
-                      color: const Color(0xFF16A085),
-                      onTap: () {
-                        _mostrarProximamente(context);
-                      },
-                    ),
-                  ],
                 ),
-              ),
-            ],
-          );
+              ],
+            );
         },
       ),
     );
@@ -337,212 +349,8 @@ class _PantallaInicioView extends StatelessWidget {
   }
 
   void _mostrarRegistroNegocio(BuildContext context, PantallaInicioCubit cubit) {
-    final formKey = GlobalKey<FormState>();
-    final nombreNegocioController = TextEditingController();
-    final nombreContactoController = TextEditingController();
-    final emailController = TextEditingController();
-    final telefonoController = TextEditingController();
-    final direccionController = TextEditingController();
-    final passwordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.add_business, color: Color(0xFF27AE60)),
-              SizedBox(width: 12),
-              Text('Registrar Negocio'),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: nombreNegocioController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre del Negocio *',
-                      prefixIcon: Icon(Icons.store),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  TextFormField(
-                    controller: nombreContactoController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre del Responsable *',
-                      prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  TextFormField(
-                    controller: emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Correo Electrónico *',
-                      prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Ingrese un correo válido';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  TextFormField(
-                    controller: telefonoController,
-                    decoration: const InputDecoration(
-                      labelText: 'Teléfono *',
-                      prefixIcon: Icon(Icons.phone),
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  TextFormField(
-                    controller: direccionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Dirección *',
-                      prefixIcon: Icon(Icons.location_on),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  TextFormField(
-                    controller: passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Contraseña *',
-                      prefixIcon: Icon(Icons.lock),
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      if (value.length < 6) {
-                        return 'Mínimo 6 caracteres';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  TextFormField(
-                    controller: confirmPasswordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirmar Contraseña *',
-                      prefixIcon: Icon(Icons.lock_outline),
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Este campo es obligatorio';
-                      }
-                      if (value != passwordController.text) {
-                        return 'Las contraseñas no coinciden';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  // Registrar el negocio usando el cubit capturado
-                  final nuevoNegocio = await cubit.registrarNegocio(
-                    nombre: nombreNegocioController.text,
-                    nombreResponsable: nombreContactoController.text,
-                    email: emailController.text,
-                    telefono: telefonoController.text,
-                    direccion: direccionController.text,
-                    password: passwordController.text,
-                  );
-                  
-                  Navigator.pop(context);
-                  
-                  if (nuevoNegocio != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('✅ ¡${nuevoNegocio.nombre} registrado exitosamente!'),
-                        backgroundColor: const Color(0xFF27AE60),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('❌ El email ya está registrado'),
-                        backgroundColor: Color(0xFFE74C3C),
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF27AE60),
-              ),
-              child: const Text('Registrar'),
-            ),
-          ],
-        );
-      },
-    );
+    // Usar el nuevo widget con Stepper
+    mostrarRegistroNegocioStepper(context, cubit);
   }
 
   void _mostrarLoginNegocio(BuildContext context, PantallaInicioCubit cubit) {
@@ -673,103 +481,181 @@ class _PantallaInicioView extends StatelessWidget {
     required String especialidad,
     required IconData icono,
     required Color color,
+    required bool destacado,
     required VoidCallback onTap,
   }) {
     return Card(
-      elevation: 8,
+      elevation: destacado ? 12 : 6,
+      shadowColor: destacado ? color.withOpacity(0.5) : Colors.black26,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        side: destacado
+            ? BorderSide(color: color.withOpacity(0.3), width: 2)
+            : BorderSide.none,
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.all(20.0),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Colors.white,
-                color.withOpacity(0.05),
-              ],
+              colors: destacado
+                  ? [
+                      Colors.white,
+                      color.withOpacity(0.08),
+                    ]
+                  : [
+                      Colors.white,
+                      color.withOpacity(0.03),
+                    ],
             ),
           ),
-          child: Row(
+          child: Column(
             children: [
-              // Icono del restaurante
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: color.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: Icon(
-                  icono,
-                  size: 40,
-                  color: color,
-                ),
-              ),
-              const SizedBox(width: 20),
-              
-              // Información del restaurante
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nombre,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
+              Row(
+                children: [
+                  // Icono del restaurante
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          color.withOpacity(0.8),
+                          color,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      descripcion,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontStyle: FontStyle.italic,
-                        color: Color(0xFF7F8C8D),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.restaurant,
-                          size: 16,
-                          color: color,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            especialidad,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: color.withOpacity(0.8),
-                              fontWeight: FontWeight.w500,
+                      ],
+                    ),
+                    child: Icon(
+                      icono,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  
+                  // Información del restaurante
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                nombre,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
                             ),
+                            if (destacado)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [color, color.withOpacity(0.7)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Destacado',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          descripcion,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF7F8C8D),
                           ),
                         ),
                       ],
                     ),
+                  ),
+                  
+                  // Flecha indicadora
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      color: color,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Especialidad en la parte inferior
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.restaurant,
+                      size: 18,
+                      color: color,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        especialidad,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: color.withOpacity(0.9),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              
-              // Flecha indicadora
-              Icon(
-                Icons.arrow_forward_ios,
-                color: color,
-                size: 28,
               ),
             ],
           ),

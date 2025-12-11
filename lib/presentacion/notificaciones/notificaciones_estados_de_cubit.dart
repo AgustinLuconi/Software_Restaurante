@@ -4,26 +4,26 @@ abstract class NotificacionesState {
   const NotificacionesState();
 }
 
-class NotificacionesInitial extends NotificacionesState {
-  const NotificacionesInitial();
+class NotificacionesInicial extends NotificacionesState {
+  const NotificacionesInicial();
 }
 
-class NotificacionesLoading extends NotificacionesState {
-  const NotificacionesLoading();
+class NotificacionesCargando extends NotificacionesState {
+  const NotificacionesCargando();
 }
 
-class NotificacionesLoaded extends NotificacionesState {
+class NotificacionesCargadas extends NotificacionesState {
   final List<Notificacion> notificaciones;
   final int noLeidas;
 
-  const NotificacionesLoaded({
+  const NotificacionesCargadas({
     required this.notificaciones,
     required this.noLeidas,
   });
 }
 
-class NotificacionesError extends NotificacionesState {
+class NotificacionesConError extends NotificacionesState {
   final String mensaje;
 
-  const NotificacionesError(this.mensaje);
+  const NotificacionesConError(this.mensaje);
 }

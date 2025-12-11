@@ -10,27 +10,27 @@ abstract class PantallaInicioState {
 }
 
 // Estado inicial
-class PantallaInicioInitial extends PantallaInicioState {
-  const PantallaInicioInitial({super.negocios});
+class PantallaInicioInicial extends PantallaInicioState {
+  const PantallaInicioInicial({super.negocios});
 }
 
 // Estado de carga
-class PantallaInicioLoading extends PantallaInicioState {
-  const PantallaInicioLoading({super.negocios});
+class PantallaInicioCargando extends PantallaInicioState {
+  const PantallaInicioCargando({super.negocios});
 }
 
 // Estado de éxito
-class PantallaInicioSuccess extends PantallaInicioState {
-  final String message;
+class PantallaInicioExitoso extends PantallaInicioState {
+  final String mensaje;
 
-  const PantallaInicioSuccess(this.message, {super.negocios});
+  const PantallaInicioExitoso(this.mensaje, {super.negocios});
 }
 
 // Estado de error
-class PantallaInicioError extends PantallaInicioState {
-  final String message;
+class PantallaInicioConError extends PantallaInicioState {
+  final String mensaje;
 
-  const PantallaInicioError(this.message, {super.negocios});
+  const PantallaInicioConError(this.mensaje, {super.negocios});
 }
 
 // Estado con negocio agregado

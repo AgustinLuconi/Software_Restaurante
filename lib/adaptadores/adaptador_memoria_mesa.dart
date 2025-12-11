@@ -21,13 +21,23 @@ class MesaRepositorioMemoria implements MesaRepositorio {
   }
 
   @override
+  Future<Mesa?> obtenerMesaPorId(String mesaId) async {
+    try {
+      return _mesas.firstWhere((mesa) => mesa.id == mesaId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
   Future<List<Mesa>> obtenerMesasDisponibles(DateTime fecha, DateTime hora, int numeroPersonas) async {
     // Filtrar mesas que pueden acomodar el número de personas
+    // con la nueva lógica: capacidad >= numeroPersonas && capacidad <= numeroPersonas + 3
     final mesasCandidatas = _mesas.where((mesa) => mesa.puedeAcomodar(numeroPersonas)).toList();
     
-    // Si no hay repositorio de reservas, devolver todas las mesas candidatas
+    // Si no hay repositorio de reservas, devolver todas las mesas candidatas ordenadas
     if (reservaRepositorio == null) {
-      return mesasCandidatas;
+      return _ordenarMesasPorCapacidad(mesasCandidatas, numeroPersonas);
     }
     
     // Filtrar mesas que NO estén reservadas en ese horario
@@ -45,7 +55,23 @@ class MesaRepositorioMemoria implements MesaRepositorio {
       }
     }
     
-    return mesasDisponibles;
+    // Ordenar por capacidad: primero las más cercanas al número de personas solicitado
+    return _ordenarMesasPorCapacidad(mesasDisponibles, numeroPersonas);
+  }
+
+  /// Ordena las mesas por capacidad, priorizando las más cercanas al número de personas
+  List<Mesa> _ordenarMesasPorCapacidad(List<Mesa> mesas, int numeroPersonas) {
+    final mesasOrdenadas = List<Mesa>.from(mesas);
+    mesasOrdenadas.sort((a, b) {
+      // Calcular la diferencia con el número de personas solicitado
+      // SIN valor absoluto, queremos ordenar de menor a mayor capacidad
+      final diferenciaA = a.capacidad - numeroPersonas;
+      final diferenciaB = b.capacidad - numeroPersonas;
+      
+      // Ordenar por capacidad ascendente (primero la más justa, después las más grandes)
+      return diferenciaA.compareTo(diferenciaB);
+    });
+    return mesasOrdenadas;
   }
 
   @override
@@ -61,6 +87,7 @@ class MesaRepositorioMemoria implements MesaRepositorio {
         nombre: mesa.nombre,
         capacidad: mesa.capacidad,
         negocioId: mesa.negocioId,
+        zona: mesa.zona,
       );
       _mesas.add(nuevaMesa);
       _contadorId++;
@@ -96,5 +123,56 @@ class MesaRepositorioMemoria implements MesaRepositorio {
     } catch (e) {
       return false;
     }
+  }
+
+  @override
+  Future<List<ZonaMesa>> obtenerZonasDisponibles(String negocioId) async {
+    // Obtener las zonas únicas de las mesas del negocio
+    final mesasNegocio = _mesas.where((m) => m.negocioId == negocioId).toList();
+    final zonasSet = mesasNegocio.map((m) => m.zona).toSet();
+    return zonasSet.toList();
+  }
+
+  @override
+  Future<Mesa?> buscarMesaDisponibleEnZona({
+    required ZonaMesa zona,
+    required DateTime fecha,
+    required DateTime hora,
+    required int numeroPersonas,
+    required String negocioId,
+  }) async {
+    // Filtrar mesas de la zona específica que pueden acomodar el número de personas
+    final mesasZona = _mesas.where((mesa) => 
+      mesa.zona == zona && 
+      mesa.negocioId == negocioId &&
+      mesa.puedeAcomodar(numeroPersonas)
+    ).toList();
+
+    if (mesasZona.isEmpty) {
+      return null;
+    }
+
+    // Si no hay repositorio de reservas, devolver la primera mesa candidata
+    if (reservaRepositorio == null) {
+      final mesasOrdenadas = _ordenarMesasPorCapacidad(mesasZona, numeroPersonas);
+      return mesasOrdenadas.isNotEmpty ? mesasOrdenadas.first : null;
+    }
+
+    // Buscar la primera mesa disponible (ordenadas por mejor ajuste de capacidad)
+    final mesasOrdenadas = _ordenarMesasPorCapacidad(mesasZona, numeroPersonas);
+    
+    for (final mesa in mesasOrdenadas) {
+      final estaDisponible = await reservaRepositorio!.mesaDisponible(
+        mesaId: mesa.id,
+        fecha: fecha,
+        hora: hora,
+      );
+      
+      if (estaDisponible) {
+        return mesa; // Encontramos una mesa disponible
+      }
+    }
+
+    return null; // No hay mesas disponibles en esa zona
   }
 }

@@ -27,25 +27,25 @@ class _DisponibilidadView extends StatefulWidget {
 
 class _DisponibilidadViewState extends State<_DisponibilidadView> {
   DateTime? _fechaSeleccionada;
-  TimeOfDay? _horaSeleccionada;
+  String? _intervaloSeleccionado; // Cambio: ahora guardamos el intervalo como String
   int _numeroPersonas = 2;
+  ZonaMesa? _zonaSeleccionada; // Nueva variable para la zona
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Disponibilidad'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Buscar Disponibilidad'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/restaurante'),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             // Horarios del restaurante
             _buildHorariosCard(),
             const SizedBox(height: 16),
@@ -54,12 +54,19 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF3498DB).withOpacity(0.1),
+                color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF3498DB).withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.5),
                   width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -105,15 +112,17 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             const SizedBox(height: 24),
 
             // Título sección de búsqueda
-            const Text(
+            Text(
               'Buscar Mesa Disponible',
-              style: TextStyle(
-                fontSize: 24,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2C3E50),
               ),
             ),
             const SizedBox(height: 20),
+
+            // Selector de zona (NUEVO)
+            _buildSelectorZona(),
+            const SizedBox(height: 16),
 
             // Selector de fecha
             _buildSelectorFecha(),
@@ -137,7 +146,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 if (state is ReservaCreada) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(state.message),
+                      content: Text(state.mensaje),
                       backgroundColor: Colors.green,
                       action: SnackBarAction(
                         label: 'Ver Reservas',
@@ -153,7 +162,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 }
               },
               builder: (context, state) {
-                if (state is DisponibilidadLoading) {
+                if (state is DisponibilidadCargando) {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(40.0),
@@ -162,15 +171,26 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   );
                 }
 
-                if (state is DisponibilidadError) {
-                  return _buildErrorCard(state.message);
+                if (state is DisponibilidadConError) {
+                  return _buildErrorCard(state.mensaje);
                 }
 
-                if (state is DisponibilidadSuccess) {
+                // Nuevo estado: Mesa encontrada automáticamente en zona
+                if (state is MesaEncontrada) {
+                  return _buildTarjetaMesaEncontrada(
+                    state.mesa,
+                    state.zona,
+                    _fechaSeleccionada,
+                    _intervaloSeleccionado,
+                    _numeroPersonas,
+                  );
+                }
+
+                if (state is DisponibilidadExitosa) {
                   return _buildListadoMesas(
                     state.mesasDisponibles,
                     _fechaSeleccionada,
-                    _horaSeleccionada,
+                    _intervaloSeleccionado,
                     _numeroPersonas,
                   );
                 }
@@ -272,10 +292,10 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE74C3C).withOpacity(0.1),
+                  color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: const Color(0xFFE74C3C).withOpacity(0.3),
+                    color: Colors.grey[400]!,
                     width: 1,
                   ),
                 ),
@@ -283,17 +303,17 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.block,
-                      color: const Color(0xFFE74C3C),
+                      Icons.event_busy,
+                      color: Colors.grey[700],
                       size: 18,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'Cerrado: Lunes y Martes',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFE74C3C),
+                        color: Colors.grey[800],
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -355,6 +375,123 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     );
   }
 
+  Widget _buildSelectorZona() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF9B59B6).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.location_on,
+                color: Color(0xFF9B59B6),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Zona',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  FutureBuilder<List<ZonaMesa>>(
+                    future: context.read<DisponibilidadCubit>().obtenerZonasDisponibles(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Text(
+                          'Cargando zonas...',
+                          style: TextStyle(color: Colors.grey),
+                        );
+                      }
+
+                      final zonas = snapshot.data!;
+
+                      return DropdownButton<ZonaMesa>(
+                        value: _zonaSeleccionada,
+                        hint: const Text('Seleccionar zona'),
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                        dropdownColor: Colors.white,
+                        focusColor: Colors.transparent,
+                        items: zonas.map((zona) {
+                          return DropdownMenuItem<ZonaMesa>(
+                            value: zona,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _obtenerIconoZona(zona),
+                                  size: 20,
+                                  color: _obtenerColorZona(zona),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(zona.nombre),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (zona) {
+                          setState(() {
+                            _zonaSeleccionada = zona;
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _obtenerIconoZona(ZonaMesa zona) {
+    switch (zona) {
+      case ZonaMesa.terraza:
+        return Icons.deck;
+      case ZonaMesa.salon:
+        return Icons.chair;
+      case ZonaMesa.jardin:
+        return Icons.grass;
+      case ZonaMesa.barraBar:
+        return Icons.local_bar;
+      case ZonaMesa.vip:
+        return Icons.star;
+    }
+  }
+
+  Color _obtenerColorZona(ZonaMesa zona) {
+    switch (zona) {
+      case ZonaMesa.terraza:
+        return const Color(0xFFE67E22);
+      case ZonaMesa.salon:
+        return const Color(0xFF3498DB);
+      case ZonaMesa.jardin:
+        return const Color(0xFF27AE60);
+      case ZonaMesa.barraBar:
+        return const Color(0xFF9B59B6);
+      case ZonaMesa.vip:
+        return const Color(0xFFF1C40F);
+    }
+  }
+
   Widget _buildSelectorFecha() {
     return Card(
       elevation: 2,
@@ -381,17 +518,14 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             context: context,
             initialDate: DateTime.now(),
             firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 90)),
+            lastDate: DateTime.now().add(const Duration(days: 14)),
           );
           if (fecha != null) {
             setState(() {
               _fechaSeleccionada = fecha;
+              // Limpiar intervalo seleccionado al cambiar de fecha
+              _intervaloSeleccionado = null;
             });
-            
-            // Si ya hay una hora seleccionada, revalidar el horario
-            if (_horaSeleccionada != null && mounted) {
-              await _validarHorarioSeleccionado(_horaSeleccionada!);
-            }
           }
         },
       ),
@@ -399,42 +533,123 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   }
 
   Widget _buildSelectorHora() {
+    // Si no hay fecha seleccionada, mostrar mensaje
+    if (_fechaSeleccionada == null) {
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Icon(Icons.access_time, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 12),
+              Text(
+                'Selecciona primero una fecha',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ListTile(
-        leading: const Icon(
-          Icons.access_time,
-          color: Color(0xFF3498DB),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.access_time, color: Color(0xFF3498DB)),
+                const SizedBox(width: 12),
+                const Text(
+                  'Horarios Disponibles',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Selecciona un horario (intervalos de 1 hora)',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Mostrar lista de horarios
+            FutureBuilder<List<String>>(
+              future: context.read<DisponibilidadCubit>().obtenerIntervalosHorarioNegocio(_fechaSeleccionada!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                      child: Text(
+                        'No hay horarios disponibles para esta fecha',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final intervalos = snapshot.data!;
+
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: intervalos.map((intervalo) {
+                    final seleccionado = _intervaloSeleccionado == intervalo;
+                    
+                    return ChoiceChip(
+                      label: Text(intervalo),
+                      selected: seleccionado,
+                      onSelected: (selected) {
+                        setState(() {
+                          _intervaloSeleccionado = selected ? intervalo : null;
+                        });
+                      },
+                      selectedColor: const Color(0xFF27AE60),
+                      backgroundColor: Colors.grey[200],
+                      labelStyle: TextStyle(
+                        color: seleccionado ? Colors.white : Colors.black87,
+                        fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ],
         ),
-        title: const Text(
-          'Hora',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(
-          _horaSeleccionada == null
-              ? 'Seleccionar hora'
-              : '${_horaSeleccionada!.hour.toString().padLeft(2, '0')}:${_horaSeleccionada!.minute.toString().padLeft(2, '0')}',
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () async {
-          final hora = await showTimePicker(
-            context: context,
-            initialTime: TimeOfDay.now(),
-          );
-          if (hora != null) {
-            setState(() {
-              _horaSeleccionada = hora;
-            });
-            
-            // Validar horario inmediatamente después de seleccionar
-            if (_fechaSeleccionada != null && mounted) {
-              await _validarHorarioSeleccionado(hora);
-            }
-          }
-        },
       ),
     );
   }
@@ -510,33 +725,50 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
       height: 55,
       child: ElevatedButton.icon(
         onPressed: () {
-          if (_fechaSeleccionada == null || _horaSeleccionada == null) {
+          // Validar que todos los campos estén completos
+          if (_zonaSeleccionada == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Por favor selecciona fecha y hora'),
+                content: Text('Por favor selecciona una zona'),
                 backgroundColor: Colors.orange,
               ),
             );
             return;
           }
 
+          if (_fechaSeleccionada == null || _intervaloSeleccionado == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Por favor selecciona fecha y horario'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            return;
+          }
+
+          // Extraer la hora del intervalo seleccionado (ej: "08:00 - 09:00" -> 8)
+          final partes = _intervaloSeleccionado!.split(' - ');
+          final horaInicio = int.parse(partes[0].split(':')[0]);
+
           final fechaHora = DateTime(
             _fechaSeleccionada!.year,
             _fechaSeleccionada!.month,
             _fechaSeleccionada!.day,
-            _horaSeleccionada!.hour,
-            _horaSeleccionada!.minute,
+            horaInicio,
+            0,
           );
 
-          context.read<DisponibilidadCubit>().buscarMesasDisponibles(
-                _fechaSeleccionada!,
-                fechaHora,
-                _numeroPersonas,
-              );
+          // Buscar mesa automáticamente en la zona seleccionada
+          context.read<DisponibilidadCubit>().buscarMesaEnZona(
+            zona: _zonaSeleccionada!,
+            fecha: _fechaSeleccionada!,
+            hora: fechaHora,
+            numeroPersonas: _numeroPersonas,
+          );
         },
         icon: const Icon(Icons.search, size: 24),
         label: const Text(
-          'Buscar Mesas Disponibles',
+          'Buscar Mesa Disponible',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -551,6 +783,218 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Widget que muestra la mesa encontrada automáticamente en la zona
+  Widget _buildTarjetaMesaEncontrada(
+    Mesa mesa,
+    ZonaMesa zona,
+    DateTime? fecha,
+    String? intervaloSeleccionado,
+    int numeroPersonas,
+  ) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: _obtenerColorZona(zona),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Header con información de la zona
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _obtenerColorZona(zona).withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _obtenerColorZona(zona).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _obtenerIconoZona(zona),
+                    color: _obtenerColorZona(zona),
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '¡Mesa encontrada!',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF27AE60),
+                        ),
+                      ),
+                      Text(
+                        'Zona: ${zona.nombre}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.check_circle,
+                  color: Color(0xFF27AE60),
+                  size: 32,
+                ),
+              ],
+            ),
+          ),
+          // Información de la mesa
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF27AE60).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.table_restaurant,
+                        color: Color(0xFF27AE60),
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            mesa.nombre,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2C3E50),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.people, size: 16, color: Color(0xFF7F8C8D)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Capacidad: ${mesa.capacidad} personas',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF7F8C8D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Resumen de la reserva
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildItemResumen(Icons.calendar_today, 'Fecha', 
+                        fecha != null ? '${fecha.day}/${fecha.month}/${fecha.year}' : '-'),
+                      const SizedBox(height: 8),
+                      _buildItemResumen(Icons.access_time, 'Horario', 
+                        intervaloSeleccionado ?? '-'),
+                      const SizedBox(height: 8),
+                      _buildItemResumen(Icons.people, 'Personas', 
+                        '$numeroPersonas'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Botón para reservar
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (fecha != null && intervaloSeleccionado != null) {
+                        _showConfirmarReservaDialog(
+                          context,
+                          mesa,
+                          fecha,
+                          intervaloSeleccionado,
+                          numeroPersonas,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check),
+                    label: const Text(
+                      'Reservar Esta Mesa',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF27AE60),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemResumen(IconData icono, String etiqueta, String valor) {
+    return Row(
+      children: [
+        Icon(icono, size: 18, color: const Color(0xFF7F8C8D)),
+        const SizedBox(width: 8),
+        Text(
+          '$etiqueta: ',
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF7F8C8D),
+          ),
+        ),
+        Text(
+          valor,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2C3E50),
+          ),
+        ),
+      ],
     );
   }
 
@@ -651,7 +1095,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildListadoMesas(
     List<Mesa> mesas,
     DateTime? fecha,
-    TimeOfDay? hora,
+    String? intervaloSeleccionado,
     int numeroPersonas,
   ) {
     return Column(
@@ -662,11 +1106,18 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2C3E50),
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 2),
+                blurRadius: 4,
+                color: Colors.black26,
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
-        ...mesas.map((mesa) => _buildMesaCard(mesa, fecha, hora, numeroPersonas)),
+        ...mesas.map((mesa) => _buildMesaCard(mesa, fecha, intervaloSeleccionado, numeroPersonas)),
       ],
     );
   }
@@ -674,7 +1125,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildMesaCard(
     Mesa mesa,
     DateTime? fecha,
-    TimeOfDay? hora,
+    String? intervaloSeleccionado,
     int numeroPersonas,
   ) {
     return Card(
@@ -735,22 +1186,127 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (fecha == null || hora == null) {
+                if (fecha == null || intervaloSeleccionado == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Por favor selecciona fecha y hora para reservar'),
+                      content: Text('Por favor selecciona fecha y horario para reservar'),
                       backgroundColor: Colors.orange,
                     ),
                   );
                   return;
                 }
                 
-                // Mostrar diálogo de confirmación
+                // VALIDAR CAPACIDAD ANTES de continuar
+                if (!mesa.puedeAcomodar(numeroPersonas)) {
+                  // Determinar el mensaje específico
+                  String mensaje;
+                  if (mesa.capacidad < numeroPersonas) {
+                    mensaje = '❌ Esta mesa tiene capacidad para ${mesa.capacidad} persona${mesa.capacidad > 1 ? 's' : ''}, '
+                        'pero has seleccionado ${numeroPersonas} personas.\n\n'
+                        'Por favor, elige una mesa con mayor capacidad.';
+                  } else {
+                    final diferencia = mesa.capacidad - numeroPersonas;
+                    mensaje = '❌ Esta mesa tiene capacidad para ${mesa.capacidad} personas, '
+                        'pero solo necesitas ${numeroPersonas}.\n\n'
+                        'La diferencia es de $diferencia lugar${diferencia > 1 ? 'es' : ''}. '
+                        'Por favor, selecciona una mesa más adecuada (máximo +3 lugares de diferencia).';
+                  }
+                  
+                  // Mostrar diálogo de error
+                  showDialog(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      backgroundColor: Colors.red.shade50,
+                      title: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade100,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Capacidad No Adecuada',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            mensaje,
+                            style: TextStyle(
+                              fontSize: 15,
+                              height: 1.5,
+                              color: Colors.red.shade900,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.blue.shade200,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Selecciona "Buscar Mesas" nuevamente para ver opciones más adecuadas.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.blue.shade900,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade700,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Entendido'),
+                        ),
+                      ],
+                    ),
+                  );
+                  return; // No continuar con la reserva
+                }
+                
+                // Si la validación pasa, mostrar diálogo de confirmación
                 _showConfirmarReservaDialog(
                   context,
                   mesa,
                   fecha,
-                  hora,
+                  intervaloSeleccionado,
                   numeroPersonas,
                 );
               },
@@ -780,7 +1336,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     BuildContext context,
     Mesa mesa,
     DateTime fecha,
-    TimeOfDay hora,
+    String intervaloSeleccionado,
     int numeroPersonas,
   ) {
     // Primer diálogo: Solicitar contacto y nombre
@@ -819,7 +1375,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 const SizedBox(height: 12),
                 _buildInfoRow(Icons.table_restaurant, 'Mesa', mesa.nombre),
                 _buildInfoRow(Icons.calendar_today, 'Fecha', '${fecha.day}/${fecha.month}/${fecha.year}'),
-                _buildInfoRow(Icons.access_time, 'Hora', '${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}'),
+                _buildInfoRow(Icons.access_time, 'Horario', intervaloSeleccionado),
                 _buildInfoRow(Icons.people, 'Personas', '$numeroPersonas'),
                 const Divider(height: 24),
                 const Text(
@@ -913,7 +1469,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 await context.read<DisponibilidadCubit>().enviarCodigoVerificacion(contacto);
                 
                 // Mostrar diálogo para ingresar el código
-                _showVerificacionDialog(context, contacto, nombre, mesa, fecha, hora, numeroPersonas);
+                _showVerificacionDialog(context, contacto, nombre, mesa, fecha, intervaloSeleccionado, numeroPersonas);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -961,9 +1517,13 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     String nombre,
     Mesa mesa,
     DateTime fecha,
-    TimeOfDay hora,
+    String intervaloSeleccionado,
     int numeroPersonas,
   ) {
+    // Extraer la hora del intervalo (ej: "08:00 - 09:00" -> 8)
+    final partes = intervaloSeleccionado.split(' - ');
+    final horaInicio = int.parse(partes[0].split(':')[0]);
+    
     final codigoController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
@@ -1110,8 +1670,8 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   fecha.year,
                   fecha.month,
                   fecha.day,
-                  hora.hour,
-                  hora.minute,
+                  horaInicio,
+                  0,
                 );
                 
                 // Crear reserva con verificación
@@ -1136,123 +1696,5 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
         ],
       ),
     );
-  }
-
-  /// Valida el horario seleccionado y muestra alerta si no está disponible
-  Future<void> _validarHorarioSeleccionado(TimeOfDay hora) async {
-    if (_fechaSeleccionada == null) return;
-
-    final fechaHora = DateTime(
-      _fechaSeleccionada!.year,
-      _fechaSeleccionada!.month,
-      _fechaSeleccionada!.day,
-      hora.hour,
-      hora.minute,
-    );
-
-    final mensajeError = await context
-        .read<DisponibilidadCubit>()
-        .validarHorarioApertura(_fechaSeleccionada!, fechaHora);
-
-    if (mensajeError != null && mounted) {
-      // Mostrar diálogo de error de horario
-      showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          backgroundColor: Colors.orange.shade50,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade100,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.access_time_filled,
-                  color: Colors.orange.shade700,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Horario No Disponible',
-                  style: TextStyle(
-                    color: Colors.orange.shade900,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                mensajeError,
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.5,
-                  color: Colors.orange.shade900,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.blue.shade200,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Por favor, selecciona un horario válido dentro del horario de atención.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue.shade900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Entendido'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                // Limpiar hora seleccionada
-                setState(() {
-                  _horaSeleccionada = null;
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange.shade700,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Seleccionar Otra Hora'),
-            ),
-          ],
-        ),
-      );
-    }
   }
 }

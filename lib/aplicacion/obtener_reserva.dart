@@ -6,7 +6,7 @@ class ObtenerReserva {
 
   ObtenerReserva(this.reservaRepositorio);
 
-  Future<List<Reserva>> execute() async {
+  Future<List<Reserva>> ejecutar() async {
     try {
       return await reservaRepositorio.obtenerReserva();
     } catch (e) {
@@ -22,7 +22,7 @@ class ObtenerReservaPorId {
 
   ObtenerReservaPorId(this.reservaRepositorio);
 
-  Future<Reserva?> execute(String reservaId) async {
+  Future<Reserva?> ejecutar(String reservaId) async {
     final reserva = await reservaRepositorio.obtenerReservaPorId(reservaId);
     if (reserva == null) {
       // Puedes lanzar una excepción o retornar null
