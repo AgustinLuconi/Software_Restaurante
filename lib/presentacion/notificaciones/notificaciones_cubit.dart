@@ -52,8 +52,4 @@ class NotificacionesCubit extends Cubit<NotificacionesState> {
       emit(NotificacionesConError('Error al eliminar notificación: $e'));
     }
   }
-
-  Future<int> contarNoLeidas(String usuarioId) async {
-    return await notificacionRepositorio.contarNotificacionesNoLeidas(usuarioId);
-  }
 }

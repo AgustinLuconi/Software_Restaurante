@@ -19,23 +19,9 @@ class PantallaInicioCargando extends PantallaInicioState {
   const PantallaInicioCargando({super.negocios});
 }
 
-// Estado de éxito
-class PantallaInicioExitoso extends PantallaInicioState {
-  final String mensaje;
-
-  const PantallaInicioExitoso(this.mensaje, {super.negocios});
-}
-
 // Estado de error
 class PantallaInicioConError extends PantallaInicioState {
   final String mensaje;
 
   const PantallaInicioConError(this.mensaje, {super.negocios});
-}
-
-// Estado con negocio agregado
-class NegocioAgregado extends PantallaInicioState {
-  final Negocio negocioNuevo;
-  
-  const NegocioAgregado(this.negocioNuevo, {super.negocios});
 }

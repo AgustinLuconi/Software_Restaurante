@@ -48,6 +48,7 @@ class MesaRepositorioMemoria implements MesaRepositorio {
         mesaId: mesa.id,
         fecha: fecha,
         hora: hora,
+        duracionMinutos: 60, // Duración por defecto de 1 hora
       );
       
       if (estaDisponible) {
@@ -166,6 +167,7 @@ class MesaRepositorioMemoria implements MesaRepositorio {
         mesaId: mesa.id,
         fecha: fecha,
         hora: hora,
+        duracionMinutos: 60, // Duración por defecto de 1 hora
       );
       
       if (estaDisponible) {

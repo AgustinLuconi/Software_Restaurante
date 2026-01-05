@@ -13,7 +13,7 @@ class PantallaRestauranteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => PantallaRestauranteCubit(),
+      create: (context) => PantallaRestauranteCubit()..cargarDatosNegocio(),
       child: const _PantallaRestauranteView(),
     );
   }
@@ -86,12 +86,6 @@ class _PantallaRestauranteView extends StatelessWidget {
       ),
       body: BlocBuilder<PantallaRestauranteCubit, PantallaRestauranteState>(
         builder: (context, state) {
-          if (state is PantallaRestauranteCargando) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
           if (state is PantallaRestauranteConError) {
             return Center(
               child: Column(
@@ -107,26 +101,6 @@ class _PantallaRestauranteView extends StatelessWidget {
                       context.read<PantallaRestauranteCubit>().reiniciar();
                     },
                     child: const Text('Reintentar'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state is PantallaRestauranteExitoso) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    state.mensaje,
-                    style: const TextStyle(fontSize: 18),
                   ),
                 ],
               ),
@@ -378,77 +352,149 @@ class _PantallaRestauranteView extends StatelessWidget {
   }
 
   Widget _buildContactInfo(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
+    return BlocBuilder<PantallaRestauranteCubit, PantallaRestauranteState>(
+      builder: (context, state) {
+        final horarios = state is PantallaRestauranteExitoso
+            ? state.horariosAtencion
+            : <String, String>{};
+
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
               children: [
-                Icon(Icons.schedule, color: Colors.blue.shade700, size: 24),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Horario de Atención',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2C3E50),
-                        ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.schedule, color: Colors.blue.shade700, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Horario de Atención',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2C3E50),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Horarios dinámicos
+                          _buildHorariosColumn(horarios),
+                        ],
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Lun - Dom: 08:00 - 15:00 | 19:00 - 23:00',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF7F8C8D),
-                        ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, color: Colors.red.shade700, size: 24),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ubicación',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2C3E50),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Frente al mar • Vista panorámica',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF7F8C8D),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.red.shade700, size: 24),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ubicación',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2C3E50),
-                        ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Construye la columna de horarios dinámicamente
+  Widget _buildHorariosColumn(Map<String, String> horarios) {
+    if (horarios.isEmpty) {
+      return const Text(
+        'Horarios no disponibles',
+        style: TextStyle(fontSize: 13, color: Color(0xFF7F8C8D)),
+      );
+    }
+
+    final diasAbiertos = <MapEntry<String, String>>[];
+    final diasCerrados = <String>[];
+
+    for (final entry in horarios.entries) {
+      if (entry.value.toLowerCase() == 'cerrado') {
+        diasCerrados.add(entry.key);
+      } else {
+        diasAbiertos.add(entry);
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Días abiertos
+        ...diasAbiertos.map((entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    child: Text(
+                      '${entry.key}:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF2C3E50),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Frente al mar • Vista panorámica',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF7F8C8D),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: Text(
+                      entry.value,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF7F8C8D),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+        // Días cerrados (si hay)
+        if (diasCerrados.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Cerrado: ${diasCerrados.join(', ')}',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF7F8C8D),
+              fontStyle: FontStyle.italic,
             ),
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 

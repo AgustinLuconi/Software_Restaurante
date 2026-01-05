@@ -1,30 +1,32 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../aplicacion/crear_reserva.dart';
-import '../../aplicacion/obtener_mesas_disponibles.dart';
 import '../../dominio/entidades/mesa.dart';
+import '../../dominio/entidades/negocio.dart';
 import '../../dominio/entidades/reserva.dart';
 import '../../dominio/repositorios/codigo_verificacion_repositorio.dart';
 import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/mesa_repositorio.dart';
-import '../../dominio/repositorios/reserva_repositorio.dart';
+import '../../dominio/repositorios/negocio_repositorio.dart';
 import '../../dominio/servicios/servicio_notificaciones.dart';
 import '../../service_locator.dart';
 import 'disponibilidad_estados_de_cubit.dart';
 
 class DisponibilidadCubit extends Cubit<DisponibilidadState> {
-  final ObtenerMesasDisponibles _obtenerMesasDisponibles;
   final MesaRepositorio _mesaRepositorio;
-  final ReservaRepositorio _reservaRepositorio;
+  final NegocioRepositorio _negocioRepositorio;
   final CrearReserva _crearReserva;
   final ServicioNotificaciones _servicioNotificaciones;
   final CodigoVerificacionRepositorio _codigoVerificacionRepo;
   final HorarioAperturaRepositorio _horarioAperturaRepo;
 
+  /// Negocio cacheado para acceso rápido
+  Negocio? _negocioActual;
+  Negocio? get negocioActual => _negocioActual;
+
   DisponibilidadCubit()
-      : _obtenerMesasDisponibles = getIt<ObtenerMesasDisponibles>(),
-        _mesaRepositorio = getIt<MesaRepositorio>(),
-        _reservaRepositorio = getIt<ReservaRepositorio>(),
+      : _mesaRepositorio = getIt<MesaRepositorio>(),
+        _negocioRepositorio = getIt<NegocioRepositorio>(),
         _crearReserva = getIt<CrearReserva>(),
         _servicioNotificaciones = getIt<ServicioNotificaciones>(),
         _codigoVerificacionRepo = getIt<CodigoVerificacionRepositorio>(),
@@ -34,36 +36,42 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   Future<void> cargarTodasLasMesas() async {
     try {
       emit(DisponibilidadCargando());
-      final mesas = await _mesaRepositorio.obtenerMesas();
-      emit(DisponibilidadExitosa(mesas));
+      
+      // Cargar mesas, negocio y horarios en paralelo
+      final resultados = await Future.wait([
+        _mesaRepositorio.obtenerMesas(),
+        _negocioRepositorio.obtenerNegocioPorId('negocio_1'),
+        _negocioRepositorio.obtenerHorariosServicio('negocio_1'),
+      ]);
+      
+      final mesas = resultados[0] as List<Mesa>;
+      _negocioActual = resultados[1] as Negocio?;
+      final horarios = resultados[2] as Map<String, String>;
+      
+      emit(DisponibilidadExitosa(mesas, negocio: _negocioActual, horariosServicio: horarios));
     } catch (e) {
-      emit(DisponibilidadConError('Error al cargar las mesas: ${e.toString()}'));
+      emit(DisponibilidadConError('Error al cargar los datos: ${e.toString()}'));
     }
   }
 
-  Future<void> buscarMesasDisponibles(
-    DateTime fecha,
-    DateTime hora,
-    int numeroPersonas,
-  ) async {
+  /// Carga inicial de datos (mesas + configuración del negocio + horarios)
+  Future<void> cargarDatosIniciales({String negocioId = 'negocio_1'}) async {
     try {
       emit(DisponibilidadCargando());
-
-      final mesas = await _obtenerMesasDisponibles.ejecutar(
-        fecha,
-        hora,
-        numeroPersonas,
-      );
-
-      if (mesas.isEmpty) {
-        emit(DisponibilidadConError(
-          'No hay mesas disponibles para la fecha y hora seleccionadas.',
-        ));
-      } else {
-        emit(DisponibilidadExitosa(mesas));
-      }
+      
+      final resultados = await Future.wait([
+        _mesaRepositorio.obtenerMesas(),
+        _negocioRepositorio.obtenerNegocioPorId(negocioId),
+        _negocioRepositorio.obtenerHorariosServicio(negocioId),
+      ]);
+      
+      final mesas = resultados[0] as List<Mesa>;
+      _negocioActual = resultados[1] as Negocio?;
+      final horarios = resultados[2] as Map<String, String>;
+      
+      emit(DisponibilidadExitosa(mesas, negocio: _negocioActual, horariosServicio: horarios));
     } catch (e) {
-      emit(DisponibilidadConError('Error al buscar mesas: ${e.toString()}'));
+      emit(DisponibilidadConError('Error al cargar los datos: ${e.toString()}'));
     }
   }
 
@@ -108,85 +116,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     }
   }
 
-  /// Valida si el horario seleccionado está dentro del horario de apertura
-  /// Retorna null si es válido, o un mensaje de error si no lo es
-  Future<String?> validarHorarioApertura(DateTime fecha, DateTime hora) async {
-    try {
-      final fechaHora = DateTime(
-        fecha.year,
-        fecha.month,
-        fecha.day,
-        hora.hour,
-        hora.minute,
-      );
-
-      final estaAbierto = await _horarioAperturaRepo.estaAbiertoEn(
-        'negocio_1', // ID del negocio
-        fechaHora,
-      );
-
-      if (!estaAbierto) {
-        final mensajeError = await _horarioAperturaRepo.obtenerMensajeHorarioCerrado(
-          'negocio_1',
-          fechaHora,
-        );
-        return mensajeError;
-      }
-
-      return null; // Horario válido
-    } catch (e) {
-      return 'Error al validar horario: ${e.toString()}';
-    }
-  }
-
-  /// Obtiene los intervalos de horarios disponibles para una fecha y mesa específica
-  /// Retorna un Map donde la clave es el intervalo (ej: "08:00 - 09:00")
-  /// y el valor es un booleano indicando si está disponible (true) o no (false)
-  Future<Map<String, bool>> obtenerIntervalosDisponibles({
-    required DateTime fecha,
-    required String mesaId,
-  }) async {
-    try {
-      // Obtener los intervalos del horario del negocio
-      final intervalos = await _horarioAperturaRepo.obtenerIntervalosDisponibles(
-        'negocio_1',
-        fecha,
-      );
-
-      // Obtener todas las reservas para esa mesa en esa fecha
-      final todasReservas = await _reservaRepositorio.obtenerReserva();
-      final reservasMesa = todasReservas.where((r) {
-        return r.mesaId == mesaId &&
-            r.fechaHora.year == fecha.year &&
-            r.fechaHora.month == fecha.month &&
-            r.fechaHora.day == fecha.day &&
-            (r.estado == EstadoReserva.confirmada || 
-             r.estado == EstadoReserva.pendiente);
-      }).toList();
-
-      // Crear el mapa de disponibilidad
-      final disponibilidad = <String, bool>{};
-      
-      for (final intervalo in intervalos) {
-        // Extraer la hora de inicio del intervalo (ej: "08:00 - 09:00" -> 8)
-        final partes = intervalo.split(' - ');
-        final horaInicio = int.parse(partes[0].split(':')[0]);
-        
-        // Verificar si hay alguna reserva en ese horario
-        final ocupado = reservasMesa.any((reserva) {
-          return reserva.fechaHora.hour == horaInicio;
-        });
-        
-        disponibilidad[intervalo] = !ocupado;
-      }
-      
-      return disponibilidad;
-    } catch (e) {
-      return {};
-    }
-  }
-
-  /// Obtiene solo los intervalos horarios del negocio (sin verificar disponibilidad de mesas)
+  /// Obtiene los intervalos horarios del negocio para una fecha
   Future<List<String>> obtenerIntervalosHorarioNegocio(DateTime fecha) async {
     try {
       return await _horarioAperturaRepo.obtenerIntervalosDisponibles(
@@ -264,10 +194,6 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     } catch (e) {
       emit(DisponibilidadConError('Error al crear la reserva: ${e.toString()}'));
     }
-  }
-
-  void reiniciar() {
-    emit(DisponibilidadInicial());
   }
 }
 

@@ -11,10 +11,8 @@ import 'adaptadores/servicio_notificaciones_consola.dart';
 import 'aplicacion/agregar_a_lista_de_espera.dart';
 import 'aplicacion/cancelar_reserva.dart';
 import 'aplicacion/crear_reserva.dart';
-import 'aplicacion/obtener_mesas_disponibles.dart';
 import 'aplicacion/obtener_reserva.dart';
 import 'aplicacion/procesar_lista_de_espera.dart';
-import 'aplicacion/ver_reserva.dart';
 import 'dominio/entidades/mesa.dart';
 import 'dominio/repositorios/codigo_verificacion_repositorio.dart';
 import 'dominio/repositorios/horario_apertura_repositorio.dart';
@@ -96,20 +94,19 @@ void setupServiceLocator() {
         getIt<ReservaRepositorio>(),
         mesaRepositorio: getIt<MesaRepositorio>(),
         horarioAperturaRepositorio: getIt<HorarioAperturaRepositorio>(),
+        negocioRepositorio: getIt<NegocioRepositorio>(),
       ));
   
   // CancelarReserva con ProcesarListaDeEspera
   getIt.registerFactory(() => CancelarReserva(
         getIt<ReservaRepositorio>(),
         procesarListaDeEspera: getIt<ProcesarListaDeEspera>(),
+        negocioRepositorio: getIt<NegocioRepositorio>(),
       ));
   
   getIt.registerFactory(() => ObtenerReserva(getIt<ReservaRepositorio>()));
-  getIt.registerFactory(() => ObtenerReservaPorId(getIt<ReservaRepositorio>()));
-  getIt.registerFactory(() => VerReserva(getIt<ReservaRepositorio>()));
-  getIt.registerFactory(() => ObtenerMesasDisponibles(getIt<MesaRepositorio>()));
   
-  // Nuevos casos de uso para lista de espera
+  // Casos de uso para lista de espera
   getIt.registerFactory(() => AgregarAListaDeEspera(getIt<ListaEsperaRepositorio>()));
   
   getIt.registerFactory(() => ProcesarListaDeEspera(

@@ -43,25 +43,6 @@ class PantallaInicioCubit extends Cubit<PantallaInicioState> {
     return null;
   }
 
-  // Obtener todos los negocios
-  List<Negocio> obtenerNegocios() {
-    return state.negocios;
-  }
-
-  // Ejemplo de método que cambia el estado
-  Future<void> cargarDatos() async {
-    try {
-      emit(PantallaInicioCargando(negocios: state.negocios));
-      
-      // Simular carga de datos
-      await Future.delayed(const Duration(seconds: 1));
-      
-      emit(PantallaInicioExitoso('Datos cargados correctamente', negocios: state.negocios));
-    } catch (e) {
-      emit(PantallaInicioConError('Error al cargar los datos: $e', negocios: state.negocios));
-    }
-  }
-
   // Reiniciar al estado inicial manteniendo los negocios
   void reiniciar() {
     emit(PantallaInicioInicial(negocios: state.negocios));

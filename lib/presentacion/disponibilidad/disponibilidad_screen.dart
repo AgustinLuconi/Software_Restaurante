@@ -30,6 +30,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   String? _intervaloSeleccionado; // Cambio: ahora guardamos el intervalo como String
   int _numeroPersonas = 2;
   ZonaMesa? _zonaSeleccionada; // Nueva variable para la zona
+  Future<List<String>>? _intervalosFuture; // Cache del Future de intervalos
 
   @override
   Widget build(BuildContext context) {
@@ -50,64 +51,14 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             _buildHorariosCard(),
             const SizedBox(height: 16),
             
-            // Info sobre intervalos de reserva
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.5),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3498DB).withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.schedule,
-                      color: Color(0xFF3498DB),
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Reservas por intervalos de 1 hora',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C3E50),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Cada mesa se reserva por 1 hora. Si una mesa está reservada, no estará disponible en ese horario.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            // Info sobre intervalos de reserva (dinámico)
+            BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
+              builder: (context, state) {
+                final duracion = state is DisponibilidadExitosa 
+                    ? state.duracionPromedioMinutos 
+                    : 60;
+                return _buildInfoIntervalosCard(duracion);
+              },
             ),
             const SizedBox(height: 24),
 
@@ -205,124 +156,225 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   }
 
   Widget _buildHorariosCard() {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(
-          color: Color(0xFF3498DB),
-          width: 2,
-        ),
-      ),
-      color: Colors.white,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF3498DB).withOpacity(0.05),
-              Colors.white,
-            ],
+    return BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
+      builder: (context, state) {
+        final horarios = state is DisponibilidadExitosa 
+            ? state.horariosServicio 
+            : null;
+        
+        return Card(
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(
+              color: Color(0xFF3498DB),
+              width: 2,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3498DB),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF3498DB).withOpacity(0.3),
-                          spreadRadius: 2,
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.access_time,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Horarios de Atención',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C3E50),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+          color: Colors.white,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF3498DB).withOpacity(0.05),
+                  Colors.white,
                 ],
               ),
-              const SizedBox(height: 20),
-              Container(
-                height: 2,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      const Color(0xFF3498DB).withOpacity(0.5),
-                      Colors.transparent,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3498DB),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF3498DB).withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.access_time,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Text(
+                        'Horarios de Atención',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildHorarioItem('Miércoles a Viernes', '12:00 - 15:30 / 20:00 - 23:30'),
-              const SizedBox(height: 14),
-              _buildHorarioItem('Sábados', '12:00 - 16:00 / 20:00 - 00:00'),
-              const SizedBox(height: 14),
-              _buildHorarioItem('Domingos', '12:00 - 16:00'),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.grey[400]!,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.event_busy,
-                      color: Colors.grey[700],
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Cerrado: Lunes y Martes',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                        fontStyle: FontStyle.italic,
+                  const SizedBox(height: 20),
+                  Container(
+                    height: 2,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          const Color(0xFF3498DB).withOpacity(0.5),
+                          Colors.transparent,
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Horarios dinámicos
+                  ..._buildHorariosItems(horarios),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Construye la lista de items de horario a partir del mapa
+  List<Widget> _buildHorariosItems(Map<String, String>? horarios) {
+    if (horarios == null || horarios.isEmpty) {
+      return [
+        const Text(
+          'Horarios no disponibles',
+          style: TextStyle(color: Colors.grey),
+        ),
+      ];
+    }
+
+    final List<Widget> items = [];
+    final diasCerrados = <String>[];
+
+    horarios.forEach((dia, horario) {
+      if (horario.toLowerCase() == 'cerrado') {
+        diasCerrados.add(dia);
+      } else {
+        if (items.isNotEmpty) {
+          items.add(const SizedBox(height: 14));
+        }
+        items.add(_buildHorarioItem(dia, horario));
+      }
+    });
+
+    // Mostrar días cerrados al final
+    if (diasCerrados.isNotEmpty) {
+      items.add(const SizedBox(height: 16));
+      items.add(
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.grey[400]!,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.event_busy,
+                color: Colors.grey[700],
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Cerrado: ${diasCerrados.join(', ')}',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                  fontStyle: FontStyle.italic,
                 ),
               ),
             ],
           ),
         ),
+      );
+    }
+
+    return items;
+  }
+
+  /// Widget para la tarjeta de info de intervalos (dinámico)
+  Widget _buildInfoIntervalosCard(int duracionMinutos) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3498DB).withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.schedule,
+              color: Color(0xFF3498DB),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reservas por intervalos de $duracionMinutos minutos',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Cada mesa se reserva por $duracionMinutos minutos. Si una mesa está reservada, no estará disponible en ese horario.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -525,6 +577,8 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
               _fechaSeleccionada = fecha;
               // Limpiar intervalo seleccionado al cambiar de fecha
               _intervaloSeleccionado = null;
+              // Actualizar el cache del Future de intervalos
+              _intervalosFuture = context.read<DisponibilidadCubit>().obtenerIntervalosHorarioNegocio(fecha);
             });
           }
         },
@@ -593,9 +647,9 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
               ),
             ),
             const SizedBox(height: 16),
-            // Mostrar lista de horarios
+            // Mostrar lista de horarios (usando Future cacheado para evitar animaciones)
             FutureBuilder<List<String>>(
-              future: context.read<DisponibilidadCubit>().obtenerIntervalosHorarioNegocio(_fechaSeleccionada!),
+              future: _intervalosFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -1000,15 +1054,8 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
 
   Widget _buildErrorCard(String message) {
     // Determinar si es un error de horario cerrado
-    final esErrorHorario = message.contains('horario') || 
-                           message.contains('cerrado') || 
-                           message.contains('Lunes') ||
-                           message.contains('Martes') ||
-                           message.contains('Miércoles') ||
-                           message.contains('Jueves') ||
-                           message.contains('Viernes') ||
-                           message.contains('Sábado') ||
-                           message.contains('Domingo');
+    final esErrorHorario = message.toLowerCase().contains('horario') || 
+                           message.toLowerCase().contains('cerrado');
     
     return Card(
       elevation: 3,
@@ -1057,35 +1104,6 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 color: esErrorHorario ? Colors.orange.shade900 : Colors.red.shade900,
               ),
             ),
-            if (esErrorHorario) ...[
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.blue.shade200,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Por favor, selecciona un horario dentro del horario de atención del restaurante.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue.shade900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -1102,18 +1120,11 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Mesas Disponibles',
+          'Mesas del Restaurante',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
-            shadows: [
-              Shadow(
-                offset: Offset(0, 2),
-                blurRadius: 4,
-                color: Colors.black26,
-              ),
-            ],
+            color: Color(0xFF2C3E50),
           ),
         ),
         const SizedBox(height: 16),
@@ -1196,112 +1207,18 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   return;
                 }
                 
-                // VALIDAR CAPACIDAD ANTES de continuar
+                // Validar capacidad
                 if (!mesa.puedeAcomodar(numeroPersonas)) {
-                  // Determinar el mensaje específico
-                  String mensaje;
-                  if (mesa.capacidad < numeroPersonas) {
-                    mensaje = '❌ Esta mesa tiene capacidad para ${mesa.capacidad} persona${mesa.capacidad > 1 ? 's' : ''}, '
-                        'pero has seleccionado ${numeroPersonas} personas.\n\n'
-                        'Por favor, elige una mesa con mayor capacidad.';
-                  } else {
-                    final diferencia = mesa.capacidad - numeroPersonas;
-                    mensaje = '❌ Esta mesa tiene capacidad para ${mesa.capacidad} personas, '
-                        'pero solo necesitas ${numeroPersonas}.\n\n'
-                        'La diferencia es de $diferencia lugar${diferencia > 1 ? 'es' : ''}. '
-                        'Por favor, selecciona una mesa más adecuada (máximo +3 lugares de diferencia).';
-                  }
-                  
-                  // Mostrar diálogo de error
-                  showDialog(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      backgroundColor: Colors.red.shade50,
-                      title: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade100,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.error_outline,
-                              color: Colors.red.shade700,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'Capacidad No Adecuada',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            mensaje,
-                            style: TextStyle(
-                              fontSize: 15,
-                              height: 1.5,
-                              color: Colors.red.shade900,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Colors.blue.shade200,
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Selecciona "Buscar Mesas" nuevamente para ver opciones más adecuadas.',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.blue.shade900,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade700,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Entendido'),
-                        ),
-                      ],
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Esta mesa no es adecuada para $numeroPersonas personas'),
+                      backgroundColor: Colors.red,
                     ),
                   );
-                  return; // No continuar con la reserva
+                  return;
                 }
                 
-                // Si la validación pasa, mostrar diálogo de confirmación
+                // Mostrar diálogo de confirmación
                 _showConfirmarReservaDialog(
                   context,
                   mesa,

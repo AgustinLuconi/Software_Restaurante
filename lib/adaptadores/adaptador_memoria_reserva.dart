@@ -89,12 +89,37 @@ class ReservaRepositorioMemoria implements ReservaRepositorio {
     required String mesaId,
     required DateTime fecha,
     required DateTime hora,
+    required int duracionMinutos,
   }) async {
-    final reservasConflictivas = await obtenerReservasPorMesaYHorario(
-      mesaId: mesaId,
-      fecha: fecha,
-      hora: hora,
-    );
+    // Calcular el fin del nuevo intervalo solicitado
+    final nuevaFin = hora.add(Duration(minutes: duracionMinutos));
+
+    // Buscar reservas que puedan tener conflicto
+    final reservasConflictivas = _reservas.where((reserva) {
+      // Ignorar reservas canceladas
+      if (reserva.estado == EstadoReserva.cancelada) {
+        return false;
+      }
+
+      // Verificar que sea la misma mesa
+      if (reserva.mesaId != mesaId) {
+        return false;
+      }
+
+      // Verificar que sea el mismo día
+      if (reserva.fechaHora.year != fecha.year ||
+          reserva.fechaHora.month != fecha.month ||
+          reserva.fechaHora.day != fecha.day) {
+        return false;
+      }
+
+      // Calcular el fin de la reserva existente
+      final reservaFin = reserva.horaFin;
+
+      // Hay conflicto si los intervalos se solapan:
+      // (NuevaInicio < ReservaFin) Y (NuevaFin > ReservaInicio)
+      return hora.isBefore(reservaFin) && nuevaFin.isAfter(reserva.fechaHora);
+    }).toList();
 
     // La mesa está disponible si no hay reservas conflictivas
     return reservasConflictivas.isEmpty;

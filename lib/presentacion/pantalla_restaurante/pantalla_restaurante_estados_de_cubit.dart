@@ -1,20 +1,26 @@
 import 'package:flutter/foundation.dart';
 
+import '../../dominio/entidades/negocio.dart';
+
 // Estados del Cubit
 @immutable
 abstract class PantallaRestauranteState {}
 
-// Estado inicial
+// Estado inicial (cargando)
 class PantallaRestauranteInicial extends PantallaRestauranteState {}
 
-// Estado de carga
+// Estado cargando
 class PantallaRestauranteCargando extends PantallaRestauranteState {}
 
-// Estado de éxito
+// Estado exitoso con datos del negocio
 class PantallaRestauranteExitoso extends PantallaRestauranteState {
-  final String mensaje;
+  final Negocio negocio;
+  final Map<String, String> horariosAtencion;
 
-  PantallaRestauranteExitoso(this.mensaje);
+  PantallaRestauranteExitoso({
+    required this.negocio,
+    required this.horariosAtencion,
+  });
 }
 
 // Estado de error

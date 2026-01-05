@@ -49,10 +49,6 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     emit(const PantallaDuenoInicial());
   }
 
-  void limpiarError() {
-    emit(const PantallaDuenoInicial());
-  }
-
   Future<bool> actualizarTelefono(Negocio negocio, String nuevoTelefono) async {
     try {
       final negocioActualizado = negocio.copyWith(telefono: nuevoTelefono);

@@ -38,10 +38,15 @@ class NegocioRepositorioMemoria implements NegocioRepositorio {
     _negocios.add(chiringuito);
     _passwords['chiringuito@restaurant.com'] = 'chiringuito123';
     
-    // Horarios predeterminados para Chiringuito
+    // Horarios predeterminados para Chiringuito (por día de semana)
     _horariosServicio['negocio_1'] = {
-      'Almuerzo': '12:00 - 15:30',
-      'Cena': '20:00 - 23:30',
+      'Lunes': 'Cerrado',
+      'Martes': 'Cerrado',
+      'Miércoles': '12:00 - 15:30 / 20:00 - 23:30',
+      'Jueves': '12:00 - 15:30 / 20:00 - 23:30',
+      'Viernes': '12:00 - 15:30 / 20:00 - 23:30',
+      'Sábado': '12:00 - 16:00 / 20:00 - 00:00',
+      'Domingo': '12:00 - 16:00',
     };
     
     // Resetear el contador después del negocio inicial
@@ -140,8 +145,13 @@ class NegocioRepositorioMemoria implements NegocioRepositorio {
   @override
   Future<Map<String, String>> obtenerHorariosServicio(String negocioId) async {
     return _horariosServicio[negocioId] ?? {
-      'Almuerzo': '12:00 - 15:30',
-      'Cena': '20:00 - 23:30',
+      'Lunes': 'Cerrado',
+      'Martes': 'Cerrado',
+      'Miércoles': '12:00 - 15:30 / 20:00 - 23:30',
+      'Jueves': '12:00 - 15:30 / 20:00 - 23:30',
+      'Viernes': '12:00 - 15:30 / 20:00 - 23:30',
+      'Sábado': '12:00 - 16:00 / 20:00 - 00:00',
+      'Domingo': '12:00 - 16:00',
     };
   }
 

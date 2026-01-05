@@ -79,26 +79,6 @@ class _PantallaInicioView extends StatelessWidget {
             );
           }
 
-          if (state is PantallaInicioExitoso) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    state.mensaje,
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                ],
-              ),
-            );
-          }
-
           // Estado inicial - Lista de restaurantes
           return Column(
               children: [

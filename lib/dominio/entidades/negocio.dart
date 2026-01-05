@@ -7,6 +7,9 @@ class Negocio {
   final String direccion;
   final String descripcion;
   final String especialidad;
+  final int minHorasParaCancelar;
+  final int maxDiasAnticipacionReserva;
+  final int duracionPromedioMinutos;
 
   Negocio({
     required this.id,
@@ -17,6 +20,9 @@ class Negocio {
     required this.direccion,
     this.descripcion = '',
     this.especialidad = '',
+    this.minHorasParaCancelar = 24,
+    this.maxDiasAnticipacionReserva = 14,
+    this.duracionPromedioMinutos = 60,
   });
 
   Negocio copyWith({
@@ -28,6 +34,9 @@ class Negocio {
     String? direccion,
     String? descripcion,
     String? especialidad,
+    int? minHorasParaCancelar,
+    int? maxDiasAnticipacionReserva,
+    int? duracionPromedioMinutos,
   }) {
     return Negocio(
       id: id ?? this.id,
@@ -38,6 +47,9 @@ class Negocio {
       direccion: direccion ?? this.direccion,
       descripcion: descripcion ?? this.descripcion,
       especialidad: especialidad ?? this.especialidad,
+      minHorasParaCancelar: minHorasParaCancelar ?? this.minHorasParaCancelar,
+      maxDiasAnticipacionReserva: maxDiasAnticipacionReserva ?? this.maxDiasAnticipacionReserva,
+      duracionPromedioMinutos: duracionPromedioMinutos ?? this.duracionPromedioMinutos,
     );
   }
 }

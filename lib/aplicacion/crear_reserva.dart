@@ -1,17 +1,20 @@
 import '../dominio/entidades/reserva.dart';
 import '../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../dominio/repositorios/mesa_repositorio.dart';
+import '../dominio/repositorios/negocio_repositorio.dart';
 import '../dominio/repositorios/reserva_repositorio.dart';
 
 class CrearReserva {
   final ReservaRepositorio reservaRepositorio;
   final MesaRepositorio? mesaRepositorio;
   final HorarioAperturaRepositorio? horarioAperturaRepositorio;
+  final NegocioRepositorio? negocioRepositorio;
 
   CrearReserva(
     this.reservaRepositorio, {
     this.mesaRepositorio,
     this.horarioAperturaRepositorio,
+    this.negocioRepositorio,
   });
 
   Future<Reserva> ejecutar(
@@ -31,10 +34,22 @@ class CrearReserva {
       throw Exception('La fecha y hora deben ser futuras.');
     }
     
-    // Validar que la reserva no sea mayor a 2 semanas (14 días)
-    final maximoFechaReserva = now.add(const Duration(days: 14));
+    // Obtener configuración del negocio
+    int maxDiasAnticipacion = 14; // Valor por defecto
+    int duracionMinutos = 60; // Valor por defecto
+    
+    if (negocioRepositorio != null) {
+      final negocio = await negocioRepositorio!.obtenerNegocioPorId(negocioId);
+      if (negocio != null) {
+        maxDiasAnticipacion = negocio.maxDiasAnticipacionReserva;
+        duracionMinutos = negocio.duracionPromedioMinutos;
+      }
+    }
+    
+    // Validar que la reserva no sea mayor al límite configurado
+    final maximoFechaReserva = now.add(Duration(days: maxDiasAnticipacion));
     if (fechaHora.isAfter(maximoFechaReserva)) {
-      throw Exception('Solo se pueden hacer reservas hasta dentro de 2 semanas como máximo.');
+      throw Exception('Solo se pueden hacer reservas hasta dentro de $maxDiasAnticipacion días como máximo.');
     }
     
     if (numeroPersonas <= 0) {
@@ -91,6 +106,7 @@ class CrearReserva {
       mesaId: mesaId,
       fecha: fecha,
       hora: fechaHora,
+      duracionMinutos: duracionMinutos,
     );
     
     if (!mesaDisponible) {
@@ -103,6 +119,7 @@ class CrearReserva {
       mesaId: mesaId,
       fechaHora: fechaHora,
       numeroPersonas: numeroPersonas,
+      duracionMinutos: duracionMinutos,
       estado: estadoInicial,
       contactoCliente: contactoCliente,
       nombreCliente: nombreCliente,

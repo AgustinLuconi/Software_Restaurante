@@ -33,8 +33,4 @@ class ListaEsperaCubit extends Cubit<ListaEsperaState> {
       emit(ListaEsperaError(e.toString()));
     }
   }
-
-  void reiniciar() {
-    emit(const ListaEsperaInicial());
-  }
 }

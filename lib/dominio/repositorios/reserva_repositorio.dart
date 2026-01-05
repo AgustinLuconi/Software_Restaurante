@@ -14,10 +14,11 @@ abstract class ReservaRepositorio {
 	});
 	
 	/// Verifica si una mesa está disponible en un horario específico
-	/// Considera intervalos de 1 hora para las reservas
+	/// Considera la duración de la reserva para detectar colisiones
 	Future<bool> mesaDisponible({
 		required String mesaId,
 		required DateTime fecha,
 		required DateTime hora,
+		required int duracionMinutos,
 	});
 }
