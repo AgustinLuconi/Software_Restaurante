@@ -31,7 +31,7 @@ class HorarioAperturaRepositorioMemoria implements HorarioAperturaRepositorio {
   }
 
   @override
-  Future<List<String>> obtenerIntervalosDisponibles(String negocioId, DateTime fecha) async {
+  Future<List<String>> obtenerIntervalosDisponibles(String negocioId, DateTime fecha, {int intervaloMinutos = 60}) async {
     final horario = _horarios[negocioId];
     if (horario == null) return [];
     
@@ -49,20 +49,27 @@ class HorarioAperturaRepositorioMemoria implements HorarioAperturaRepositorio {
     
     final intervalos = <String>[];
     
-    // Generar intervalos de 1 hora para cada período del día
+    // Generar intervalos según la duración configurada
     for (final intervalo in horarioDia.intervalos) {
-      int horaInicio = intervalo.horaInicio;
-      final horaFin = intervalo.horaFin;
+      int minutoActual = intervalo.horaInicio * 60; // Convertir a minutos
+      final minutoFin = intervalo.horaFin * 60;
       
-      while (horaInicio < horaFin) {
+      while (minutoActual < minutoFin) {
+        final horaInicio = minutoActual ~/ 60;
+        final minInicio = minutoActual % 60;
+        
+        final minutoSiguiente = minutoActual + intervaloMinutos;
+        final horaSiguiente = minutoSiguiente ~/ 60;
+        final minSiguiente = minutoSiguiente % 60;
+        
+        // Formatear horas y minutos
         final horaInicioStr = horaInicio.toString().padLeft(2, '0');
-        final horaSiguiente = horaInicio + 1;
-        // Si la hora siguiente es 24, mostrarla como 00
-        final horaSiguienteStr = horaSiguiente == 24 
-            ? '00' 
-            : horaSiguiente.toString().padLeft(2, '0');
-        intervalos.add('$horaInicioStr:00 - $horaSiguienteStr:00');
-        horaInicio++;
+        final minInicioStr = minInicio.toString().padLeft(2, '0');
+        final horaSiguienteStr = (horaSiguiente >= 24 ? horaSiguiente - 24 : horaSiguiente).toString().padLeft(2, '0');
+        final minSiguienteStr = minSiguiente.toString().padLeft(2, '0');
+        
+        intervalos.add('$horaInicioStr:$minInicioStr - $horaSiguienteStr:$minSiguienteStr');
+        minutoActual += intervaloMinutos;
       }
     }
     

@@ -1,16 +1,13 @@
 import '../dominio/entidades/reserva.dart';
 import '../dominio/repositorios/negocio_repositorio.dart';
 import '../dominio/repositorios/reserva_repositorio.dart';
-import 'procesar_lista_de_espera.dart';
 
 class CancelarReserva {
   final ReservaRepositorio reservaRepositorio;
-  final ProcesarListaDeEspera? procesarListaDeEspera;
   final NegocioRepositorio? negocioRepositorio;
 
   CancelarReserva(
     this.reservaRepositorio, {
-    this.procesarListaDeEspera,
     this.negocioRepositorio,
   });
 
@@ -44,15 +41,5 @@ class CancelarReserva {
     
     // Cancelar la reserva
     await reservaRepositorio.cancelarReserva(reservaId);
-    
-    // Procesar lista de espera si está disponible
-    if (procesarListaDeEspera != null) {
-      try {
-        await procesarListaDeEspera!.ejecutar(reservaId);
-      } catch (e) {
-        print('⚠️  Error al procesar lista de espera: $e');
-        // No lanzamos el error para que la cancelación no falle si hay problemas con la lista de espera
-      }
-    }
   }
 }

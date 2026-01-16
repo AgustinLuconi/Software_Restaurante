@@ -6,19 +6,26 @@ import 'pantalla_restaurante_estados_de_cubit.dart';
 
 class PantallaRestauranteCubit extends Cubit<PantallaRestauranteState> {
   final NegocioRepositorio _negocioRepositorio;
+  
+  /// ID del negocio actual
+  String _negocioId = 'negocio_1';
 
   PantallaRestauranteCubit()
       : _negocioRepositorio = getIt<NegocioRepositorio>(),
         super(PantallaRestauranteInicial());
 
   /// Carga los datos del negocio (info + horarios)
-  Future<void> cargarDatosNegocio({String negocioId = 'negocio_1'}) async {
+  Future<void> cargarDatosNegocio({String? negocioId}) async {
     try {
       emit(PantallaRestauranteCargando());
+      
+      // Usar el negocioId proporcionado o el actual
+      final id = negocioId ?? _negocioId;
+      _negocioId = id;
 
       final resultados = await Future.wait([
-        _negocioRepositorio.obtenerNegocioPorId(negocioId),
-        _negocioRepositorio.obtenerHorariosServicio(negocioId),
+        _negocioRepositorio.obtenerNegocioPorId(id),
+        _negocioRepositorio.obtenerHorariosServicio(id),
       ]);
 
       final negocio = resultados[0] as dynamic;

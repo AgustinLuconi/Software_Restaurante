@@ -48,23 +48,23 @@ class ServicioNotificacionesConsola implements ServicioNotificaciones {
   }
 
   @override
-  Future<void> notificarReservaConfirmada(String clienteId, Reserva reserva) async {
+  Future<void> notificarReservaConfirmada(String clienteId, Reserva reserva, {required String nombreNegocio}) async {
     await crearNotificacion(
       usuarioId: clienteId,
       titulo: '✅ Reserva Confirmada',
-      mensaje: 'Tu reserva para el ${_formatearFecha(reserva.fechaHora)} a las ${_formatearHora(reserva.fechaHora)} ha sido confirmada.',
+      mensaje: 'Tu reserva en $nombreNegocio para el ${_formatearFecha(reserva.fechaHora)} a las ${_formatearHora(reserva.fechaHora)} ha sido confirmada.',
       tipo: TipoNotificacion.reservaConfirmada,
       reservaId: reserva.id,
     );
     
-    print('✅ Reserva confirmada para cliente $clienteId');
+    print('✅ Reserva confirmada en $nombreNegocio para cliente $clienteId');
   }
 
   @override
-  Future<void> notificarReservaCancelada(String clienteId, Reserva reserva, {bool porNegocio = false}) async {
+  Future<void> notificarReservaCancelada(String clienteId, Reserva reserva, {bool porNegocio = false, required String nombreNegocio}) async {
     final mensaje = porNegocio
-        ? 'Lo sentimos, tu reserva para el ${_formatearFecha(reserva.fechaHora)} ha sido cancelada por el restaurante.'
-        : 'Tu reserva para el ${_formatearFecha(reserva.fechaHora)} ha sido cancelada exitosamente.';
+        ? 'Lo sentimos, tu reserva en $nombreNegocio para el ${_formatearFecha(reserva.fechaHora)} ha sido cancelada por el restaurante.'
+        : 'Tu reserva en $nombreNegocio para el ${_formatearFecha(reserva.fechaHora)} ha sido cancelada exitosamente.';
     
     await crearNotificacion(
       usuarioId: clienteId,
@@ -74,7 +74,7 @@ class ServicioNotificacionesConsola implements ServicioNotificaciones {
       reservaId: reserva.id,
     );
     
-    print('❌ Reserva cancelada para cliente $clienteId');
+    print('❌ Reserva cancelada en $nombreNegocio para cliente $clienteId');
   }
 
   @override

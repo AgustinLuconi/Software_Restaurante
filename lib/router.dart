@@ -51,7 +51,7 @@ final GoRouter appRouter = GoRouter(
       path: '/notificaciones/:usuarioId',
       name: 'notificaciones',
       builder: (context, state) {
-        final usuarioId = state.pathParameters['usuarioId'] ?? 'cliente_123';
+        final usuarioId = state.pathParameters['usuarioId'] ?? 'usuario_invitado';
         return NotificacionesScreen(usuarioId: usuarioId);
       },
     ),

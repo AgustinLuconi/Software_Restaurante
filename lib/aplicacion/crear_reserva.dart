@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 import '../dominio/entidades/reserva.dart';
 import '../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../dominio/repositorios/mesa_repositorio.dart';
@@ -18,7 +20,6 @@ class CrearReserva {
   });
 
   Future<Reserva> ejecutar(
-    String clienteId,
     String mesaId,
     DateTime fecha,
     DateTime hora,
@@ -28,6 +29,9 @@ class CrearReserva {
     EstadoReserva estadoInicial = EstadoReserva.pendiente,
     String negocioId = 'negocio_1', // ID del negocio por defecto
   }) async {
+    // Generar ID único para el cliente
+    final String clienteId = const Uuid().v4();
+    
     final now = DateTime.now();
     final fechaHora = DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute);
     if (fechaHora.isBefore(now)) {

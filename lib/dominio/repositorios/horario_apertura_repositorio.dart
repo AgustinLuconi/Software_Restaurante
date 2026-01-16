@@ -11,6 +11,7 @@ abstract class HorarioAperturaRepositorio {
   Future<String> obtenerMensajeHorarioCerrado(String negocioId, DateTime fecha);
   
   /// Obtiene los intervalos de horarios disponibles para una fecha específica
-  /// Retorna una lista de horarios en formato "HH:00 - HH:00" (intervalos de 1 hora)
-  Future<List<String>> obtenerIntervalosDisponibles(String negocioId, DateTime fecha);
+  /// Retorna una lista de horarios en formato "HH:00 - HH:00"
+  /// El parámetro [intervaloMinutos] define la duración de cada intervalo (default: 60)
+  Future<List<String>> obtenerIntervalosDisponibles(String negocioId, DateTime fecha, {int intervaloMinutos = 60});
 }

@@ -43,6 +43,7 @@ class ReservaCreada extends DisponibilidadState {
 class MesaEncontrada extends DisponibilidadState {
   final Mesa mesa;
   final ZonaMesa zona;
+  final int duracionPromedioMinutos;
 
-  MesaEncontrada(this.mesa, this.zona);
+  MesaEncontrada(this.mesa, this.zona, this.duracionPromedioMinutos);
 }

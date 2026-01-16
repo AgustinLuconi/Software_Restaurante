@@ -16,10 +16,10 @@ abstract class ServicioNotificaciones {
   });
   
   /// Notificar al cliente cuando su reserva es confirmada
-  Future<void> notificarReservaConfirmada(String clienteId, Reserva reserva);
+  Future<void> notificarReservaConfirmada(String clienteId, Reserva reserva, {required String nombreNegocio});
   
   /// Notificar al cliente cuando su reserva es cancelada
-  Future<void> notificarReservaCancelada(String clienteId, Reserva reserva, {bool porNegocio = false});
+  Future<void> notificarReservaCancelada(String clienteId, Reserva reserva, {bool porNegocio = false, required String nombreNegocio});
   
   /// Notificar al dueño del negocio sobre una nueva reserva
   Future<void> notificarNuevaReservaDueno(String negocioId, Reserva reserva);

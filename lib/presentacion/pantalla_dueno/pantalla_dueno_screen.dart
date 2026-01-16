@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../dominio/entidades/historia_restaurante.dart';
 import '../../dominio/entidades/mesa.dart';
 import '../../dominio/entidades/reserva.dart';
 import 'pantalla_dueno_cubit.dart';
@@ -266,6 +267,28 @@ class _PantallaDuenoView extends StatelessWidget {
                         ),
                         onTap: () => _mostrarMetricas(context, negocio),
                       ),
+                      const SizedBox(width: 16),
+                      _buildDashboardCard(
+                        context,
+                        icon: Icons.settings_suggest,
+                        title: 'Reglas',
+                        subtitle: 'Tiempos',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF7F8C8D), Color(0xFF2C3E50)],
+                        ),
+                        onTap: () => _mostrarConfiguracionReglas(context, negocio),
+                      ),
+                      const SizedBox(width: 16),
+                      _buildDashboardCard(
+                        context,
+                        icon: Icons.history_edu,
+                        title: 'Historia',
+                        subtitle: 'Editar Contenido',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8E44AD), Color(0xFF6C3483)],
+                        ),
+                        onTap: () => _mostrarEditorHistoria(context),
+                      ),
                       const SizedBox(width: 4),
                     ],
                   ),
@@ -355,32 +378,32 @@ class _PantallaDuenoView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.3),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       icon,
-                      size: 36,
+                      size: 32,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: Colors.white.withOpacity(0.9),
                     ),
                     textAlign: TextAlign.center,
@@ -634,98 +657,194 @@ class _PantallaDuenoView extends StatelessWidget {
 
   void _mostrarGestionHorarios(BuildContext context, negocio) async {
     final cubit = context.read<PantallaDuenoCubit>();
+    // 1. Obtener los horarios actuales de la base de datos
     final horariosActuales = await cubit.obtenerHorarios(negocio.id);
     
-    final almuerzController = TextEditingController(text: horariosActuales['Almuerzo'] ?? '12:00 - 15:30');
-    final cenaController = TextEditingController(text: horariosActuales['Cena'] ?? '20:00 - 23:30');
+    // 2. Preparar los controladores para la edición
+    // Convertimos el Mapa {'Día': 'Hora'} en una Lista de pares de controladores para poder editar visualmente
+    List<Map<String, TextEditingController>> filasEdicion = [];
+
+    if (horariosActuales.isEmpty) {
+      // Si no hay nada, agregamos una fila vacía por defecto
+      filasEdicion.add({
+        'dia': TextEditingController(text: ''),
+        'hora': TextEditingController(text: ''),
+      });
+    } else {
+      horariosActuales.forEach((dia, hora) {
+        filasEdicion.add({
+          'dia': TextEditingController(text: dia),
+          'hora': TextEditingController(text: hora),
+        });
+      });
+    }
+    
+    // 3. Mostrar el Diálogo
+    if (!context.mounted) return;
     
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.schedule, color: Color(0xFFE67E22)),
-              SizedBox(width: 12),
-              Text('Gestionar Horarios'),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: almuerzController,
-                  decoration: const InputDecoration(
-                    labelText: 'Horario de Almuerzo',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lunch_dining),
-                    hintText: 'Ej: 12:00 - 15:30',
+        // Usamos StatefulBuilder para poder actualizar la lista (agregar/quitar filas) dentro del diálogo
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.schedule, color: Color(0xFFE67E22)),
+                  SizedBox(width: 12),
+                  Text('Gestionar Horarios'),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Define los rangos de atención. Ejemplo:\n"Lun - Vie" : "12:00 - 22:00"',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Lista de Filas de Edición
+                      ...filasEdicion.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final controladores = entry.value;
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Campo Día
+                              Expanded(
+                                flex: 2,
+                                child: TextField(
+                                  controller: controladores['dia'],
+                                  decoration: InputDecoration(
+                                    labelText: 'Días / Título',
+                                    hintText: 'Ej: Sab-Dom',
+                                    border: const OutlineInputBorder(),
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.all(12),
+                                    fillColor: Colors.grey[50],
+                                    filled: true,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Campo Hora
+                              Expanded(
+                                flex: 3,
+                                child: TextField(
+                                  controller: controladores['hora'],
+                                  decoration: InputDecoration(
+                                    labelText: 'Horario',
+                                    hintText: 'Ej: 18:00 - 02:00',
+                                    border: const OutlineInputBorder(),
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.all(12),
+                                    fillColor: Colors.grey[50],
+                                    filled: true,
+                                  ),
+                                ),
+                              ),
+                              // Botón Eliminar Fila
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    filasEdicion.removeAt(index);
+                                  });
+                                },
+                                tooltip: 'Eliminar fila',
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+
+                      const SizedBox(height: 10),
+                      
+                      // Botón Agregar Nueva Fila
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            filasEdicion.add({
+                              'dia': TextEditingController(),
+                              'hora': TextEditingController(),
+                            });
+                          });
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Agregar Otro Horario'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFE67E22),
+                          side: const BorderSide(color: Color(0xFFE67E22)),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: cenaController,
-                  decoration: const InputDecoration(
-                    labelText: 'Horario de Cena',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.dinner_dining),
-                    hintText: 'Ej: 20:00 - 23:30',
-                  ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Estos horarios se mostrarán a los clientes en la página de disponibilidad del restaurante.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
+                ElevatedButton(
+                  onPressed: () async {
+                    // 4. Reconstruir el Mapa a partir de los controladores
+                    final Map<String, String> nuevosHorarios = {};
+                    
+                    for (var fila in filasEdicion) {
+                      final dia = fila['dia']!.text.trim();
+                      final hora = fila['hora']!.text.trim();
+                      
+                      if (dia.isNotEmpty && hora.isNotEmpty) {
+                        nuevosHorarios[dia] = hora;
+                      }
+                    }
+                    
+                    // Guardar usando el Cubit
+                    final exito = await cubit.actualizarHorarios(negocio.id, nuevosHorarios);
+                    
+                    if (context.mounted) Navigator.pop(dialogContext);
+                    
+                    if (exito && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Horarios configurados correctamente'),
+                          backgroundColor: Color(0xFF27AE60),
+                        ),
+                      );
+                    } else if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('❌ Error al guardar horarios'),
+                          backgroundColor: Color(0xFFE74C3C),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE67E22),
                   ),
+                  child: const Text('Guardar Todo'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final nuevosHorarios = {
-                  'Almuerzo': almuerzController.text.trim(),
-                  'Cena': cenaController.text.trim(),
-                };
-                
-                final exito = await cubit.actualizarHorarios(negocio.id, nuevosHorarios);
-                
-                Navigator.pop(dialogContext);
-                
-                if (exito) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('✅ Horarios actualizados correctamente'),
-                      backgroundColor: Color(0xFF27AE60),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('❌ Error al actualizar horarios'),
-                      backgroundColor: Color(0xFFE74C3C),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE67E22),
-              ),
-              child: const Text('Guardar'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -760,8 +879,11 @@ class _PantallaDuenoView extends StatelessWidget {
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // Filtrar reservas
-            final reservasPendientes = reservas.where((r) => r.estado == EstadoReserva.pendiente).toList();
+            // Filtro: Solo Confirmadas y Canceladas
+            final reservasVisibles = reservas.where((r) =>
+                r.estado == EstadoReserva.confirmada ||
+                r.estado == EstadoReserva.cancelada
+            ).toList();
             final reservasConfirmadas = reservas.where((r) => r.estado == EstadoReserva.confirmada).toList();
             final reservasCanceladas = reservas.where((r) => r.estado == EstadoReserva.cancelada).toList();
 
@@ -825,7 +947,6 @@ class _PantallaDuenoView extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildEstadisticaChip('Pendientes', reservasPendientes.length, Colors.orange),
                           _buildEstadisticaChip('Confirmadas', reservasConfirmadas.length, Colors.green),
                           _buildEstadisticaChip('Canceladas', reservasCanceladas.length, Colors.red),
                         ],
@@ -834,7 +955,7 @@ class _PantallaDuenoView extends StatelessWidget {
 
                     // Lista de reservas
                     Expanded(
-                      child: reservas.isEmpty
+                      child: reservasVisibles.isEmpty
                           ? const Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -842,7 +963,7 @@ class _PantallaDuenoView extends StatelessWidget {
                                   Icon(Icons.event_busy, size: 64, color: Colors.grey),
                                   SizedBox(height: 16),
                                   Text(
-                                    'No hay reservas registradas',
+                                    'No hay reservas confirmadas o canceladas',
                                     style: TextStyle(fontSize: 16, color: Colors.grey),
                                   ),
                                 ],
@@ -850,9 +971,9 @@ class _PantallaDuenoView extends StatelessWidget {
                             )
                           : ListView.builder(
                               padding: const EdgeInsets.all(16),
-                              itemCount: reservas.length,
+                              itemCount: reservasVisibles.length,
                               itemBuilder: (context, index) {
-                                final reserva = reservas[index];
+                                final reserva = reservasVisibles[index];
                                 final mesa = mesas.firstWhere(
                                   (m) => m.id == reserva.mesaId,
                                   orElse: () => Mesa(id: '', nombre: 'Desconocida', capacidad: 0, negocioId: ''),
@@ -1054,51 +1175,23 @@ class _PantallaDuenoView extends StatelessWidget {
               ],
             ),
 
-            // Botones de acción
+            // Botón de cancelar (solo si no está cancelada)
             if (reserva.estado != EstadoReserva.cancelada) ...[
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  if (reserva.estado == EstadoReserva.pendiente)
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          final exito = await cubit.confirmarReserva(reserva.id);
-                          if (exito) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('✅ Reserva confirmada'),
-                                backgroundColor: Color(0xFF27AE60),
-                              ),
-                            );
-                            onUpdate();
-                          }
-                        },
-                        icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Confirmar', style: TextStyle(fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF27AE60),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                  if (reserva.estado == EstadoReserva.pendiente) const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        _mostrarConfirmarCancelarReserva(context, reserva.id, cubit, onUpdate);
-                      },
-                      icon: const Icon(Icons.cancel, size: 18),
-                      label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFE74C3C),
-                        side: const BorderSide(color: Color(0xFFE74C3C)),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                    ),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    _mostrarConfirmarCancelarReserva(context, reserva.id, cubit, onUpdate);
+                  },
+                  icon: const Icon(Icons.cancel, size: 18),
+                  label: const Text('Cancelar reserva', style: TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE74C3C),
+                    side: const BorderSide(color: Color(0xFFE74C3C)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                ],
+                ),
               ),
             ],
           ],
@@ -1935,5 +2028,535 @@ class _PantallaDuenoView extends StatelessWidget {
       );
     }).toList();
   }
+
+  // Método para mostrar configuración de reglas de negocio
+  void _mostrarConfiguracionReglas(BuildContext context, negocio) {
+    final cubit = context.read<PantallaDuenoCubit>();
+    
+    // Controladores con valores actuales
+    final duracionController = TextEditingController(
+      text: negocio.duracionPromedioMinutos.toString(),
+    );
+    final cancelacionController = TextEditingController(
+      text: negocio.minHorasParaCancelar.toString(),
+    );
+    final anticipacionController = TextEditingController(
+      text: negocio.maxDiasAnticipacionReserva.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(dialogContext).size.width * 0.9,
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Encabezado
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7F8C8D).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.settings_suggest,
+                            color: Color(0xFF2C3E50),
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Reglas de Negocio',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
+                              Text(
+                                'Configuración de tiempos',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF7F8C8D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(dialogContext),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 16),
+
+                    // Campo: Duración promedio de reserva
+                    _buildReglaField(
+                      icon: Icons.timer,
+                      label: 'Duración de reserva',
+                      hint: 'Minutos por reserva',
+                      controller: duracionController,
+                      suffix: 'min',
+                      helperText: 'Tiempo que dura cada reserva (ej: 60, 90, 120)',
+                    ),
+                    
+                    const SizedBox(height: 20),
+
+                    // Campo: Horas mínimas para cancelar
+                    _buildReglaField(
+                      icon: Icons.cancel_schedule_send,
+                      label: 'Anticipación para cancelar',
+                      hint: 'Horas mínimas',
+                      controller: cancelacionController,
+                      suffix: 'hrs',
+                      helperText: 'Horas de anticipación mínima para cancelar una reserva',
+                    ),
+                    
+                    const SizedBox(height: 20),
+
+                    // Campo: Días máximos de anticipación
+                    _buildReglaField(
+                      icon: Icons.date_range,
+                      label: 'Anticipación máxima',
+                      hint: 'Días máximos',
+                      controller: anticipacionController,
+                      suffix: 'días',
+                      helperText: 'Cuántos días en el futuro se puede reservar',
+                    ),
+
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 16),
+
+                    // Botones de acción
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: const Text('Cancelar'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final duracion = int.tryParse(duracionController.text) ?? 60;
+                            final cancelacion = int.tryParse(cancelacionController.text) ?? 24;
+                            final anticipacion = int.tryParse(anticipacionController.text) ?? 14;
+
+                            // Validaciones básicas
+                            if (duracion < 15 || duracion > 480) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('La duración debe estar entre 15 y 480 minutos'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+                            if (cancelacion < 1 || cancelacion > 168) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Las horas para cancelar deben estar entre 1 y 168'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+                            if (anticipacion < 1 || anticipacion > 90) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Los días de anticipación deben estar entre 1 y 90'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final exito = await cubit.actualizarConfiguracionReglas(
+                              negocio,
+                              duracionPromedioMinutos: duracion,
+                              minHorasParaCancelar: cancelacion,
+                              maxDiasAnticipacionReserva: anticipacion,
+                            );
+
+                            Navigator.pop(dialogContext);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  exito
+                                      ? '✅ Configuración actualizada correctamente'
+                                      : '❌ Error al actualizar la configuración',
+                                ),
+                                backgroundColor: exito ? Colors.green : Colors.red,
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.save),
+                          label: const Text('Guardar'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2C3E50),
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Widget helper para los campos de reglas
+  Widget _buildReglaField({
+    required IconData icon,
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required String suffix,
+    String? helperText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 20, color: const Color(0xFF7F8C8D)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: hint,
+            suffixText: suffix,
+            helperText: helperText,
+            helperMaxLines: 2,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _mostrarEditorHistoria(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditorHistoriaScreen()),
+    );
+  }
 }
 
+// --- CLASES DEL EDITOR DE HISTORIA ---
+
+class EditorHistoriaScreen extends StatefulWidget {
+  const EditorHistoriaScreen({super.key});
+
+  @override
+  State<EditorHistoriaScreen> createState() => _EditorHistoriaScreenState();
+}
+
+class _EditorHistoriaScreenState extends State<EditorHistoriaScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late TextEditingController _tituloController;
+  late TextEditingController _subtituloController;
+  late TextEditingController _parrafosController;
+  late List<EspecialidadItemEditable> _platosEditables;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+    final datos = HistoriaData.actual;
+    _tituloController = TextEditingController(text: datos.titulo);
+    _subtituloController = TextEditingController(text: datos.subtitulo);
+    _parrafosController =
+        TextEditingController(text: datos.parrafosHistoria.join('\n\n'));
+    _platosEditables =
+        datos.especialidades.map((e) => EspecialidadItemEditable.fromItem(e)).toList();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _tituloController.dispose();
+    _subtituloController.dispose();
+    _parrafosController.dispose();
+    for (var p in _platosEditables) {
+      p.dispose();
+    }
+    super.dispose();
+  }
+
+  void _guardarCambios() {
+    final nuevosParrafos = _parrafosController.text
+        .split('\n\n')
+        .where((p) => p.trim().isNotEmpty)
+        .toList();
+    final nuevosPlatos = _platosEditables.map((e) => e.toItem()).toList();
+    HistoriaData.actual = HistoriaRestaurante(
+      titulo: _tituloController.text.trim(),
+      subtitulo: _subtituloController.text.trim(),
+      parrafosHistoria: nuevosParrafos.isEmpty ? ['...'] : nuevosParrafos,
+      especialidades: nuevosPlatos,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✅ Historia actualizada')),
+    );
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Editor de Contenido'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.article), text: 'Textos'),
+            Tab(icon: Icon(Icons.restaurant_menu), text: 'Platos'),
+          ],
+        ),
+        actions: [
+          IconButton(onPressed: _guardarCambios, icon: const Icon(Icons.save)),
+        ],
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [_buildTabHistoria(), _buildTabPlatos()],
+      ),
+      floatingActionButton: _tabController.index == 1
+          ? FloatingActionButton.extended(
+              onPressed: () =>
+                  setState(() => _platosEditables.add(EspecialidadItemEditable())),
+              label: const Text('Nuevo Plato'),
+              icon: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildTabHistoria() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          TextField(
+            controller: _tituloController,
+            decoration: const InputDecoration(
+              labelText: 'Título',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _subtituloController,
+            decoration: const InputDecoration(
+              labelText: 'Subtítulo',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _parrafosController,
+            maxLines: 12,
+            decoration: const InputDecoration(
+              labelText: 'Historia (doble enter para párrafos)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabPlatos() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: _platosEditables.length,
+      itemBuilder: (ctx, i) {
+        final p = _platosEditables[i];
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Selector de Ícono
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(p.iconoSeleccionado, color: Colors.blue, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    // Campo Nombre
+                    Expanded(
+                      child: TextField(
+                        controller: p.nombreCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre del Plato',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Color(0xFFFAFAFA),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        ),
+                      ),
+                    ),
+                    // Botón Borrar
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      onPressed: () => setState(() => _platosEditables.removeAt(i)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Campo Descripción
+                TextField(
+                  controller: p.descripcionCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción corta',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Color(0xFFFAFAFA),
+                    alignLabelWithHint: true,
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Selecciona un ícono:',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                // Lista de íconos
+                SizedBox(
+                  height: 50,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      Icons.restaurant,
+                      Icons.local_pizza,
+                      Icons.lunch_dining,
+                      Icons.icecream,
+                      Icons.cake,
+                      Icons.coffee,
+                      Icons.wine_bar,
+                      Icons.set_meal,
+                    ]
+                        .map((ic) => InkWell(
+                              onTap: () => setState(() => p.iconoSeleccionado = ic),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: p.iconoSeleccionado == ic
+                                      ? Colors.blue
+                                      : Colors.transparent,
+                                  border: Border.all(
+                                    color: p.iconoSeleccionado == ic
+                                        ? Colors.blue
+                                        : Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  ic,
+                                  color: p.iconoSeleccionado == ic
+                                      ? Colors.white
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class EspecialidadItemEditable {
+  final TextEditingController nombreCtrl;
+  final TextEditingController descripcionCtrl;
+  IconData iconoSeleccionado;
+
+  EspecialidadItemEditable({
+    String nombre = '',
+    String descripcion = '',
+    this.iconoSeleccionado = Icons.restaurant,
+  })  : nombreCtrl = TextEditingController(text: nombre),
+        descripcionCtrl = TextEditingController(text: descripcion);
+
+  factory EspecialidadItemEditable.fromItem(EspecialidadItem item) =>
+      EspecialidadItemEditable(
+        nombre: item.nombre,
+        descripcion: item.descripcion,
+        iconoSeleccionado: item.icono,
+      );
+
+  EspecialidadItem toItem() => EspecialidadItem(
+        nombre: nombreCtrl.text.trim().isEmpty ? 'Plato' : nombreCtrl.text.trim(),
+        descripcion: descripcionCtrl.text.trim(),
+        icono: iconoSeleccionado,
+      );
+
+    void dispose() {
+      nombreCtrl.dispose();
+      descripcionCtrl.dispose();
+    }
+  }

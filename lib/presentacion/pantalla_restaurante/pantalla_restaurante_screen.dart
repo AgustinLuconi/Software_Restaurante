@@ -24,138 +24,152 @@ class _PantallaRestauranteView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            context.go('/');
-          },
-          tooltip: 'Volver a restaurantes',
-        ),
-        title: const Text('Chiringuito'),
-        actions: [
-          // Botón de notificaciones con badge
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  // Por ahora usamos un ID de cliente por defecto
-                  context.go('/notificaciones/cliente_123');
-                },
-                tooltip: 'Notificaciones',
-              ),
-              // Badge de notificaciones no leídas
-              Positioned(
-                right: 8,
-                top: 8,
-                child: FutureBuilder<int>(
-                  future: _getNotificacionesNoLeidas(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData && snapshot.data! > 0) {
-                      return Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          '${snapshot.data! > 9 ? '9+' : snapshot.data}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: BlocBuilder<PantallaRestauranteCubit, PantallaRestauranteState>(
-        builder: (context, state) {
-          if (state is PantallaRestauranteConError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    return BlocBuilder<PantallaRestauranteCubit, PantallaRestauranteState>(
+      builder: (context, state) {
+        // Obtener datos del negocio para toda la pantalla
+        String nombreNegocio = 'Restaurante';
+        String especialidad = 'Gastronomía';
+        String negocioId = 'usuario_invitado';
+        
+        if (state is PantallaRestauranteExitoso) {
+          nombreNegocio = state.negocio.nombre;
+          especialidad = state.negocio.especialidad;
+          negocioId = state.negocio.id;
+        }
+        
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                context.go('/');
+              },
+              tooltip: 'Volver a restaurantes',
+            ),
+            title: Text(nombreNegocio),
+            actions: [
+              // Botón de notificaciones con badge
+              Stack(
                 children: [
-                  Text(
-                    state.mensaje,
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
+                  IconButton(
+                    icon: const Icon(Icons.notifications),
                     onPressed: () {
-                      context.read<PantallaRestauranteCubit>().reiniciar();
+                      // Navegar a notificaciones del usuario actual
+                      context.go('/notificaciones/$negocioId');
                     },
-                    child: const Text('Reintentar'),
+                    tooltip: 'Notificaciones',
+                  ),
+                  // Badge de notificaciones no leídas
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: FutureBuilder<int>(
+                      future: _getNotificacionesNoLeidas(negocioId),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data! > 0) {
+                          return Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              '${snapshot.data! > 9 ? '9+' : snapshot.data}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
                 ],
               ),
-            );
-          }
+              const SizedBox(width: 8),
+            ],
+          ),
+          body: _buildBody(context, state, nombreNegocio, especialidad),
+        );
+      },
+    );
+  }
+  
+  Widget _buildBody(BuildContext context, PantallaRestauranteState state, String nombreNegocio, String especialidad) {
+    if (state is PantallaRestauranteConError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              state.mensaje,
+              style: const TextStyle(color: Colors.red, fontSize: 16),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                context.read<PantallaRestauranteCubit>().reiniciar();
+              },
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
 
-          // Estado inicial
-          return SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Header con imagen de fondo
+          _buildHeader(context, nombreNegocio, especialidad),
+          
+          // Contenido principal
+          Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header con imagen de fondo
-                _buildHeader(context),
+                // Botón principal - Reservar Mesa
+                _buildPrimaryButton(context),
                 
-                // Contenido principal
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Botón principal - Reservar Mesa
-                      _buildPrimaryButton(context),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Sección de título
-                      Text(
-                        'Explora',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Grid de opciones secundarias
-                      _buildSecondaryOptions(context),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Información de contacto
-                      _buildContactInfo(context),
-                      
-                      const SizedBox(height: 20),
-                    ],
+                const SizedBox(height: 24),
+                
+                // Sección de título
+                Text(
+                  'Explora',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+                
+                const SizedBox(height: 16),
+                
+                // Grid de opciones secundarias
+                _buildSecondaryOptions(context),
+                
+                const SizedBox(height: 24),
+                
+                // Información de contacto
+                _buildContactInfo(context),
+                
+                const SizedBox(height: 20),
               ],
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, String nombreNegocio, String especialidad) {
     final theme = Theme.of(context);
     
     return Container(
@@ -207,7 +221,7 @@ class _PantallaRestauranteView extends StatelessWidget {
             const SizedBox(height: 16),
             // Nombre del restaurante
             Text(
-              'Chiringuito',
+              nombreNegocio,
               style: theme.textTheme.displaySmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -223,7 +237,7 @@ class _PantallaRestauranteView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Restaurante de Mar',
+                especialidad,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.white,
                   letterSpacing: 1.0,
@@ -557,11 +571,11 @@ class _PantallaRestauranteView extends StatelessWidget {
     );
   }
 
-  Future<int> _getNotificacionesNoLeidas() async {
+  Future<int> _getNotificacionesNoLeidas(String usuarioId) async {
     // Consultar el repositorio de notificaciones
     try {
       final notificacionRepo = getIt<NotificacionRepositorio>();
-      return await notificacionRepo.contarNotificacionesNoLeidas('cliente_123');
+      return await notificacionRepo.contarNotificacionesNoLeidas(usuarioId);
     } catch (e) {
       return 0;
     }

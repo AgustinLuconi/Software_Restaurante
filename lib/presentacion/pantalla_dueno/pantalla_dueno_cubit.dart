@@ -94,6 +94,32 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     }
   }
 
+  // Nuevo método para actualizar la configuración de reglas de negocio
+  Future<bool> actualizarConfiguracionReglas(Negocio negocio, {
+    required int duracionPromedioMinutos,
+    required int minHorasParaCancelar,
+    required int maxDiasAnticipacionReserva,
+  }) async {
+    try {
+      final negocioActualizado = negocio.copyWith(
+        duracionPromedioMinutos: duracionPromedioMinutos,
+        minHorasParaCancelar: minHorasParaCancelar,
+        maxDiasAnticipacionReserva: maxDiasAnticipacionReserva,
+      );
+      
+      final exito = await negocioRepositorio.actualizarNegocio(negocioActualizado);
+      
+      if (exito) {
+        emit(PantallaDuenoAutenticado(negocioActualizado));
+      }
+      
+      return exito;
+    } catch (e) {
+      emit(PantallaDuenoConError('Error al actualizar configuración: $e'));
+      return false;
+    }
+  }
+
   // Métodos para gestión de mesas
   Future<List<Mesa>> obtenerMesasDelNegocio(String negocioId) async {
     return await mesaRepositorio.obtenerMesasPorNegocio(negocioId);
@@ -155,8 +181,12 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       final reserva = reservas.firstWhere((r) => r.id == reservaId);
       reserva.confirmar();
       
+      // Obtener nombre del negocio para la notificación
+      final state = this.state;
+      final nombreNegocio = state is PantallaDuenoAutenticado ? state.negocio.nombre : 'Restaurante';
+      
       // Notificar al cliente
-      await servicioNotificaciones.notificarReservaConfirmada(reserva.clienteId, reserva);
+      await servicioNotificaciones.notificarReservaConfirmada(reserva.clienteId, reserva, nombreNegocio: nombreNegocio);
       
       return true;
     } catch (e) {
@@ -176,23 +206,21 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       
       await reservaRepositorio.cancelarReserva(reservaId);
       
+      // Obtener nombre del negocio para la notificación
+      final state = this.state;
+      final nombreNegocio = state is PantallaDuenoAutenticado ? state.negocio.nombre : 'Restaurante';
+      
       // Notificar al cliente que el negocio canceló la reserva
-      // Usar contactoCliente en lugar de clienteId
+      // Usar contactoCliente (email/teléfono) como identificador
       final clienteNotificacion = reserva.contactoCliente ?? reserva.clienteId;
       await servicioNotificaciones.notificarReservaCancelada(
         clienteNotificacion,
         reserva,
         porNegocio: true,
+        nombreNegocio: nombreNegocio,
       );
       
-      // También enviar a cliente_123 para que aparezca en el panel general
-      await servicioNotificaciones.notificarReservaCancelada(
-        'cliente_123',
-        reserva,
-        porNegocio: true,
-      );
-      
-      print('✅ Notificación enviada a: $clienteNotificacion y a cliente_123');
+      print('✅ Notificación enviada a: $clienteNotificacion');
       
       return true;
     } catch (e) {

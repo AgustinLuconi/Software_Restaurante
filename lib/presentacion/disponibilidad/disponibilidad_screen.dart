@@ -54,9 +54,12 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             // Info sobre intervalos de reserva (dinámico)
             BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
               builder: (context, state) {
-                final duracion = state is DisponibilidadExitosa 
-                    ? state.duracionPromedioMinutos 
-                    : 60;
+                int duracion = 60;
+                if (state is DisponibilidadExitosa) {
+                  duracion = state.duracionPromedioMinutos;
+                } else if (state is MesaEncontrada) {
+                  duracion = state.duracionPromedioMinutos;
+                }
                 return _buildInfoIntervalosCard(duracion);
               },
             ),
@@ -639,12 +642,23 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
               ],
             ),
             const SizedBox(height: 4),
-            Text(
-              'Selecciona un horario (intervalos de 1 hora)',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[600],
-              ),
+            BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
+              builder: (context, state) {
+                int duracion = 60;
+                if (state is DisponibilidadExitosa) {
+                  duracion = state.duracionPromedioMinutos;
+                } else if (state is MesaEncontrada) {
+                  duracion = state.duracionPromedioMinutos;
+                }
+                    
+                return Text(
+                  'Selecciona un horario (intervalos de $duracion minutos)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 16),
             // Mostrar lista de horarios (usando Future cacheado para evitar animaciones)

@@ -33,6 +33,9 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         _horarioAperturaRepo = getIt<HorarioAperturaRepositorio>(),
         super(DisponibilidadInicial());
 
+  /// ID del negocio actual (por defecto el primero disponible)
+  String _negocioId = 'negocio_1';
+  
   Future<void> cargarTodasLasMesas() async {
     try {
       emit(DisponibilidadCargando());
@@ -40,8 +43,8 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       // Cargar mesas, negocio y horarios en paralelo
       final resultados = await Future.wait([
         _mesaRepositorio.obtenerMesas(),
-        _negocioRepositorio.obtenerNegocioPorId('negocio_1'),
-        _negocioRepositorio.obtenerHorariosServicio('negocio_1'),
+        _negocioRepositorio.obtenerNegocioPorId(_negocioId),
+        _negocioRepositorio.obtenerHorariosServicio(_negocioId),
       ]);
       
       final mesas = resultados[0] as List<Mesa>;
@@ -55,14 +58,18 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   }
 
   /// Carga inicial de datos (mesas + configuración del negocio + horarios)
-  Future<void> cargarDatosIniciales({String negocioId = 'negocio_1'}) async {
+  Future<void> cargarDatosIniciales({String? negocioId}) async {
     try {
       emit(DisponibilidadCargando());
       
+      // Usar el negocioId proporcionado o el actual
+      final id = negocioId ?? _negocioId;
+      _negocioId = id;
+      
       final resultados = await Future.wait([
         _mesaRepositorio.obtenerMesas(),
-        _negocioRepositorio.obtenerNegocioPorId(negocioId),
-        _negocioRepositorio.obtenerHorariosServicio(negocioId),
+        _negocioRepositorio.obtenerNegocioPorId(id),
+        _negocioRepositorio.obtenerHorariosServicio(id),
       ]);
       
       final mesas = resultados[0] as List<Mesa>;
@@ -78,7 +85,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   /// Obtiene las zonas disponibles del restaurante
   Future<List<ZonaMesa>> obtenerZonasDisponibles() async {
     try {
-      return await _mesaRepositorio.obtenerZonasDisponibles('negocio_1');
+      return await _mesaRepositorio.obtenerZonasDisponibles(_negocioActual?.id ?? _negocioId);
     } catch (e) {
       return [];
     }
@@ -99,7 +106,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         fecha: fecha,
         hora: hora,
         numeroPersonas: numeroPersonas,
-        negocioId: 'negocio_1',
+        negocioId: _negocioActual?.id ?? _negocioId,
       );
 
       if (mesa == null) {
@@ -108,8 +115,8 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
           'Intenta con otra zona o un horario diferente.',
         ));
       } else {
-        // Emitir estado con la mesa encontrada
-        emit(MesaEncontrada(mesa, zona));
+        // Emitir estado con la mesa encontrada y la duración configurada
+        emit(MesaEncontrada(mesa, zona, _negocioActual?.duracionPromedioMinutos ?? 60));
       }
     } catch (e) {
       emit(DisponibilidadConError('Error al buscar mesa: ${e.toString()}'));
@@ -120,8 +127,9 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   Future<List<String>> obtenerIntervalosHorarioNegocio(DateTime fecha) async {
     try {
       return await _horarioAperturaRepo.obtenerIntervalosDisponibles(
-        'negocio_1',
+        _negocioActual?.id ?? _negocioId,
         fecha,
+        intervaloMinutos: _negocioActual?.duracionPromedioMinutos ?? 60,
       );
     } catch (e) {
       return [];
@@ -171,8 +179,8 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       }
 
       // Crear reserva directamente CONFIRMADA (sin necesidad de aprobación del dueño)
+      final negocioId = _negocioActual?.id ?? _negocioId;
       final reserva = await _crearReserva.ejecutar(
-        contacto, // Usar el contacto como clienteId
         mesaId,
         fecha,
         hora,
@@ -180,15 +188,17 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         contactoCliente: contacto,
         nombreCliente: nombreCliente,
         estadoInicial: EstadoReserva.confirmada, // CONFIRMADA automáticamente
+        negocioId: negocioId,
       );
 
+      // Obtener nombre del negocio para las notificaciones
+      final nombreNegocio = _negocioActual?.nombre ?? 'Restaurante';
+
       // Notificar al dueño sobre la nueva reserva confirmada
-      await _servicioNotificaciones.notificarNuevaReservaDueno('negocio_1', reserva);
+      await _servicioNotificaciones.notificarNuevaReservaDueno(negocioId, reserva);
 
       // Notificar al cliente que su reserva está confirmada
-      await _servicioNotificaciones.notificarReservaConfirmada(contacto, reserva);
-      // También enviar a cliente_123 para que aparezca en el panel general
-      await _servicioNotificaciones.notificarReservaConfirmada('cliente_123', reserva);
+      await _servicioNotificaciones.notificarReservaConfirmada(contacto, reserva, nombreNegocio: nombreNegocio);
 
       emit(ReservaCreada('✅ Reserva confirmada exitosamente. Recibirás un recordatorio en tu ${contacto.contains('@') ? 'email' : 'teléfono'}.'));
     } catch (e) {

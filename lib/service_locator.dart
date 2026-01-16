@@ -4,19 +4,15 @@ import 'adaptadores/adaptador_memoria_mesa.dart';
 import 'adaptadores/adaptador_memoria_reserva.dart';
 import 'adaptadores/adaptador_memoria_codigo_verificacion.dart';
 import 'adaptadores/adaptador_memoria_horario_apertura.dart';
-import 'adaptadores/adaptador_memoria_lista_espera.dart';
 import 'adaptadores/adaptador_memoria_negocio.dart';
 import 'adaptadores/adaptador_memoria_notificacion.dart';
 import 'adaptadores/servicio_notificaciones_consola.dart';
-import 'aplicacion/agregar_a_lista_de_espera.dart';
 import 'aplicacion/cancelar_reserva.dart';
 import 'aplicacion/crear_reserva.dart';
 import 'aplicacion/obtener_reserva.dart';
-import 'aplicacion/procesar_lista_de_espera.dart';
 import 'dominio/entidades/mesa.dart';
 import 'dominio/repositorios/codigo_verificacion_repositorio.dart';
 import 'dominio/repositorios/horario_apertura_repositorio.dart';
-import 'dominio/repositorios/lista_espera_repositorio.dart';
 import 'dominio/repositorios/mesa_repositorio.dart';
 import 'dominio/repositorios/negocio_repositorio.dart';
 import 'dominio/repositorios/notificacion_repositorio.dart';
@@ -64,10 +60,6 @@ void setupServiceLocator() {
     ),
   );
 
-  getIt.registerLazySingleton<ListaEsperaRepositorio>(
-    () => ListaEsperaRepositorioMemoria(),
-  );
-
   getIt.registerLazySingleton<NegocioRepositorio>(
     () => NegocioRepositorioMemoria(),
   );
@@ -97,23 +89,13 @@ void setupServiceLocator() {
         negocioRepositorio: getIt<NegocioRepositorio>(),
       ));
   
-  // CancelarReserva con ProcesarListaDeEspera
+  // CancelarReserva
   getIt.registerFactory(() => CancelarReserva(
         getIt<ReservaRepositorio>(),
-        procesarListaDeEspera: getIt<ProcesarListaDeEspera>(),
         negocioRepositorio: getIt<NegocioRepositorio>(),
       ));
   
   getIt.registerFactory(() => ObtenerReserva(getIt<ReservaRepositorio>()));
-  
-  // Casos de uso para lista de espera
-  getIt.registerFactory(() => AgregarAListaDeEspera(getIt<ListaEsperaRepositorio>()));
-  
-  getIt.registerFactory(() => ProcesarListaDeEspera(
-        getIt<ReservaRepositorio>(),
-        getIt<ListaEsperaRepositorio>(),
-        getIt<ServicioNotificaciones>(),
-      ));
   
   // Cubits
   getIt.registerFactory(() => PantallaDuenoCubit(
