@@ -175,25 +175,17 @@ class _PantallaRestauranteView extends StatelessWidget {
     return Container(
       height: 220,
       width: double.infinity,
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/restaurant_header.png'),
-          fit: BoxFit.cover,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withOpacity(0.7),
+          ],
         ),
       ),
-      child: Container(
-        // Overlay oscuro sobre la imagen
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withOpacity(0.3),
-              Colors.black.withOpacity(0.6),
-            ],
-          ),
-        ),
-        child: SafeArea(
+      child: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -247,7 +239,6 @@ class _PantallaRestauranteView extends StatelessWidget {
           ],
         ),
       ),
-      ), // Cierre del Container con gradient overlay
     );
   }
 

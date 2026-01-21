@@ -6,6 +6,7 @@ import 'adaptadores/adaptador_memoria_codigo_verificacion.dart';
 import 'adaptadores/adaptador_memoria_horario_apertura.dart';
 import 'adaptadores/adaptador_memoria_negocio.dart';
 import 'adaptadores/adaptador_memoria_notificacion.dart';
+import 'adaptadores/servicio_autenticacion_firebase.dart';
 import 'adaptadores/servicio_notificaciones_consola.dart';
 import 'aplicacion/cancelar_reserva.dart';
 import 'aplicacion/crear_reserva.dart';
@@ -29,6 +30,11 @@ void setupServiceLocator() {
   if (getIt.isRegistered<ReservaRepositorio>()) {
     return;
   }
+
+  // Servicio de autenticación con Firebase
+  getIt.registerLazySingleton<ServicioAutenticacion>(
+    () => ServicioAutenticacion(),
+  );
 
   // Datos de ejemplo para mesas del restaurante Chiringuito (negocio_1)
   // Ahora con zonas asignadas

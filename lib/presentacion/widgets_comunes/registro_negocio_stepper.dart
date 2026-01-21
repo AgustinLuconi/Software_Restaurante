@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../adaptadores/servicio_autenticacion_firebase.dart';
+import '../../service_locator.dart';
 import '../pantalla_inicio/pantalla_inicio_cubit.dart';
 
 /// Widget de registro de negocio usando Stepper
@@ -148,6 +152,47 @@ class _RegistroNegocioStepperState extends State<RegistroNegocioStepper> {
       key: _formKeyPaso1,
       child: Column(
         children: [
+          // Botón de Google al inicio
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _registrarConGoogle,
+              icon: Image.asset(
+                'images/google_logo.jpeg',
+                height: 24,
+                width: 24,
+                errorBuilder: (_, __, ___) => const Icon(Icons.account_circle, size: 24),
+              ),
+              label: const Text('Registrarse con Google'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF4285F4),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Color(0xFF4285F4), width: 2),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Divider
+          Row(
+            children: [
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'o registra con email',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
+              ),
+              Expanded(child: Divider(color: Colors.grey.shade300)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
           TextFormField(
             controller: _emailController,
             decoration: const InputDecoration(
@@ -477,6 +522,66 @@ class _RegistroNegocioStepperState extends State<RegistroNegocioStepper> {
         setState(() {
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  /// Registrar negocio usando Google Sign-In
+  /// Muestra ventana de selección de cuenta, toma email y nombre,
+  /// rellena los campos y avanza al siguiente paso
+  Future<void> _registrarConGoogle() async {
+    final auth = getIt<ServicioAutenticacion>();
+    
+    try {
+      // Ejecutar login con Google - muestra ventana de selección de cuenta
+      final resultado = await auth.iniciarSesionConGoogle();
+      
+      if (!mounted) return;
+      
+      if (resultado != null && resultado.user != null) {
+        final email = resultado.user!.email ?? '';
+        final nombre = resultado.user!.displayName ?? '';
+        
+        // Verificar si ya existe un negocio con ese email
+        final negocioExistente = await widget.cubit.negocioRepositorio.obtenerNegocioPorEmail(email);
+        
+        if (negocioExistente != null) {
+          // Ya existe - ir directamente al panel
+          if (mounted) {
+            Navigator.pop(context);
+            context.go('/dueno', extra: negocioExistente);
+          }
+          return;
+        }
+        
+        // Rellenar los campos del formulario con los datos de Google
+        setState(() {
+          _emailController.text = email;
+          _passwordController.text = 'google_auth_${DateTime.now().millisecondsSinceEpoch}';
+          _confirmPasswordController.text = _passwordController.text;
+          _nombreResponsableController.text = nombre;
+        });
+        
+        // Simular clic en "Continuar" - avanzar al paso 2
+        _onStepContinue();
+      }
+      // Si resultado es null, el usuario canceló - no hacer nada
+    } catch (e) {
+      // Ignorar errores de popup cerrado por el usuario
+      final errorStr = e.toString().toLowerCase();
+      final esErrorCancelacion = errorStr.contains('popup') || 
+                                  errorStr.contains('closed') || 
+                                  errorStr.contains('cancelled') ||
+                                  errorStr.contains('canceled') ||
+                                  errorStr.contains('dismissed');
+      
+      if (!esErrorCancelacion && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

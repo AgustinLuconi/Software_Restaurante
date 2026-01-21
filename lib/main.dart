@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 
+import 'firebase_options.dart';
 import 'router.dart';
 import 'service_locator.dart';
 
-void main() {
+void main() async {
+  // Asegurar que los widgets estén inicializados
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar Firebase (verificar si ya está inicializado para evitar error en hot restart)
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // Firebase ya está inicializado (ocurre en hot restart)
+    if (e.toString().contains('already exists')) {
+      // Ignorar - ya está inicializado
+    } else {
+      rethrow;
+    }
+  }
+  
   // Inicializar el service locator (GetIt)
   setupServiceLocator();
   

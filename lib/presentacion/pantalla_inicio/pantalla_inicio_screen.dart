@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../adaptadores/servicio_autenticacion_firebase.dart';
 import '../../service_locator.dart';
 import '../widgets_comunes/registro_negocio_stepper.dart';
 import 'pantalla_inicio_cubit.dart';
@@ -268,20 +269,64 @@ class _PantallaInicioView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               
-              // Botón Registrar Negocio
+              // Botón Continuar con Google (Principal)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _mostrarLoginGoogle(context, cubit);
+                  },
+                  icon: Image.asset(
+                    'images/google_logo.jpeg',
+                    height: 24,
+                    width: 24,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.account_circle, size: 24),
+                  ),
+                  label: const Text('Continuar con Google'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF4285F4),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFF4285F4), width: 2),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Divider con texto
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'o usa email',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Botón Registrar Negocio
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(dialogContext);
                     _mostrarRegistroNegocio(context, cubit);
                   },
                   icon: const Icon(Icons.add_business),
                   label: const Text('Registrar mi Negocio'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF27AE60),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF27AE60),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: Color(0xFF27AE60), width: 1.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -299,13 +344,13 @@ class _PantallaInicioView extends StatelessWidget {
                     _mostrarLoginNegocio(context, cubit);
                   },
                   icon: const Icon(Icons.login),
-                  label: const Text('Ingresar a mi Negocio'),
+                  label: const Text('Ingresar con Email'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF3498DB),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     side: const BorderSide(
                       color: Color(0xFF3498DB),
-                      width: 2,
+                      width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -398,13 +443,48 @@ class _PantallaInicioView extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Función de recuperación próximamente disponible'),
-                        ),
-                      );
+                      Navigator.pop(context);
+                      _mostrarRecuperarContrasena(context);
                     },
                     child: const Text('¿Olvidaste tu contraseña?'),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                const Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('o', style: TextStyle(color: Colors.grey)),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Botón de Google
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _mostrarLoginGoogle(context, cubit);
+                    },
+                    icon: Image.asset(
+                      'images/google_logo.jpeg',
+                      height: 24,
+                      width: 24,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.account_circle, size: 24),
+                    ),
+                    label: const Text('Continuar con Google'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: Colors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -451,6 +531,420 @@ class _PantallaInicioView extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  void _mostrarRecuperarContrasena(BuildContext context) {
+    final emailController = TextEditingController();
+    bool isLoading = false;
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_reset, color: Color(0xFFE67E22)),
+              SizedBox(width: 12),
+              Text('Recuperar Contraseña'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Correo Electrónico',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email),
+                  hintText: 'ejemplo@correo.com',
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      final email = emailController.text.trim();
+                      if (email.isEmpty || !email.contains('@')) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Ingresa un correo válido'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      setState(() => isLoading = true);
+                      
+                      try {
+                        final auth = getIt<ServicioAutenticacion>();
+                        await auth.enviarEmailRecuperacion(email: email);
+                        
+                        Navigator.pop(dialogContext);
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('✅ Revisa tu correo para restablecer tu contraseña'),
+                            backgroundColor: Color(0xFF27AE60),
+                            duration: Duration(seconds: 4),
+                          ),
+                        );
+                      } catch (e) {
+                        setState(() => isLoading = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('❌ ${e.toString().replaceAll('Exception: ', '')}'),
+                            backgroundColor: const Color(0xFFE74C3C),
+                          ),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE67E22),
+              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Enviar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _mostrarLoginGoogle(BuildContext context, PantallaInicioCubit cubit) async {
+    final auth = getIt<ServicioAutenticacion>();
+    
+    // Variable para trackear si el diálogo de carga está abierto
+    bool dialogoAbierto = false;
+    
+    try {
+      // Mostrar indicador de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      dialogoAbierto = true;
+      
+      final resultado = await auth.iniciarSesionConGoogle();
+      
+      // Cerrar indicador de carga
+      if (dialogoAbierto && context.mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+        dialogoAbierto = false;
+      }
+      
+      if (resultado != null && resultado.user != null) {
+        final email = resultado.user!.email;
+        final nombre = resultado.user!.displayName ?? 'Usuario';
+        
+        // Buscar si existe un negocio con ese email
+        final negocio = await cubit.negocioRepositorio.obtenerNegocioPorEmail(email ?? '');
+        
+        if (negocio != null) {
+          // Negocio encontrado - ir al panel del dueño
+          if (context.mounted) {
+            context.go('/dueno', extra: negocio);
+          }
+        } else {
+          // No hay negocio registrado - mostrar formulario de registro
+          if (context.mounted) {
+            _mostrarOpcionRegistrarConGoogle(context, cubit, email ?? '', nombre);
+          }
+        }
+      }
+      // Si resultado es null, el usuario canceló - no hacemos nada
+    } catch (e) {
+      // Cerrar indicador si hay error
+      if (dialogoAbierto && context.mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      
+      // Ignorar errores de popup cerrado por el usuario
+      final errorStr = e.toString().toLowerCase();
+      final esErrorCancelacion = errorStr.contains('popup') || 
+                                  errorStr.contains('closed') || 
+                                  errorStr.contains('cancelled') ||
+                                  errorStr.contains('canceled') ||
+                                  errorStr.contains('user') ||
+                                  errorStr.contains('dismissed');
+      
+      // Solo mostrar error si NO es por cancelación del usuario
+      if (!esErrorCancelacion && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Muestra opción para registrar negocio después de login con Google
+  void _mostrarOpcionRegistrarConGoogle(
+    BuildContext context,
+    PantallaInicioCubit cubit,
+    String email,
+    String nombre,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(Icons.person_add, size: 48, color: Color(0xFF3498DB)),
+        title: Text('¡Hola, $nombre!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'No encontramos un negocio asociado a $email',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '¿Deseas registrar tu negocio ahora?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              // Cerrar sesión de Google ya que no se va a usar
+              getIt<ServicioAutenticacion>().cerrarSesion();
+            },
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              // Abrir registro con email pre-llenado
+              _mostrarRegistroConGoogle(context, cubit, email, nombre);
+            },
+            icon: const Icon(Icons.add_business),
+            label: const Text('Registrar Negocio'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF27AE60),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Muestra formulario de registro simplificado (sin email/password)
+  void _mostrarRegistroConGoogle(
+    BuildContext context,
+    PantallaInicioCubit cubit,
+    String email,
+    String nombreUsuario,
+  ) {
+    final formKey = GlobalKey<FormState>();
+    final nombreNegocioController = TextEditingController();
+    final telefonoController = TextEditingController();
+    final direccionController = TextEditingController();
+    final nombreResponsableController = TextEditingController(text: nombreUsuario);
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4285F4).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.add_business, color: Color(0xFF4285F4)),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text('Completar Registro', style: TextStyle(fontSize: 18)),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Info del email de Google
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF27AE60).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF27AE60).withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Color(0xFF27AE60), size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            email,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF27AE60),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Nombre del negocio
+                  TextFormField(
+                    controller: nombreNegocioController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre del Negocio *',
+                      prefixIcon: Icon(Icons.store),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Nombre responsable
+                  TextFormField(
+                    controller: nombreResponsableController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre del Responsable *',
+                      prefixIcon: Icon(Icons.person),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Teléfono
+                  TextFormField(
+                    controller: telefonoController,
+                    decoration: const InputDecoration(
+                      labelText: 'Teléfono *',
+                      prefixIcon: Icon(Icons.phone),
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Dirección
+                  TextFormField(
+                    controller: direccionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Dirección *',
+                      prefixIcon: Icon(Icons.location_on),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () {
+                Navigator.pop(dialogContext);
+                getIt<ServicioAutenticacion>().cerrarSesion();
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: isLoading ? null : () async {
+                if (formKey.currentState?.validate() ?? false) {
+                  setState(() => isLoading = true);
+                  
+                  try {
+                    // Registrar negocio con contraseña generada (el login es por Google)
+                    final negocio = await cubit.registrarNegocio(
+                      nombre: nombreNegocioController.text.trim(),
+                      nombreResponsable: nombreResponsableController.text.trim(),
+                      email: email,
+                      telefono: telefonoController.text.trim(),
+                      direccion: direccionController.text.trim(),
+                      password: 'google_auth_${DateTime.now().millisecondsSinceEpoch}',
+                    );
+                    
+                    if (negocio != null && dialogContext.mounted) {
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ ¡Negocio registrado exitosamente!'),
+                          backgroundColor: Color(0xFF27AE60),
+                        ),
+                      );
+                      context.go('/dueno', extra: negocio);
+                    }
+                  } catch (e) {
+                    setState(() => isLoading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF27AE60),
+                foregroundColor: Colors.white,
+              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Registrar'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

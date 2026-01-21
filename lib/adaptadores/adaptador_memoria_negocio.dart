@@ -164,4 +164,60 @@ class NegocioRepositorioMemoria implements NegocioRepositorio {
       return false;
     }
   }
+
+  @override
+  Future<bool> actualizarEmail(String negocioId, String nuevoEmail) async {
+    try {
+      final index = _negocios.indexWhere((n) => n.id == negocioId);
+      if (index != -1) {
+        final negocioActual = _negocios[index];
+        final emailAnterior = negocioActual.email;
+        
+        // Actualizar el negocio con el nuevo email
+        _negocios[index] = Negocio(
+          id: negocioActual.id,
+          nombre: negocioActual.nombre,
+          nombreResponsable: negocioActual.nombreResponsable,
+          email: nuevoEmail,
+          telefono: negocioActual.telefono,
+          direccion: negocioActual.direccion,
+          especialidad: negocioActual.especialidad,
+        );
+        
+        // Actualizar también la contraseña asociada al email
+        if (_passwords.containsKey(emailAnterior)) {
+          _passwords[nuevoEmail] = _passwords[emailAnterior]!;
+          _passwords.remove(emailAnterior);
+        }
+        
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> actualizarDireccion(String negocioId, String nuevaDireccion) async {
+    try {
+      final index = _negocios.indexWhere((n) => n.id == negocioId);
+      if (index != -1) {
+        final negocioActual = _negocios[index];
+        _negocios[index] = Negocio(
+          id: negocioActual.id,
+          nombre: negocioActual.nombre,
+          nombreResponsable: negocioActual.nombreResponsable,
+          email: negocioActual.email,
+          telefono: negocioActual.telefono,
+          direccion: nuevaDireccion,
+          especialidad: negocioActual.especialidad,
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 }
