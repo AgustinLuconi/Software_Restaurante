@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../adaptadores/servicio_verificacion_cliente.dart';
 import '../../dominio/entidades/reserva.dart';
+import '../../service_locator.dart';
 import 'mis_reservas_cubit.dart';
 import 'mis_reservas_estados_de_cubit.dart';
 
@@ -19,14 +21,22 @@ class MisReservasScreen extends StatelessWidget {
   }
 }
 
-class _MisReservasView extends StatelessWidget {
+class _MisReservasView extends StatefulWidget {
   const _MisReservasView();
+
+  @override
+  State<_MisReservasView> createState() => _MisReservasViewState();
+}
+
+class _MisReservasViewState extends State<_MisReservasView> {
+  List<Map<String, dynamic>> _reservasCliente = [];
+  bool _mostrandoReservasCliente = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Reservas'),
@@ -49,9 +59,7 @@ class _MisReservasView extends StatelessWidget {
         builder: (context, state) {
           if (state is MisReservasCargando) {
             return Center(
-              child: CircularProgressIndicator(
-                color: colorScheme.primary,
-              ),
+              child: CircularProgressIndicator(color: colorScheme.primary),
             );
           }
 
@@ -141,10 +149,32 @@ class _MisReservasView extends StatelessWidget {
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      TextButton.icon(
+                        onPressed: () => _mostrarBuscarReservasDialog(context),
+                        icon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF3498DB),
+                        ),
+                        label: const Text(
+                          '¿Desea ver sus reservas anteriores?',
+                          style: TextStyle(
+                            color: Color(0xFF3498DB),
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               );
+            }
+
+            // Mostrar reservas del cliente si están cargadas
+            if (_mostrandoReservasCliente && _reservasCliente.isNotEmpty) {
+              return _buildReservasClienteView(context, state.reservas);
             }
 
             return ListView.builder(
@@ -203,9 +233,7 @@ class _MisReservasView extends StatelessWidget {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -254,7 +282,7 @@ class _MisReservasView extends StatelessWidget {
               ],
             ),
             const Divider(height: 24),
-            
+
             // Información de la reserva
             _buildInfoRow(
               Icons.calendar_today,
@@ -279,7 +307,7 @@ class _MisReservasView extends StatelessWidget {
               'Personas',
               '${reserva.numeroPersonas}',
             ),
-            
+
             // Botones de acción
             if (reserva.estado != EstadoReserva.cancelada) ...[
               const SizedBox(height: 16),
@@ -294,9 +322,7 @@ class _MisReservasView extends StatelessWidget {
                       label: const Text('Detalles'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF3498DB),
-                        side: const BorderSide(
-                          color: Color(0xFF3498DB),
-                        ),
+                        side: const BorderSide(color: Color(0xFF3498DB)),
                       ),
                     ),
                   ),
@@ -326,18 +352,11 @@ class _MisReservasView extends StatelessWidget {
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: const Color(0xFF7F8C8D),
-        ),
+        Icon(icon, size: 20, color: const Color(0xFF7F8C8D)),
         const SizedBox(width: 12),
         Text(
           '$label: ',
-          style: const TextStyle(
-            fontSize: 15,
-            color: Color(0xFF7F8C8D),
-          ),
+          style: const TextStyle(fontSize: 15, color: Color(0xFF7F8C8D)),
         ),
         Text(
           value,
@@ -353,62 +372,576 @@ class _MisReservasView extends StatelessWidget {
 
   void _showDetalleDialog(BuildContext context, Reserva reserva) {
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-    
+
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Detalles de la Reserva'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('ID: ${reserva.id}'),
-            const SizedBox(height: 8),
-            Text('Fecha y Hora: ${dateFormat.format(reserva.fechaHora)}'),
-            const SizedBox(height: 8),
-            Text('Mesa: ${reserva.mesaId}'),
-            const SizedBox(height: 8),
-            Text('Número de Personas: ${reserva.numeroPersonas}'),
-            const SizedBox(height: 8),
-            Text('Cliente ID: ${reserva.clienteId}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cerrar'),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Detalles de la Reserva'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('ID: ${reserva.id}'),
+                const SizedBox(height: 8),
+                Text('Fecha y Hora: ${dateFormat.format(reserva.fechaHora)}'),
+                const SizedBox(height: 8),
+                Text('Mesa: ${reserva.mesaId}'),
+                const SizedBox(height: 8),
+                Text('Número de Personas: ${reserva.numeroPersonas}'),
+                const SizedBox(height: 8),
+                Text('Cliente ID: ${reserva.clienteId}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cerrar'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showCancelarDialog(BuildContext context, String reservaId) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Cancelar Reserva'),
-        content: const Text(
-          '¿Estás seguro de que deseas cancelar esta reserva?\n\n'
-          'Esta acción no se puede deshacer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('No, mantener'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context.read<MisReservasCubit>().cancelarReserva(reservaId);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE74C3C),
-              foregroundColor: Colors.white,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Cancelar Reserva'),
+            content: const Text(
+              '¿Estás seguro de que deseas cancelar esta reserva?\n\n'
+              'Esta acción no se puede deshacer.',
             ),
-            child: const Text('Sí, cancelar'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('No, mantener'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  context.read<MisReservasCubit>().cancelarReserva(reservaId);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE74C3C),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Sí, cancelar'),
+              ),
+            ],
           ),
-        ],
+    );
+  }
+
+  // ============== NUEVO: Buscar reservas anteriores con SMS ==============
+
+  void _mostrarBuscarReservasDialog(BuildContext context) {
+    final telefonoController = TextEditingController();
+    String? errorTelefono;
+
+    final servicioVerificacion = getIt<ServicioVerificacionCliente>();
+
+    // Verificar si ya hay una sesión activa
+    final sesion = servicioVerificacion.obtenerSesionCliente();
+    if (sesion != null) {
+      // Ya tiene sesión, cargar reservas directamente
+      _cargarReservasCliente(context, sesion['telefono']);
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (dialogContext) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  title: Row(
+                    children: [
+                      Icon(Icons.search, color: const Color(0xFF3498DB)),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Buscar Mis Reservas',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ingresa tu número de teléfono para verificar y ver tus reservas anteriores.',
+                        style: TextStyle(color: Color(0xFF7F8C8D)),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: telefonoController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: 'Teléfono',
+                          hintText: 'Ej: 2614567890',
+                          prefixIcon: const Icon(Icons.phone),
+                          prefixText: '+54 ',
+                          border: const OutlineInputBorder(),
+                          errorText: errorTelefono,
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        final telefono = telefonoController.text.trim();
+                        final validacion = servicioVerificacion.validarTelefono(
+                          telefono,
+                        );
+
+                        if (!validacion['valido']) {
+                          setDialogState(() {
+                            errorTelefono = validacion['error'];
+                          });
+                          return;
+                        }
+
+                        Navigator.of(dialogContext).pop();
+                        _mostrarVerificacionSMSBusqueda(
+                          context,
+                          validacion['formateado'],
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3498DB),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Verificar con SMS'),
+                    ),
+                  ],
+                ),
+          ),
+    );
+  }
+
+  void _mostrarVerificacionSMSBusqueda(BuildContext context, String telefono) {
+    final codigoController = TextEditingController();
+    bool enviando = true;
+    bool verificando = false;
+    String? errorCodigo;
+    int segundosRestantes = 60;
+
+    final servicioVerificacion = getIt<ServicioVerificacionCliente>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (dialogContext) => StatefulBuilder(
+            builder: (context, setDialogState) {
+              // Enviar código al abrir el diálogo
+              if (enviando) {
+                servicioVerificacion.enviarCodigoSMS(
+                  telefono: telefono,
+                  onCodigoEnviado: (verificationId) {
+                    setDialogState(() {
+                      enviando = false;
+                    });
+                    // Iniciar timer para reenvío
+                    _iniciarTimerReenvio(
+                      setDialogState,
+                      () => segundosRestantes,
+                      (v) => segundosRestantes = v,
+                    );
+                  },
+                  onError: (error) {
+                    Navigator.of(dialogContext).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al enviar SMS: $error'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  },
+                  onVerificacionAutomatica: (credential) async {
+                    Navigator.of(dialogContext).pop();
+                    _cargarReservasCliente(context, telefono);
+                  },
+                );
+              }
+
+              return AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.sms, color: const Color(0xFF3498DB)),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Verificación SMS',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (enviando) ...[
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      const Text('Enviando código SMS...'),
+                    ] else ...[
+                      Text(
+                        'Ingresa el código de 6 dígitos enviado a:',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        telefono,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: codigoController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          letterSpacing: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '000000',
+                          counterText: '',
+                          border: const OutlineInputBorder(),
+                          errorText: errorCodigo,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (segundosRestantes > 0)
+                        Text(
+                          'Puedes reenviar en $segundosRestantes segundos',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        )
+                      else
+                        TextButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              enviando = true;
+                              segundosRestantes = 60;
+                            });
+                          },
+                          child: const Text('Reenviar código'),
+                        ),
+                    ],
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                  if (!enviando)
+                    ElevatedButton(
+                      onPressed:
+                          verificando
+                              ? null
+                              : () async {
+                                final codigo = codigoController.text.trim();
+                                if (codigo.length != 6) {
+                                  setDialogState(() {
+                                    errorCodigo =
+                                        'Ingresa el código de 6 dígitos';
+                                  });
+                                  return;
+                                }
+
+                                setDialogState(() {
+                                  verificando = true;
+                                  errorCodigo = null;
+                                });
+
+                                try {
+                                  final telefonoVerificado =
+                                      await servicioVerificacion
+                                          .verificarCodigoSMS(codigo: codigo);
+
+                                  Navigator.of(dialogContext).pop();
+
+                                  // Guardar sesión del cliente
+                                  servicioVerificacion.guardarSesionCliente(
+                                    telefonoVerificado,
+                                    '',
+                                  );
+
+                                  _cargarReservasCliente(
+                                    context,
+                                    telefonoVerificado,
+                                  );
+                                } catch (e) {
+                                  setDialogState(() {
+                                    verificando = false;
+                                    errorCodigo =
+                                        'Código incorrecto. Intenta de nuevo.';
+                                  });
+                                }
+                              },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF27AE60),
+                        foregroundColor: Colors.white,
+                      ),
+                      child:
+                          verificando
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Text('Verificar'),
+                    ),
+                ],
+              );
+            },
+          ),
+    );
+  }
+
+  void _iniciarTimerReenvio(
+    void Function(void Function()) setDialogState,
+    int Function() getSegundos,
+    void Function(int) setSegundos,
+  ) {
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      final actual = getSegundos();
+      if (actual > 0) {
+        setDialogState(() {
+          setSegundos(actual - 1);
+        });
+        return true;
+      }
+      return false;
+    });
+  }
+
+  void _cargarReservasCliente(BuildContext context, String telefono) {
+    final servicioVerificacion = getIt<ServicioVerificacionCliente>();
+    final reservas = servicioVerificacion.obtenerReservasPorTelefono(telefono);
+
+    setState(() {
+      _reservasCliente = reservas;
+      _mostrandoReservasCliente = true;
+    });
+
+    if (reservas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se encontraron reservas asociadas a este teléfono'),
+          backgroundColor: Color(0xFFF39C12),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Se encontraron ${reservas.length} reserva(s)'),
+          backgroundColor: const Color(0xFF27AE60),
+        ),
+      );
+    }
+  }
+
+  Widget _buildReservasClienteView(
+    BuildContext context,
+    List<Reserva> reservasSistema,
+  ) {
+    return Column(
+      children: [
+        // Banner indicando que se muestran reservas del cliente
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: const Color(0xFF3498DB).withOpacity(0.1),
+          child: Row(
+            children: [
+              const Icon(Icons.person, color: Color(0xFF3498DB)),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Mostrando tus reservas anteriores',
+                  style: TextStyle(
+                    color: Color(0xFF3498DB),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _mostrandoReservasCliente = false;
+                    _reservasCliente = [];
+                  });
+                },
+                child: const Text('Volver'),
+              ),
+            ],
+          ),
+        ),
+        // Lista de reservas del cliente desde localStorage
+        Expanded(
+          child:
+              _reservasCliente.isEmpty
+                  ? const Center(
+                    child: Text(
+                      'No tienes reservas anteriores',
+                      style: TextStyle(fontSize: 18, color: Color(0xFF7F8C8D)),
+                    ),
+                  )
+                  : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _reservasCliente.length,
+                    itemBuilder: (context, index) {
+                      final reservaMap = _reservasCliente[index];
+                      return _buildReservaClienteCard(reservaMap);
+                    },
+                  ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReservaClienteCard(Map<String, dynamic> reserva) {
+    final fechaHora =
+        DateTime.tryParse(reserva['fechaHora'] ?? '') ?? DateTime.now();
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    final timeFormat = DateFormat('HH:mm');
+    final estado = reserva['estado'] ?? 'pendiente';
+
+    Color getEstadoColor() {
+      switch (estado) {
+        case 'confirmada':
+          return const Color(0xFF27AE60);
+        case 'pendiente':
+          return const Color(0xFFF39C12);
+        case 'cancelada':
+          return const Color(0xFFE74C3C);
+        default:
+          return const Color(0xFF7F8C8D);
+      }
+    }
+
+    IconData getEstadoIcono() {
+      switch (estado) {
+        case 'confirmada':
+          return Icons.check_circle;
+        case 'pendiente':
+          return Icons.schedule;
+        case 'cancelada':
+          return Icons.cancel;
+        default:
+          return Icons.help;
+      }
+    }
+
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Encabezado
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Reserva #${(reserva['id'] ?? '').toString().substring(0, 8)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: getEstadoColor().withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(getEstadoIcono(), size: 16, color: getEstadoColor()),
+                      const SizedBox(width: 6),
+                      Text(
+                        estado.toString().toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: getEstadoColor(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+
+            // Info
+            _buildInfoRow(
+              Icons.person,
+              'Nombre',
+              reserva['nombreCliente'] ?? 'N/A',
+            ),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.calendar_today,
+              'Fecha',
+              dateFormat.format(fechaHora),
+            ),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.access_time,
+              'Hora',
+              timeFormat.format(fechaHora),
+            ),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.table_restaurant,
+              'Mesa',
+              'Mesa ${reserva['mesaId'] ?? 'N/A'}',
+            ),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.people,
+              'Personas',
+              '${reserva['numeroPersonas'] ?? 'N/A'}',
+            ),
+            if (reserva['email'] != null &&
+                reserva['email'].toString().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _buildInfoRow(Icons.email, 'Email', reserva['email']),
+            ],
+          ],
+        ),
       ),
     );
   }

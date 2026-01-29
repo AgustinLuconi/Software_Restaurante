@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 /// Servicio de autenticación con Firebase
 class ServicioAutenticacion {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   // Solo inicializar GoogleSignIn en plataformas móviles/desktop
   GoogleSignIn? _googleSignIn;
   GoogleSignIn get googleSignIn {
@@ -75,22 +75,20 @@ class ServicioAutenticacion {
       final googleProvider = GoogleAuthProvider();
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
-      
+
       // IMPORTANTE: Forzar selector de cuentas
-      googleProvider.setCustomParameters({
-        'prompt': 'select_account',
-      });
-      
+      googleProvider.setCustomParameters({'prompt': 'select_account'});
+
       return await _auth.signInWithPopup(googleProvider);
     } else {
       // En móvil/desktop: Usar google_sign_in package
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      
+
       if (googleUser == null) {
         return null;
       }
 
-      final GoogleSignInAuthentication googleAuth = 
+      final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
@@ -246,6 +244,222 @@ class ServicioAutenticacion {
     final user = _auth.currentUser;
     if (user == null) return false;
     return user.providerData.any((p) => p.providerId == 'google.com');
+  }
+
+  /// Verificar si el teléfono está verificado
+  bool get telefonoVerificado {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    return user.phoneNumber != null && user.phoneNumber!.isNotEmpty;
+  }
+
+  /// Obtener teléfono verificado
+  String? get telefonoVerificadoNumero => _auth.currentUser?.phoneNumber;
+
+  // ============================================================
+  // VERIFICACIÓN DE TELÉFONO
+  // ============================================================
+
+  // Almacena el verificationId para usarlo al verificar el código
+  String? _verificationId;
+  int? _resendToken;
+
+  /// Enviar código SMS de verificación
+  /// Retorna true si se envió correctamente
+  Future<bool> enviarCodigoSMS({
+    required String numeroTelefono,
+    required Function(String) onCodeSent,
+    required Function(String) onError,
+    required Function() onAutoVerified,
+  }) async {
+    try {
+      // Formatear número (asegurar formato E.164)
+      final phoneNumber = _formatearNumeroTelefono(numeroTelefono);
+
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: const Duration(seconds: 60),
+
+        // Verificación automática (Android)
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // En Android, puede verificar automáticamente
+          try {
+            final user = _auth.currentUser;
+            if (user != null) {
+              await user.linkWithCredential(credential);
+              onAutoVerified();
+            }
+          } catch (e) {
+            onError('Error en verificación automática: $e');
+          }
+        },
+
+        // Error en verificación
+        verificationFailed: (FirebaseAuthException e) {
+          String mensaje;
+          switch (e.code) {
+            case 'invalid-phone-number':
+              mensaje =
+                  'Número de teléfono inválido. Usa formato: +54 9 11 1234-5678';
+              break;
+            case 'too-many-requests':
+              mensaje = 'Demasiados intentos. Intenta más tarde';
+              break;
+            case 'quota-exceeded':
+              mensaje = 'Límite de SMS excedido. Intenta más tarde';
+              break;
+            default:
+              mensaje = 'Error: ${e.message}';
+          }
+          onError(mensaje);
+        },
+
+        // Código enviado exitosamente
+        codeSent: (String verificationId, int? resendToken) {
+          _verificationId = verificationId;
+          _resendToken = resendToken;
+          onCodeSent('Código enviado por SMS');
+        },
+
+        // Tiempo de espera agotado
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
+
+        // Token para reenvío
+        forceResendingToken: _resendToken,
+      );
+
+      return true;
+    } catch (e) {
+      onError('Error al enviar SMS: $e');
+      return false;
+    }
+  }
+
+  /// Verificar código SMS ingresado por el usuario
+  Future<void> verificarCodigoSMS({required String codigo}) async {
+    if (_verificationId == null) {
+      throw Exception('Primero debes solicitar el código SMS');
+    }
+
+    try {
+      // Crear credencial con el código
+      final credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: codigo,
+      );
+
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No hay usuario autenticado');
+      }
+
+      // Vincular teléfono a la cuenta existente
+      await user.linkWithCredential(credential);
+
+      // Limpiar verificationId
+      _verificationId = null;
+      _resendToken = null;
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'invalid-verification-code':
+          throw Exception('Código incorrecto. Verifica e intenta nuevamente');
+        case 'credential-already-in-use':
+          throw Exception('Este número ya está vinculado a otra cuenta');
+        case 'invalid-verification-id':
+          throw Exception('La verificación expiró. Solicita un nuevo código');
+        case 'session-expired':
+          throw Exception('La sesión expiró. Solicita un nuevo código');
+        default:
+          throw Exception('Error: ${e.message}');
+      }
+    }
+  }
+
+  /// Desvincular teléfono de la cuenta
+  Future<void> desvincularTelefono() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No hay usuario autenticado');
+    }
+
+    try {
+      await user.unlink('phone');
+    } on FirebaseAuthException catch (e) {
+      throw _manejarError(e);
+    }
+  }
+
+  /// Formatear número de teléfono a formato E.164
+  /// Ejemplo: "11 1234-5678" → "+5491112345678"
+  String _formatearNumeroTelefono(String numero) {
+    // Remover espacios, guiones y paréntesis
+    String limpio = numero.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+
+    // Si no empieza con +, agregar código de Argentina
+    if (!limpio.startsWith('+')) {
+      // Si empieza con 0, removerlo
+      if (limpio.startsWith('0')) {
+        limpio = limpio.substring(1);
+      }
+      // Si empieza con 15 (formato local), removerlo y agregar 9
+      if (limpio.startsWith('15')) {
+        limpio = '9${limpio.substring(2)}';
+      }
+      // Si no tiene el 9 después del código de área
+      if (!limpio.startsWith('9') && limpio.length == 10) {
+        limpio = '9$limpio';
+      }
+      // Agregar código de Argentina
+      limpio = '+54$limpio';
+    }
+
+    return limpio;
+  }
+
+  /// Validar formato de teléfono argentino
+  Map<String, dynamic> validarTelefonoArgentino(String telefono) {
+    try {
+      final formateado = _formatearNumeroTelefono(telefono);
+
+      // Validar longitud (Argentina: +54 + 9 + 10 dígitos = 13-14 dígitos)
+      if (formateado.length < 13 || formateado.length > 14) {
+        return {
+          'valido': false,
+          'error': 'Número de teléfono inválido para Argentina',
+        };
+      }
+
+      // Validar que empiece con +54
+      if (!formateado.startsWith('+54')) {
+        return {'valido': false, 'error': 'Debe ser un número argentino (+54)'};
+      }
+
+      return {
+        'valido': true,
+        'formateado': formateado,
+        'nacional': _formatoNacional(formateado),
+      };
+    } catch (e) {
+      return {'valido': false, 'error': 'Formato de teléfono inválido'};
+    }
+  }
+
+  String _formatoNacional(String e164) {
+    // +5491112345678 → 011 15-1234-5678
+    if (e164.length < 13) return e164;
+    final sinCodigo = e164.substring(3); // Quitar +54
+    final tiene9 = sinCodigo.startsWith('9');
+    final numero = tiene9 ? sinCodigo.substring(1) : sinCodigo;
+
+    if (numero.length == 10) {
+      // Código de área 2 dígitos (Buenos Aires)
+      final area = numero.substring(0, 2);
+      final resto = numero.substring(2);
+      return '0$area 15-${resto.substring(0, 4)}-${resto.substring(4)}';
+    }
+    return e164;
   }
 
   // ============================================================

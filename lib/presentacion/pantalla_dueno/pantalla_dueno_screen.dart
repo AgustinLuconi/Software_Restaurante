@@ -359,6 +359,19 @@ class _PantallaDuenoView extends StatelessWidget {
               onTap: () => _mostrarCambiarContrasena(context),
             ),
 
+            const SizedBox(height: 12),
+
+            // Botón de verificar teléfono
+            _buildSecurityCardConEstado(
+              context,
+              icon: Icons.phone_android,
+              titulo: 'Verificar Teléfono',
+              subtitulo: _obtenerSubtituloTelefono(),
+              color: const Color(0xFF27AE60),
+              estaVerificado: getIt<ServicioAutenticacion>().telefonoVerificado,
+              onTap: () => _mostrarVerificarTelefono(context, negocio),
+            ),
+
             const SizedBox(height: 24),
           ],
         ),
@@ -404,6 +417,107 @@ class _PantallaDuenoView extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF2C3E50),
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitulo,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.grey[400]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _obtenerSubtituloTelefono() {
+    final auth = getIt<ServicioAutenticacion>();
+    if (auth.telefonoVerificado) {
+      final telefono = auth.telefonoVerificadoNumero ?? '';
+      return 'Verificado: $telefono';
+    }
+    return 'Verifica tu número para mayor seguridad';
+  }
+
+  Widget _buildSecurityCardConEstado(
+    BuildContext context, {
+    required IconData icon,
+    required String titulo,
+    required String subtitulo,
+    required Color color,
+    required bool estaVerificado,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          titulo,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                          ),
+                        ),
+                        if (estaVerificado) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF27AE60).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  size: 14,
+                                  color: Color(0xFF27AE60),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Verificado',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF27AE60),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -1198,6 +1312,352 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
+  void _mostrarVerificarTelefono(BuildContext context, negocio) {
+    final auth = getIt<ServicioAutenticacion>();
+    final telefonoController = TextEditingController(text: negocio.telefono);
+    final codigoController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        int paso = 1; // 1: ingresar teléfono, 2: ingresar código
+        bool isLoading = false;
+        int tiempoRestante = 0;
+        String? errorMessage;
+        bool verificadoExitosamente = false;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Timer de reenvío
+            void iniciarTimer() {
+              tiempoRestante = 60;
+              Future.doWhile(() async {
+                await Future.delayed(const Duration(seconds: 1));
+                if (tiempoRestante > 0 && context.mounted) {
+                  setState(() => tiempoRestante--);
+                  return true;
+                }
+                return false;
+              });
+            }
+
+            Future<void> enviarCodigo() async {
+              final telefono = telefonoController.text.trim();
+
+              // Validar teléfono
+              final validacion = auth.validarTelefonoArgentino(telefono);
+              if (validacion['valido'] != true) {
+                setState(() => errorMessage = validacion['error']);
+                return;
+              }
+
+              setState(() {
+                isLoading = true;
+                errorMessage = null;
+              });
+
+              await auth.enviarCodigoSMS(
+                numeroTelefono: telefono,
+                onCodeSent: (mensaje) {
+                  setState(() {
+                    isLoading = false;
+                    paso = 2;
+                  });
+                  iniciarTimer();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('📱 $mensaje'),
+                      backgroundColor: const Color(0xFF27AE60),
+                    ),
+                  );
+                },
+                onError: (error) {
+                  setState(() {
+                    isLoading = false;
+                    errorMessage = error;
+                  });
+                },
+                onAutoVerified: () {
+                  setState(() {
+                    verificadoExitosamente = true;
+                    isLoading = false;
+                  });
+                  Future.delayed(const Duration(seconds: 2), () {
+                    Navigator.pop(dialogContext);
+                  });
+                },
+              );
+            }
+
+            Future<void> verificarCodigo() async {
+              final codigo = codigoController.text.trim();
+
+              if (codigo.length != 6) {
+                setState(() => errorMessage = 'El código debe tener 6 dígitos');
+                return;
+              }
+
+              setState(() {
+                isLoading = true;
+                errorMessage = null;
+              });
+
+              try {
+                await auth.verificarCodigoSMS(codigo: codigo);
+                setState(() {
+                  verificadoExitosamente = true;
+                  isLoading = false;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ ¡Teléfono verificado exitosamente!'),
+                    backgroundColor: Color(0xFF27AE60),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+
+                Future.delayed(const Duration(seconds: 2), () {
+                  if (context.mounted) Navigator.pop(dialogContext);
+                });
+              } catch (e) {
+                setState(() {
+                  isLoading = false;
+                  errorMessage = e.toString().replaceAll('Exception: ', '');
+                });
+              }
+            }
+
+            if (verificadoExitosamente) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF27AE60).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: Color(0xFF27AE60),
+                        size: 64,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      '¡Teléfono Verificado!',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF27AE60),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tu número ${telefonoController.text} ha sido verificado correctamente.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    paso == 1 ? Icons.phone_android : Icons.sms,
+                    color: const Color(0xFF27AE60),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(paso == 1 ? 'Verificar Teléfono' : 'Ingresar Código'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (paso == 1) ...[
+                      const Text(
+                        'Ingresa tu número de teléfono para recibir un código SMS de verificación.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: telefonoController,
+                        decoration: const InputDecoration(
+                          labelText: 'Número de Teléfono',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.phone),
+                          hintText: '+54 9 11 1234-5678',
+                          helperText: 'Formato argentino con código de área',
+                        ),
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.blue,
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Se enviará un SMS con código de verificación',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (paso == 2) ...[
+                      Text(
+                        'Ingresa el código de 6 dígitos enviado a:',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        telefonoController.text,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF27AE60),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: codigoController,
+                        decoration: const InputDecoration(
+                          labelText: 'Código de Verificación',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.lock_outline),
+                          hintText: '123456',
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          letterSpacing: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (tiempoRestante > 0)
+                        Text(
+                          'Reenviar código en ${tiempoRestante}s',
+                          style: TextStyle(color: Colors.grey[600]),
+                        )
+                      else
+                        TextButton.icon(
+                          onPressed: isLoading ? null : enviarCodigo,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reenviar código'),
+                        ),
+                    ],
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                if (paso == 2)
+                  TextButton(
+                    onPressed:
+                        isLoading
+                            ? null
+                            : () => setState(() {
+                              paso = 1;
+                              codigoController.clear();
+                              errorMessage = null;
+                            }),
+                    child: const Text('Cambiar número'),
+                  ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed:
+                      isLoading
+                          ? null
+                          : (paso == 1 ? enviarCodigo : verificarCodigo),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF27AE60),
+                  ),
+                  child:
+                      isLoading
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : Text(paso == 1 ? 'Enviar SMS' : 'Verificar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _mostrarGestionHorarios(BuildContext context, negocio) async {
     final cubit = context.read<PantallaDuenoCubit>();
     // 1. Obtener los horarios actuales de la base de datos
@@ -1851,14 +2311,71 @@ class _PantallaDuenoView extends StatelessWidget {
     PantallaDuenoCubit cubit,
     VoidCallback onUpdate,
   ) {
+    final motivoController = TextEditingController();
+
     showDialog(
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            title: const Text('Cancelar Reserva'),
-            content: const Text(
-              '¿Estás seguro de que deseas cancelar esta reserva?\n\n'
-              'El cliente será notificado de la cancelación.',
+            title: Row(
+              children: [
+                Icon(Icons.cancel, color: const Color(0xFFE74C3C)),
+                const SizedBox(width: 8),
+                const Text('Cancelar Reserva'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '¿Estás seguro de que deseas cancelar esta reserva?',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: motivoController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Motivo de cancelación (opcional)',
+                    hintText: 'Ej: Problema con la mesa, evento privado, etc.',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.edit_note),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3498DB).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF3498DB).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.email,
+                        color: const Color(0xFF3498DB),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Se enviará un email al cliente informando la cancelación.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF2C3E50),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             actions: [
               TextButton(
@@ -1867,6 +2384,7 @@ class _PantallaDuenoView extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () async {
+                  final motivo = motivoController.text.trim();
                   Navigator.of(dialogContext).pop();
 
                   // Mostrar indicador de carga
@@ -1878,7 +2396,10 @@ class _PantallaDuenoView extends StatelessWidget {
                             const Center(child: CircularProgressIndicator()),
                   );
 
-                  final exito = await cubit.cancelarReservaAdmin(reservaId);
+                  final exito = await cubit.cancelarReservaAdmin(
+                    reservaId,
+                    motivo: motivo.isNotEmpty ? motivo : null,
+                  );
 
                   // Cerrar indicador de carga
                   if (context.mounted) {
@@ -1889,7 +2410,7 @@ class _PantallaDuenoView extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          '✅ Reserva cancelada correctamente. Cliente notificado.',
+                          '✅ Reserva cancelada. Se envió email al cliente.',
                         ),
                         backgroundColor: Color(0xFF27AE60),
                       ),
@@ -1908,7 +2429,7 @@ class _PantallaDuenoView extends StatelessWidget {
                   backgroundColor: const Color(0xFFE74C3C),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Sí, cancelar'),
+                child: const Text('Confirmar Cancelación'),
               ),
             ],
           ),

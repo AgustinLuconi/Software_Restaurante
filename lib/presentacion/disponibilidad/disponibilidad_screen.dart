@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../adaptadores/servicio_verificacion_cliente.dart';
 import '../../dominio/entidades/mesa.dart';
+import '../../service_locator.dart';
 import 'disponibilidad_cubit.dart';
 import 'disponibilidad_estados_de_cubit.dart';
 
@@ -27,7 +29,8 @@ class _DisponibilidadView extends StatefulWidget {
 
 class _DisponibilidadViewState extends State<_DisponibilidadView> {
   DateTime? _fechaSeleccionada;
-  String? _intervaloSeleccionado; // Cambio: ahora guardamos el intervalo como String
+  String?
+  _intervaloSeleccionado; // Cambio: ahora guardamos el intervalo como String
   int _numeroPersonas = 2;
   ZonaMesa? _zonaSeleccionada; // Nueva variable para la zona
   Future<List<String>>? _intervalosFuture; // Cache del Future de intervalos
@@ -43,14 +46,14 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
         ),
       ),
       body: SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             // Horarios del restaurante
             _buildHorariosCard(),
             const SizedBox(height: 16),
-            
+
             // Info sobre intervalos de reserva (dinámico)
             BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
               builder: (context, state) {
@@ -68,9 +71,9 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             // Título sección de búsqueda
             Text(
               'Buscar Mesa Disponible',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
 
@@ -161,18 +164,14 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildHorariosCard() {
     return BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
       builder: (context, state) {
-        final horarios = state is DisponibilidadExitosa 
-            ? state.horariosServicio 
-            : null;
-        
+        final horarios =
+            state is DisponibilidadExitosa ? state.horariosServicio : null;
+
         return Card(
           elevation: 6,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(
-              color: Color(0xFF3498DB),
-              width: 2,
-            ),
+            side: const BorderSide(color: Color(0xFF3498DB), width: 2),
           ),
           color: Colors.white,
           child: Container(
@@ -281,26 +280,16 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
       items.add(const SizedBox(height: 16));
       items.add(
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 10,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: Colors.grey[400]!,
-              width: 1,
-            ),
+            border: Border.all(color: Colors.grey[400]!, width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.event_busy,
-                color: Colors.grey[700],
-                size: 18,
-              ),
+              Icon(Icons.event_busy, color: Colors.grey[700], size: 18),
               const SizedBox(width: 8),
               Text(
                 'Cerrado: ${diasCerrados.join(', ')}',
@@ -327,10 +316,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.5),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -369,10 +355,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 const SizedBox(height: 4),
                 Text(
                   'Cada mesa se reserva por $duracionMinutos minutos. Si una mesa está reservada, no estará disponible en ese horario.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[700],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                 ),
               ],
             ),
@@ -433,9 +416,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildSelectorZona() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -446,10 +427,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 color: const Color(0xFF9B59B6).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.location_on,
-                color: Color(0xFF9B59B6),
-              ),
+              child: const Icon(Icons.location_on, color: Color(0xFF9B59B6)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -458,14 +436,14 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 children: [
                   const Text(
                     'Zona',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const SizedBox(height: 4),
                   FutureBuilder<List<ZonaMesa>>(
-                    future: context.read<DisponibilidadCubit>().obtenerZonasDisponibles(),
+                    future:
+                        context
+                            .read<DisponibilidadCubit>()
+                            .obtenerZonasDisponibles(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Text(
@@ -484,22 +462,23 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                         icon: const Icon(Icons.keyboard_arrow_down),
                         dropdownColor: Colors.white,
                         focusColor: Colors.transparent,
-                        items: zonas.map((zona) {
-                          return DropdownMenuItem<ZonaMesa>(
-                            value: zona,
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _obtenerIconoZona(zona),
-                                  size: 20,
-                                  color: _obtenerColorZona(zona),
+                        items:
+                            zonas.map((zona) {
+                              return DropdownMenuItem<ZonaMesa>(
+                                value: zona,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _obtenerIconoZona(zona),
+                                      size: 20,
+                                      color: _obtenerColorZona(zona),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(zona.nombre),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Text(zona.nombre),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                              );
+                            }).toList(),
                         onChanged: (zona) {
                           setState(() {
                             _zonaSeleccionada = zona;
@@ -550,14 +529,9 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildSelectorFecha() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: const Icon(
-          Icons.calendar_today,
-          color: Color(0xFF3498DB),
-        ),
+        leading: const Icon(Icons.calendar_today, color: Color(0xFF3498DB)),
         title: const Text(
           'Fecha',
           style: TextStyle(fontWeight: FontWeight.w600),
@@ -581,7 +555,9 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
               // Limpiar intervalo seleccionado al cambiar de fecha
               _intervaloSeleccionado = null;
               // Actualizar el cache del Future de intervalos
-              _intervalosFuture = context.read<DisponibilidadCubit>().obtenerIntervalosHorarioNegocio(fecha);
+              _intervalosFuture = context
+                  .read<DisponibilidadCubit>()
+                  .obtenerIntervalosHorarioNegocio(fecha);
             });
           }
         },
@@ -594,9 +570,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     if (_fechaSeleccionada == null) {
       return Card(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -619,9 +593,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
 
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -650,13 +622,10 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 } else if (state is MesaEncontrada) {
                   duracion = state.duracionPromedioMinutos;
                 }
-                    
+
                 return Text(
                   'Selecciona un horario (intervalos de $duracion minutos)',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 );
               },
             ),
@@ -680,10 +649,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                     child: Center(
                       child: Text(
                         'No hay horarios disponibles para esta fecha',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ),
                   );
@@ -694,25 +660,31 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 return Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: intervalos.map((intervalo) {
-                    final seleccionado = _intervaloSeleccionado == intervalo;
-                    
-                    return ChoiceChip(
-                      label: Text(intervalo),
-                      selected: seleccionado,
-                      onSelected: (selected) {
-                        setState(() {
-                          _intervaloSeleccionado = selected ? intervalo : null;
-                        });
-                      },
-                      selectedColor: const Color(0xFF27AE60),
-                      backgroundColor: Colors.grey[200],
-                      labelStyle: TextStyle(
-                        color: seleccionado ? Colors.white : Colors.black87,
-                        fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    );
-                  }).toList(),
+                  children:
+                      intervalos.map((intervalo) {
+                        final seleccionado =
+                            _intervaloSeleccionado == intervalo;
+
+                        return ChoiceChip(
+                          label: Text(intervalo),
+                          selected: seleccionado,
+                          onSelected: (selected) {
+                            setState(() {
+                              _intervaloSeleccionado =
+                                  selected ? intervalo : null;
+                            });
+                          },
+                          selectedColor: const Color(0xFF27AE60),
+                          backgroundColor: Colors.grey[200],
+                          labelStyle: TextStyle(
+                            color: seleccionado ? Colors.white : Colors.black87,
+                            fontWeight:
+                                seleccionado
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                          ),
+                        );
+                      }).toList(),
                 );
               },
             ),
@@ -725,24 +697,16 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildSelectorPersonas() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            const Icon(
-              Icons.people,
-              color: Color(0xFF3498DB),
-            ),
+            const Icon(Icons.people, color: Color(0xFF3498DB)),
             const SizedBox(width: 16),
             const Text(
               'Número de Personas:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             IconButton(
@@ -837,10 +801,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
         icon: const Icon(Icons.search, size: 24),
         label: const Text(
           'Buscar Mesa Disponible',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3498DB),
@@ -866,10 +827,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: _obtenerColorZona(zona),
-          width: 2,
-        ),
+        side: BorderSide(color: _obtenerColorZona(zona), width: 2),
       ),
       child: Column(
         children: [
@@ -912,10 +870,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                       ),
                       Text(
                         'Zona: ${zona.nombre}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -963,7 +918,11 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(Icons.people, size: 16, color: Color(0xFF7F8C8D)),
+                              const Icon(
+                                Icons.people,
+                                size: 16,
+                                color: Color(0xFF7F8C8D),
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Capacidad: ${mesa.capacidad} personas',
@@ -989,14 +948,25 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   ),
                   child: Column(
                     children: [
-                      _buildItemResumen(Icons.calendar_today, 'Fecha', 
-                        fecha != null ? '${fecha.day}/${fecha.month}/${fecha.year}' : '-'),
+                      _buildItemResumen(
+                        Icons.calendar_today,
+                        'Fecha',
+                        fecha != null
+                            ? '${fecha.day}/${fecha.month}/${fecha.year}'
+                            : '-',
+                      ),
                       const SizedBox(height: 8),
-                      _buildItemResumen(Icons.access_time, 'Horario', 
-                        intervaloSeleccionado ?? '-'),
+                      _buildItemResumen(
+                        Icons.access_time,
+                        'Horario',
+                        intervaloSeleccionado ?? '-',
+                      ),
                       const SizedBox(height: 8),
-                      _buildItemResumen(Icons.people, 'Personas', 
-                        '$numeroPersonas'),
+                      _buildItemResumen(
+                        Icons.people,
+                        'Personas',
+                        '$numeroPersonas',
+                      ),
                     ],
                   ),
                 ),
@@ -1049,10 +1019,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
         const SizedBox(width: 8),
         Text(
           '$etiqueta: ',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF7F8C8D),
-          ),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF7F8C8D)),
         ),
         Text(
           valor,
@@ -1068,9 +1035,10 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
 
   Widget _buildErrorCard(String message) {
     // Determinar si es un error de horario cerrado
-    final esErrorHorario = message.toLowerCase().contains('horario') || 
-                           message.toLowerCase().contains('cerrado');
-    
+    final esErrorHorario =
+        message.toLowerCase().contains('horario') ||
+        message.toLowerCase().contains('cerrado');
+
     return Card(
       elevation: 3,
       color: esErrorHorario ? Colors.orange.shade50 : Colors.red.shade50,
@@ -1088,14 +1056,18 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: esErrorHorario 
-                    ? Colors.orange.shade100 
-                    : Colors.red.shade100,
+                color:
+                    esErrorHorario
+                        ? Colors.orange.shade100
+                        : Colors.red.shade100,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 esErrorHorario ? Icons.access_time_filled : Icons.error_outline,
-                color: esErrorHorario ? Colors.orange.shade700 : Colors.red.shade700,
+                color:
+                    esErrorHorario
+                        ? Colors.orange.shade700
+                        : Colors.red.shade700,
                 size: 40,
               ),
             ),
@@ -1105,7 +1077,10 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: esErrorHorario ? Colors.orange.shade900 : Colors.red.shade900,
+                color:
+                    esErrorHorario
+                        ? Colors.orange.shade900
+                        : Colors.red.shade900,
               ),
             ),
             const SizedBox(height: 12),
@@ -1115,7 +1090,10 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
               style: TextStyle(
                 fontSize: 15,
                 height: 1.5,
-                color: esErrorHorario ? Colors.orange.shade900 : Colors.red.shade900,
+                color:
+                    esErrorHorario
+                        ? Colors.orange.shade900
+                        : Colors.red.shade900,
               ),
             ),
           ],
@@ -1142,7 +1120,14 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
           ),
         ),
         const SizedBox(height: 16),
-        ...mesas.map((mesa) => _buildMesaCard(mesa, fecha, intervaloSeleccionado, numeroPersonas)),
+        ...mesas.map(
+          (mesa) => _buildMesaCard(
+            mesa,
+            fecha,
+            intervaloSeleccionado,
+            numeroPersonas,
+          ),
+        ),
       ],
     );
   }
@@ -1156,9 +1141,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -1214,24 +1197,28 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 if (fecha == null || intervaloSeleccionado == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Por favor selecciona fecha y horario para reservar'),
+                      content: Text(
+                        'Por favor selecciona fecha y horario para reservar',
+                      ),
                       backgroundColor: Colors.orange,
                     ),
                   );
                   return;
                 }
-                
+
                 // Validar capacidad
                 if (!mesa.puedeAcomodar(numeroPersonas)) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Esta mesa no es adecuada para $numeroPersonas personas'),
+                      content: Text(
+                        'Esta mesa no es adecuada para $numeroPersonas personas',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
                   return;
                 }
-                
+
                 // Mostrar diálogo de confirmación
                 _showConfirmarReservaDialog(
                   context,
@@ -1270,148 +1257,221 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     String intervaloSeleccionado,
     int numeroPersonas,
   ) {
-    // Primer diálogo: Solicitar contacto y nombre
-    final contactoController = TextEditingController();
+    // Controladores para los campos
     final nombreController = TextEditingController();
+    final telefonoController = TextEditingController();
+    final emailController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    final servicioVerificacion = getIt<ServicioVerificacionCliente>();
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.contact_mail, color: Color(0xFF3498DB)),
-            const SizedBox(width: 12),
-            const Text('Datos de Contacto'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+      builder:
+          (dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
               children: [
-                const Text(
-                  'Resumen de tu reserva:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C3E50),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildInfoRow(Icons.table_restaurant, 'Mesa', mesa.nombre),
-                _buildInfoRow(Icons.calendar_today, 'Fecha', '${fecha.day}/${fecha.month}/${fecha.year}'),
-                _buildInfoRow(Icons.access_time, 'Horario', intervaloSeleccionado),
-                _buildInfoRow(Icons.people, 'Personas', '$numeroPersonas'),
-                const Divider(height: 24),
-                const Text(
-                  'Para confirmar tu reserva, necesitamos:',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF7F8C8D),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Campo de nombre
-                TextFormField(
-                  controller: nombreController,
-                  decoration: const InputDecoration(
-                    labelText: 'Tu nombre *',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                    hintText: 'Ej: Juan Pérez',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Por favor ingresa tu nombre';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // Campo de contacto (email o teléfono)
-                TextFormField(
-                  controller: contactoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email o Teléfono *',
-                    prefixIcon: Icon(Icons.alternate_email),
-                    border: OutlineInputBorder(),
-                    hintText: 'Ej: correo@mail.com o +54 261 123-4567',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Por favor ingresa tu email o teléfono';
-                    }
-                    // Validación básica
-                    final esEmail = value.contains('@');
-                    final esTelefono = value.replaceAll(RegExp(r'[^\d]'), '').length >= 8;
-                    
-                    if (!esEmail && !esTelefono) {
-                      return 'Ingresa un email o teléfono válido';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3498DB).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline, size: 20, color: Color(0xFF3498DB)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: const Text(
-                          'Te enviaremos un código de verificación para confirmar tu reserva',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF2C3E50)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const Icon(Icons.contact_mail, color: Color(0xFF3498DB)),
+                const SizedBox(width: 12),
+                const Text('Datos de Contacto'),
               ],
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                final contacto = contactoController.text.trim();
-                final nombre = nombreController.text.trim();
-                
-                Navigator.of(dialogContext).pop();
-                
-                // Enviar código de verificación
-                await context.read<DisponibilidadCubit>().enviarCodigoVerificacion(contacto);
-                
-                // Mostrar diálogo para ingresar el código
-                _showVerificacionDialog(context, contacto, nombre, mesa, fecha, intervaloSeleccionado, numeroPersonas);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF27AE60),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Resumen de tu reserva:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(Icons.table_restaurant, 'Mesa', mesa.nombre),
+                    _buildInfoRow(
+                      Icons.calendar_today,
+                      'Fecha',
+                      '${fecha.day}/${fecha.month}/${fecha.year}',
+                    ),
+                    _buildInfoRow(
+                      Icons.access_time,
+                      'Horario',
+                      intervaloSeleccionado,
+                    ),
+                    _buildInfoRow(Icons.people, 'Personas', '$numeroPersonas'),
+                    const Divider(height: 24),
+                    const Text(
+                      'Para confirmar tu reserva, necesitamos:',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF7F8C8D)),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Campo de nombre
+                    TextFormField(
+                      controller: nombreController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tu nombre *',
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(),
+                        hintText: 'Ej: Juan Pérez',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Por favor ingresa tu nombre';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Campo de teléfono (para SMS)
+                    TextFormField(
+                      controller: telefonoController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Teléfono *',
+                        prefixIcon: Icon(Icons.phone_android),
+                        border: OutlineInputBorder(),
+                        hintText: '+54 9 11 1234-5678',
+                        helperText: 'Recibirás un código SMS para confirmar',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Por favor ingresa tu teléfono';
+                        }
+                        final validacion = servicioVerificacion.validarTelefono(
+                          value,
+                        );
+                        if (validacion['valido'] != true) {
+                          return validacion['error'];
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Campo de email (para detalles)
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email *',
+                        prefixIcon: Icon(Icons.email),
+                        border: OutlineInputBorder(),
+                        hintText: 'correo@ejemplo.com',
+                        helperText: 'Recibirás los detalles de tu reserva',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Por favor ingresa tu email';
+                        }
+                        if (!value.contains('@') || !value.contains('.')) {
+                          return 'Ingresa un email válido';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3498DB).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.sms,
+                                size: 20,
+                                color: Color(0xFF3498DB),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: const Text(
+                                  '📱 SMS con código de verificación',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF2C3E50),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.email,
+                                size: 20,
+                                color: Color(0xFF3498DB),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: const Text(
+                                  '📧 Email con detalles de la reserva',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF2C3E50),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: const Text('Enviar Código'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (formKey.currentState!.validate()) {
+                    final telefono = telefonoController.text.trim();
+                    final email = emailController.text.trim();
+                    final nombre = nombreController.text.trim();
+
+                    Navigator.of(dialogContext).pop();
+
+                    // Mostrar diálogo de verificación SMS
+                    _showVerificacionSMSDialog(
+                      context,
+                      telefono: telefono,
+                      email: email,
+                      nombre: nombre,
+                      mesa: mesa,
+                      fecha: fecha,
+                      intervaloSeleccionado: intervaloSeleccionado,
+                      numeroPersonas: numeroPersonas,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF27AE60),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text('Enviar Código SMS'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -1424,10 +1484,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
           const SizedBox(width: 8),
           Text(
             '$label: ',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF7F8C8D),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF7F8C8D)),
           ),
           Text(
             value,
@@ -1442,190 +1499,384 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     );
   }
 
-  void _showVerificacionDialog(
-    BuildContext context,
-    String contacto,
-    String nombre,
-    Mesa mesa,
-    DateTime fecha,
-    String intervaloSeleccionado,
-    int numeroPersonas,
-  ) {
-    // Extraer la hora del intervalo (ej: "08:00 - 09:00" -> 8)
-    final partes = intervaloSeleccionado.split(' - ');
-    final horaInicio = int.parse(partes[0].split(':')[0]);
-    
+  void _showVerificacionSMSDialog(
+    BuildContext context, {
+    required String telefono,
+    required String email,
+    required String nombre,
+    required Mesa mesa,
+    required DateTime fecha,
+    required String intervaloSeleccionado,
+    required int numeroPersonas,
+  }) {
+    final servicioVerificacion = getIt<ServicioVerificacionCliente>();
     final codigoController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
+    // Extraer la hora del intervalo (ej: "08:00 - 09:00" -> 8)
+    final partes = intervaloSeleccionado.split(' - ');
+    final horaInicio = int.parse(partes[0].split(':')[0]);
+
     showDialog(
       context: context,
-      barrierDismissible: false, // No se puede cerrar tocando fuera
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.verified_user, color: Color(0xFF27AE60)),
-            const SizedBox(width: 12),
-            const Text('Verificación'),
-          ],
-        ),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF27AE60).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFF27AE60).withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.mark_email_read,
-                      size: 48,
-                      color: Color(0xFF27AE60),
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        bool isLoading = false;
+        bool codigoEnviado = false;
+        String? errorMessage;
+        int tiempoRestante = 0;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Timer de reenvío
+            void iniciarTimer() {
+              tiempoRestante = 60;
+              Future.doWhile(() async {
+                await Future.delayed(const Duration(seconds: 1));
+                if (tiempoRestante > 0 && context.mounted) {
+                  setState(() => tiempoRestante--);
+                  return true;
+                }
+                return false;
+              });
+            }
+
+            Future<void> enviarCodigo() async {
+              setState(() {
+                isLoading = true;
+                errorMessage = null;
+              });
+
+              await servicioVerificacion.enviarCodigoSMS(
+                telefono: telefono,
+                onCodigoEnviado: (mensaje) {
+                  setState(() {
+                    isLoading = false;
+                    codigoEnviado = true;
+                  });
+                  iniciarTimer();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('📱 $mensaje a $telefono'),
+                      backgroundColor: const Color(0xFF27AE60),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Código enviado a:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      contacto,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Ingresa el código de 6 dígitos:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: codigoController,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 8,
-                ),
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  counterText: '',
-                  hintText: '000000',
-                  prefixIcon: const Icon(Icons.pin),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                ),
-                validator: (value) {
-                  if (value == null || value.length != 6) {
-                    return 'Ingresa los 6 dígitos';
-                  }
-                  if (!RegExp(r'^\d+$').hasMatch(value)) {
-                    return 'Solo números';
-                  }
-                  return null;
+                  );
                 },
+                onError: (error) {
+                  setState(() {
+                    isLoading = false;
+                    errorMessage = error;
+                  });
+                },
+                onVerificacionAutomatica: (telefonoVerificado) async {
+                  // Verificación automática en Android
+                  Navigator.of(dialogContext).pop();
+                  await _crearReservaVerificada(
+                    context,
+                    telefono: telefonoVerificado,
+                    email: email,
+                    nombre: nombre,
+                    mesa: mesa,
+                    fecha: fecha,
+                    horaInicio: horaInicio,
+                    numeroPersonas: numeroPersonas,
+                    intervaloSeleccionado: intervaloSeleccionado,
+                  );
+                },
+              );
+            }
+
+            Future<void> verificarCodigo() async {
+              if (!formKey.currentState!.validate()) return;
+
+              setState(() {
+                isLoading = true;
+                errorMessage = null;
+              });
+
+              try {
+                final telefonoVerificado = await servicioVerificacion
+                    .verificarCodigoSMS(codigo: codigoController.text.trim());
+
+                Navigator.of(dialogContext).pop();
+
+                await _crearReservaVerificada(
+                  context,
+                  telefono: telefonoVerificado,
+                  email: email,
+                  nombre: nombre,
+                  mesa: mesa,
+                  fecha: fecha,
+                  horaInicio: horaInicio,
+                  numeroPersonas: numeroPersonas,
+                  intervaloSeleccionado: intervaloSeleccionado,
+                );
+              } catch (e) {
+                setState(() {
+                  isLoading = false;
+                  errorMessage = e.toString().replaceAll('Exception: ', '');
+                });
+              }
+            }
+
+            // Si no se ha enviado el código aún, enviarlo automáticamente
+            if (!codigoEnviado && !isLoading && errorMessage == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                enviarCodigo();
+              });
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(height: 16),
-              Row(
+              title: Row(
                 children: [
-                  const Icon(Icons.timer, size: 16, color: Color(0xFFE67E22)),
-                  const SizedBox(width: 6),
-                  Text(
-                    'El código expira en 10 minutos',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
-                    ),
+                  Icon(
+                    codigoEnviado ? Icons.sms : Icons.phone_android,
+                    color: const Color(0xFF27AE60),
                   ),
+                  const SizedBox(width: 12),
+                  Text(codigoEnviado ? 'Verificar Código' : 'Enviando SMS...'),
                 ],
               ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () async {
-              // Reenviar código
-              await context.read<DisponibilidadCubit>().enviarCodigoVerificacion(contacto);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('✉️ Código reenviado'),
-                  backgroundColor: Color(0xFF3498DB),
-                  duration: Duration(seconds: 2),
+              content: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF27AE60).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF27AE60).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              codigoEnviado ? Icons.sms : Icons.send_to_mobile,
+                              size: 48,
+                              color: const Color(0xFF27AE60),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              codigoEnviado
+                                  ? 'Código SMS enviado a:'
+                                  : 'Enviando código a:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              telefono,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2C3E50),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isLoading && !codigoEnviado) ...[
+                        const SizedBox(height: 20),
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 12),
+                        const Text('Enviando código SMS...'),
+                      ],
+                      if (codigoEnviado) ...[
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Ingresa el código de 6 dígitos:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: codigoController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 8,
+                          ),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            counterText: '',
+                            hintText: '000000',
+                            prefixIcon: const Icon(Icons.pin),
+                            filled: true,
+                            fillColor: Colors.grey[100],
+                          ),
+                          validator: (value) {
+                            if (value == null || value.length != 6) {
+                              return 'Ingresa los 6 dígitos';
+                            }
+                            if (!RegExp(r'^\d+$').hasMatch(value)) {
+                              return 'Solo números';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        if (tiempoRestante > 0)
+                          Text(
+                            'Reenviar código en ${tiempoRestante}s',
+                            style: TextStyle(color: Colors.grey[600]),
+                          )
+                        else
+                          TextButton.icon(
+                            onPressed: isLoading ? null : enviarCodigo,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reenviar código'),
+                          ),
+                      ],
+                      if (errorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  errorMessage!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              );
-            },
-            child: const Text('Reenviar Código'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                final codigo = codigoController.text.trim();
-                
-                Navigator.of(dialogContext).pop();
-                
-                // Crear fecha y hora combinadas
-                final fechaHora = DateTime(
-                  fecha.year,
-                  fecha.month,
-                  fecha.day,
-                  horaInicio,
-                  0,
-                );
-                
-                // Crear reserva con verificación
-                await context.read<DisponibilidadCubit>().crearReservaConVerificacion(
-                  contacto: contacto,
-                  codigo: codigo,
-                  nombreCliente: nombre,
-                  mesaId: mesa.id,
-                  fecha: fecha,
-                  hora: fechaHora,
-                  numeroPersonas: numeroPersonas,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF27AE60),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text('Verificar y Confirmar'),
-          ),
-        ],
-      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                if (codigoEnviado)
+                  ElevatedButton(
+                    onPressed: isLoading ? null : verificarCodigo,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF27AE60),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child:
+                        isLoading
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : const Text('Verificar y Confirmar'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _crearReservaVerificada(
+    BuildContext context, {
+    required String telefono,
+    required String email,
+    required String nombre,
+    required Mesa mesa,
+    required DateTime fecha,
+    required int horaInicio,
+    required int numeroPersonas,
+    required String intervaloSeleccionado,
+  }) async {
+    final servicioVerificacion = getIt<ServicioVerificacionCliente>();
+
+    // Crear fecha y hora combinadas
+    final fechaHora = DateTime(
+      fecha.year,
+      fecha.month,
+      fecha.day,
+      horaInicio,
+      0,
+    );
+
+    // Crear reserva con el cubit existente
+    await context.read<DisponibilidadCubit>().crearReservaConVerificacion(
+      contacto:
+          email, // Usamos email como contacto principal para notificaciones
+      codigo: '000000', // Ya fue verificado por SMS
+      nombreCliente: nombre,
+      mesaId: mesa.id,
+      fecha: fecha,
+      hora: fechaHora,
+      numeroPersonas: numeroPersonas,
+    );
+
+    // Guardar reserva en localStorage con teléfono y email
+    final telefonoNormalizado = servicioVerificacion.normalizarTelefono(
+      telefono,
+    );
+    final reservaLocal = {
+      'id': 'reserva_${DateTime.now().millisecondsSinceEpoch}',
+      'negocioId': mesa.negocioId,
+      'mesaId': mesa.id,
+      'nombreMesa': mesa.nombre,
+      'zona': mesa.zona.toString(),
+      'fecha': fecha.toIso8601String(),
+      'horario': intervaloSeleccionado,
+      'personas': numeroPersonas,
+      'clienteNombre': nombre,
+      'clienteEmail': email,
+      'clienteTelefono': telefonoNormalizado,
+      'estado': 'confirmada',
+      'verificada': true,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    servicioVerificacion.guardarReserva(reservaLocal);
+
+    // Guardar sesión del cliente
+    servicioVerificacion.guardarSesionCliente(telefono, email);
+
+    // TODO: Enviar email con detalles de la reserva
+    print('📧 Email con detalles enviado a: $email');
+    print(
+      '📋 Reserva: ${mesa.nombre} - $intervaloSeleccionado - $numeroPersonas personas',
     );
   }
 }
