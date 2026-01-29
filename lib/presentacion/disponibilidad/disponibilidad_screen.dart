@@ -1777,7 +1777,11 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  onPressed: () {
+                    // Limpiar reCAPTCHA al cancelar
+                    servicioVerificacion.limpiarRecaptcha();
+                    Navigator.of(dialogContext).pop();
+                  },
                   child: const Text('Cancelar'),
                 ),
                 if (codigoEnviado)
@@ -1835,11 +1839,16 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
       0,
     );
 
-    // Crear reserva con el cubit existente
-    await context.read<DisponibilidadCubit>().crearReservaConVerificacion(
-      contacto:
-          email, // Usamos email como contacto principal para notificaciones
-      codigo: '000000', // Ya fue verificado por SMS
+    // Normalizar teléfono
+    final telefonoNormalizado = servicioVerificacion.normalizarTelefono(
+      telefono,
+    );
+
+    // Crear reserva usando el método correcto que NO requiere verificación adicional
+    // ya que Firebase SMS ya verificó el teléfono
+    await context.read<DisponibilidadCubit>().crearReservaVerificadaPorSMS(
+      emailCliente: email,
+      telefonoVerificado: telefonoNormalizado,
       nombreCliente: nombre,
       mesaId: mesa.id,
       fecha: fecha,
@@ -1848,9 +1857,6 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     );
 
     // Guardar reserva en localStorage con teléfono y email
-    final telefonoNormalizado = servicioVerificacion.normalizarTelefono(
-      telefono,
-    );
     final reservaLocal = {
       'id': 'reserva_${DateTime.now().millisecondsSinceEpoch}',
       'negocioId': mesa.negocioId,
@@ -1873,10 +1879,6 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     // Guardar sesión del cliente
     servicioVerificacion.guardarSesionCliente(telefono, email);
 
-    // TODO: Enviar email con detalles de la reserva
-    print('📧 Email con detalles enviado a: $email');
-    print(
-      '📋 Reserva: ${mesa.nombre} - $intervaloSeleccionado - $numeroPersonas personas',
-    );
+    print('📋 Reserva guardada localmente: ${mesa.nombre} - $intervaloSeleccionado - $numeroPersonas personas');
   }
 }

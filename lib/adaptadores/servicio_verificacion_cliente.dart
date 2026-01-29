@@ -15,6 +15,9 @@ class ServicioVerificacionCliente {
   
   // Para almacenar el ConfirmationResult en web
   ConfirmationResult? _confirmationResult;
+  
+  // RecaptchaVerifier para poder limpiarlo después
+  RecaptchaVerifier? _recaptchaVerifier;
 
   // ============================================================
   // VERIFICACIÓN SMS
@@ -35,8 +38,11 @@ class ServicioVerificacionCliente {
         try {
           print('📱 Enviando SMS a: $telefonoFormateado');
           
+          // Limpiar cualquier recaptcha anterior
+          _limpiarRecaptcha();
+          
           // Crear RecaptchaVerifier invisible (sin container = modal automático)
-          final recaptchaVerifier = RecaptchaVerifier(
+          _recaptchaVerifier = RecaptchaVerifier(
             auth: FirebaseAuthPlatform.instance,
             // Sin container = reCAPTCHA invisible
           );
@@ -44,7 +50,7 @@ class ServicioVerificacionCliente {
           // signInWithPhoneNumber con el verifier
           _confirmationResult = await _auth.signInWithPhoneNumber(
             telefonoFormateado,
-            recaptchaVerifier,
+            _recaptchaVerifier,
           );
           
           // Guardar el verificationId para verificar después
@@ -54,6 +60,9 @@ class ServicioVerificacionCliente {
           return true;
         } catch (e) {
           print('❌ Error enviando SMS: $e');
+          
+          // Limpiar recaptcha en caso de error
+          _limpiarRecaptcha();
           
           // Manejar errores específicos
           if (e is FirebaseAuthException) {
@@ -174,13 +183,14 @@ class ServicioVerificacionCliente {
       // Cerrar sesión temporal (el cliente no necesita estar logueado)
       await _auth.signOut();
 
-      // Limpiar estado
-      _verificationId = null;
-      _resendToken = null;
-      _confirmationResult = null;
+      // Limpiar estado y recaptcha
+      _limpiarEstado();
 
       return telefonoVerificado;
     } on FirebaseAuthException catch (e) {
+      // Limpiar en caso de error también
+      _limpiarEstado();
+      
       switch (e.code) {
         case 'invalid-verification-code':
           throw Exception('Código incorrecto. Verifica e intenta nuevamente');
@@ -190,6 +200,44 @@ class ServicioVerificacionCliente {
           throw Exception('Error: ${e.message}');
       }
     }
+  }
+
+  /// Limpiar el widget de reCAPTCHA
+  void _limpiarRecaptcha() {
+    if (_recaptchaVerifier != null) {
+      try {
+        _recaptchaVerifier!.clear();
+        print('🧹 reCAPTCHA limpiado');
+      } catch (e) {
+        print('⚠️ Error limpiando reCAPTCHA: $e');
+      }
+      _recaptchaVerifier = null;
+    }
+    
+    // Limpiar también el contenedor HTML si existe
+    if (kIsWeb) {
+      try {
+        final container = html.document.getElementById('recaptcha-container');
+        if (container != null) {
+          container.children.clear();
+        }
+      } catch (e) {
+        print('⚠️ Error limpiando contenedor reCAPTCHA: $e');
+      }
+    }
+  }
+  
+  /// Limpiar todo el estado de verificación
+  void _limpiarEstado() {
+    _verificationId = null;
+    _resendToken = null;
+    _confirmationResult = null;
+    _limpiarRecaptcha();
+  }
+  
+  /// Método público para limpiar el reCAPTCHA desde afuera si es necesario
+  void limpiarRecaptcha() {
+    _limpiarRecaptcha();
   }
 
   // ============================================================

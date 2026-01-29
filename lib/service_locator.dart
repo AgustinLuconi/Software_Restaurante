@@ -1,22 +1,28 @@
 import 'package:get_it/get_it.dart';
 
-import 'adaptadores/adaptador_memoria_mesa.dart';
-import 'adaptadores/adaptador_memoria_reserva.dart';
-import 'adaptadores/adaptador_memoria_codigo_verificacion.dart';
-import 'adaptadores/adaptador_memoria_horario_apertura.dart';
-import 'adaptadores/adaptador_memoria_negocio.dart';
+// Adaptadores de Firestore (base de datos real)
+import 'adaptadores/adaptador_firestore_reserva.dart';
+import 'adaptadores/adaptador_firestore_mesa.dart';
+import 'adaptadores/adaptador_firestore_negocio.dart';
+import 'adaptadores/adaptador_firestore_horario.dart';
+
+// Servicios
 import 'adaptadores/servicio_autenticacion_firebase.dart';
 import 'adaptadores/servicio_email.dart';
 import 'adaptadores/servicio_verificacion_cliente.dart';
+
+// Casos de uso
 import 'aplicacion/cancelar_reserva.dart';
 import 'aplicacion/crear_reserva.dart';
 import 'aplicacion/obtener_reserva.dart';
-import 'dominio/entidades/mesa.dart';
-import 'dominio/repositorios/codigo_verificacion_repositorio.dart';
+
+// Repositorios (interfaces)
 import 'dominio/repositorios/horario_apertura_repositorio.dart';
 import 'dominio/repositorios/mesa_repositorio.dart';
 import 'dominio/repositorios/negocio_repositorio.dart';
 import 'dominio/repositorios/reserva_repositorio.dart';
+
+// Cubits
 import 'presentacion/pantalla_dueno/pantalla_dueno_cubit.dart';
 import 'presentacion/pantalla_inicio/pantalla_inicio_cubit.dart';
 
@@ -28,6 +34,10 @@ void setupServiceLocator() {
     return;
   }
 
+  // ============================================================
+  // SERVICIOS
+  // ============================================================
+
   // Servicio de autenticación con Firebase
   getIt.registerLazySingleton<ServicioAutenticacion>(
     () => ServicioAutenticacion(),
@@ -38,106 +48,39 @@ void setupServiceLocator() {
     () => ServicioVerificacionCliente(),
   );
 
-  // Datos de ejemplo para mesas del restaurante Chiringuito (negocio_1)
-  // Ahora con zonas asignadas
-  final mesasEjemplo = [
-    // Terraza - 3 mesas
-    Mesa(
-      id: '1',
-      nombre: 'Terraza 1',
-      capacidad: 2,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.terraza,
-    ),
-    Mesa(
-      id: '2',
-      nombre: 'Terraza 2',
-      capacidad: 4,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.terraza,
-    ),
-    Mesa(
-      id: '3',
-      nombre: 'Terraza 3',
-      capacidad: 6,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.terraza,
-    ),
-    // Salón - 3 mesas
-    Mesa(
-      id: '4',
-      nombre: 'Salón 1',
-      capacidad: 2,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.salon,
-    ),
-    Mesa(
-      id: '5',
-      nombre: 'Salón 2',
-      capacidad: 4,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.salon,
-    ),
-    Mesa(
-      id: '6',
-      nombre: 'Salón 3',
-      capacidad: 8,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.salon,
-    ),
-    // Jardín - 2 mesas
-    Mesa(
-      id: '7',
-      nombre: 'Jardín 1',
-      capacidad: 4,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.jardin,
-    ),
-    Mesa(
-      id: '8',
-      nombre: 'Jardín 2',
-      capacidad: 6,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.jardin,
-    ),
-    // VIP - 1 mesa
-    Mesa(
-      id: '9',
-      nombre: 'VIP Premium',
-      capacidad: 10,
-      negocioId: 'negocio_1',
-      zona: ZonaMesa.vip,
-    ),
-  ];
+  // Servicio de Email (envía correos via Firebase Trigger Email)
+  getIt.registerLazySingleton<ServicioEmail>(() => ServicioEmail());
 
-  // Registrar repositorios como singletons
+  // ============================================================
+  // REPOSITORIOS (FIRESTORE)
+  // ============================================================
+
+  // Repositorio de reservas (primero, ya que otros dependen de él)
   getIt.registerLazySingleton<ReservaRepositorio>(
-    () => ReservaRepositorioMemoria(),
+    () => ReservaRepositorioFirestore(),
   );
 
+  // Repositorio de mesas (depende de reservas para verificar disponibilidad)
   getIt.registerLazySingleton<MesaRepositorio>(
-    () => MesaRepositorioMemoria(
-      mesasEjemplo,
+    () => MesaRepositorioFirestore(
       reservaRepositorio: getIt<ReservaRepositorio>(),
     ),
   );
 
+  // Repositorio de negocios
   getIt.registerLazySingleton<NegocioRepositorio>(
-    () => NegocioRepositorioMemoria(),
+    () => NegocioRepositorioFirestore(),
   );
 
-  // Servicio de Email (reemplaza las notificaciones in-app)
-  getIt.registerLazySingleton<ServicioEmail>(() => ServicioEmail());
-
-  getIt.registerLazySingleton<CodigoVerificacionRepositorio>(
-    () => CodigoVerificacionRepositorioMemoria(),
-  );
-
+  // Repositorio de horarios de apertura
   getIt.registerLazySingleton<HorarioAperturaRepositorio>(
-    () => HorarioAperturaRepositorioMemoria(),
+    () => HorarioAperturaRepositorioFirestore(),
   );
 
-  // Registrar casos de uso
+  // ============================================================
+  // CASOS DE USO
+  // ============================================================
+
   getIt.registerFactory(
     () => CrearReserva(
       getIt<ReservaRepositorio>(),
@@ -157,7 +100,10 @@ void setupServiceLocator() {
 
   getIt.registerFactory(() => ObtenerReserva(getIt<ReservaRepositorio>()));
 
-  // Cubits
+  // ============================================================
+  // CUBITS
+  // ============================================================
+
   getIt.registerFactory(
     () => PantallaDuenoCubit(
       getIt<NegocioRepositorio>(),

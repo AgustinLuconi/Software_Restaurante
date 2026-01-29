@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+import 'adaptadores/inicializador_firestore.dart';
 import 'firebase_options.dart';
 import 'router.dart';
 import 'service_locator.dart';
@@ -26,6 +27,15 @@ void main() async {
   
   // Inicializar el service locator (GetIt)
   setupServiceLocator();
+
+  // Inicializar datos en Firestore (solo si está vacío)
+  // Esto crea el negocio Chiringuito con sus mesas y horarios
+  try {
+    final inicializador = InicializadorFirestore();
+    await inicializador.inicializarDatos();
+  } catch (e) {
+    print('⚠️ Error inicializando datos: $e');
+  }
   
   runApp(const MyApp());
 }

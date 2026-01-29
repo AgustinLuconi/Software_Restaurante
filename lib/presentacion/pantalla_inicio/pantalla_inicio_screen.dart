@@ -134,8 +134,8 @@ class _PantallaInicioView extends StatelessWidget {
                         const SizedBox(height: 10),
                         // Negocios registrados por usuarios (incluyendo Chiringuito)
                         ...state.negocios.map((negocio) {
-                          // El Chiringuito tiene funcionalidad completa
-                          final esChiringuito = negocio.id == 'negocio_1';
+                          // El Chiringuito tiene funcionalidad completa (detectar por nombre)
+                          final esChiringuito = negocio.nombre.toLowerCase() == 'chiringuito';
                           
                           return Column(
                             children: [

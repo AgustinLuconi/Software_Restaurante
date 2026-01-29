@@ -4,7 +4,6 @@ import '../../aplicacion/crear_reserva.dart';
 import '../../dominio/entidades/mesa.dart';
 import '../../dominio/entidades/negocio.dart';
 import '../../dominio/entidades/reserva.dart';
-import '../../dominio/repositorios/codigo_verificacion_repositorio.dart';
 import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/mesa_repositorio.dart';
 import '../../dominio/repositorios/negocio_repositorio.dart';
@@ -17,7 +16,6 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   final NegocioRepositorio _negocioRepositorio;
   final CrearReserva _crearReserva;
   final ServicioEmail _servicioEmail;
-  final CodigoVerificacionRepositorio _codigoVerificacionRepo;
   final HorarioAperturaRepositorio _horarioAperturaRepo;
 
   /// Negocio cacheado para acceso rápido
@@ -29,22 +27,35 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       _negocioRepositorio = getIt<NegocioRepositorio>(),
       _crearReserva = getIt<CrearReserva>(),
       _servicioEmail = getIt<ServicioEmail>(),
-      _codigoVerificacionRepo = getIt<CodigoVerificacionRepositorio>(),
       _horarioAperturaRepo = getIt<HorarioAperturaRepositorio>(),
       super(DisponibilidadInicial());
 
-  /// ID del negocio actual (por defecto el primero disponible)
-  String _negocioId = 'negocio_1';
+  /// ID del negocio actual (se carga dinámicamente)
+  String? _negocioId;
 
   Future<void> cargarTodasLasMesas() async {
     try {
       emit(DisponibilidadCargando());
 
+      // Si no tenemos negocioId, cargar el primer negocio disponible
+      if (_negocioId == null) {
+        final negocios = await _negocioRepositorio.obtenerTodosLosNegocios();
+        if (negocios.isNotEmpty) {
+          _negocioId = negocios.first.id;
+          _negocioActual = negocios.first;
+        }
+      }
+
+      if (_negocioId == null) {
+        emit(DisponibilidadConError('No hay negocios registrados'));
+        return;
+      }
+
       // Cargar mesas, negocio y horarios en paralelo
       final resultados = await Future.wait([
         _mesaRepositorio.obtenerMesas(),
-        _negocioRepositorio.obtenerNegocioPorId(_negocioId),
-        _negocioRepositorio.obtenerHorariosServicio(_negocioId),
+        _negocioRepositorio.obtenerNegocioPorId(_negocioId!),
+        _negocioRepositorio.obtenerHorariosServicio(_negocioId!),
       ]);
 
       final mesas = resultados[0] as List<Mesa>;
@@ -70,8 +81,20 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     try {
       emit(DisponibilidadCargando());
 
+      // Si no tenemos negocioId, cargar el primer negocio disponible
+      if (negocioId == null && _negocioId == null) {
+        final negocios = await _negocioRepositorio.obtenerTodosLosNegocios();
+        if (negocios.isNotEmpty) {
+          negocioId = negocios.first.id;
+        }
+      }
+
       // Usar el negocioId proporcionado o el actual
       final id = negocioId ?? _negocioId;
+      if (id == null) {
+        emit(DisponibilidadConError('No hay negocios registrados'));
+        return;
+      }
       _negocioId = id;
 
       final resultados = await Future.wait([
@@ -101,9 +124,9 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   /// Obtiene las zonas disponibles del restaurante
   Future<List<ZonaMesa>> obtenerZonasDisponibles() async {
     try {
-      return await _mesaRepositorio.obtenerZonasDisponibles(
-        _negocioActual?.id ?? _negocioId,
-      );
+      final id = _negocioActual?.id ?? _negocioId;
+      if (id == null) return [];
+      return await _mesaRepositorio.obtenerZonasDisponibles(id);
     } catch (e) {
       return [];
     }
@@ -119,12 +142,13 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     try {
       emit(DisponibilidadCargando());
 
+      final negocioId = _negocioActual?.id ?? _negocioId ?? 'default';
       final mesa = await _mesaRepositorio.buscarMesaDisponibleEnZona(
         zona: zona,
         fecha: fecha,
         hora: hora,
         numeroPersonas: numeroPersonas,
-        negocioId: _negocioActual?.id ?? _negocioId,
+        negocioId: negocioId,
       );
 
       if (mesa == null) {
@@ -152,8 +176,11 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   /// Obtiene los intervalos horarios del negocio para una fecha
   Future<List<String>> obtenerIntervalosHorarioNegocio(DateTime fecha) async {
     try {
+      final id = _negocioActual?.id ?? _negocioId;
+      if (id == null) return [];
+      
       return await _horarioAperturaRepo.obtenerIntervalosDisponibles(
-        _negocioActual?.id ?? _negocioId,
+        id,
         fecha,
         intervaloMinutos: _negocioActual?.duracionPromedioMinutos ?? 60,
       );
@@ -162,20 +189,12 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     }
   }
 
-  // Paso 1: Enviar código de verificación
-  Future<void> enviarCodigoVerificacion(String contacto) async {
-    try {
-      await _codigoVerificacionRepo.generarCodigo(contacto: contacto);
-      // El estado se mantiene para que el usuario pueda ingresar el código
-    } catch (e) {
-      emit(DisponibilidadConError('Error al enviar código: ${e.toString()}'));
-    }
-  }
-
-  // Paso 2: Crear reserva con verificación
-  Future<void> crearReservaConVerificacion({
-    required String contacto,
-    required String codigo,
+  /// Crear reserva ya verificada por SMS de Firebase
+  /// Este método se usa cuando el cliente ya verificó su teléfono por SMS
+  /// y no necesita verificación adicional con código interno.
+  Future<void> crearReservaVerificadaPorSMS({
+    required String emailCliente,
+    required String telefonoVerificado,
     required String? nombreCliente,
     required String mesaId,
     required DateTime fecha,
@@ -184,42 +203,30 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   }) async {
     try {
       emit(DisponibilidadCargando());
+      
+      print('🔄 Creando reserva verificada por SMS...');
+      print('   📧 Email: $emailCliente');
+      print('   📱 Teléfono: $telefonoVerificado');
+      print('   👤 Nombre: $nombreCliente');
+      print('   🪑 Mesa: $mesaId');
+      print('   📅 Fecha: $fecha');
+      print('   🕐 Hora: $hora');
+      print('   👥 Personas: $numeroPersonas');
 
-      // Verificar el código
-      final esValido = await _codigoVerificacionRepo.verificarCodigo(
-        contacto: contacto,
-        codigo: codigo,
-      );
-
-      if (!esValido) {
-        emit(
-          DisponibilidadConError(
-            'Código de verificación inválido o expirado. Por favor, solicita uno nuevo.',
-          ),
-        );
-        return;
-      }
-
-      // Marcar código como utilizado
-      final codigoObj = await _codigoVerificacionRepo.obtenerCodigoPorContacto(
-        contacto,
-      );
-      if (codigoObj != null) {
-        await _codigoVerificacionRepo.marcarComoUtilizado(codigoObj.id);
-      }
-
-      // Crear reserva directamente CONFIRMADA (sin necesidad de aprobación del dueño)
-      final negocioId = _negocioActual?.id ?? _negocioId;
+      // Crear reserva directamente CONFIRMADA (ya fue verificado por SMS)
+      final negocioId = _negocioActual?.id ?? _negocioId ?? 'default';
       final reserva = await _crearReserva.ejecutar(
         mesaId,
         fecha,
         hora,
         numeroPersonas,
-        contactoCliente: contacto,
+        contactoCliente: emailCliente, // Email para notificaciones
         nombreCliente: nombreCliente,
-        estadoInicial: EstadoReserva.confirmada, // CONFIRMADA automáticamente
+        estadoInicial: EstadoReserva.confirmada,
         negocioId: negocioId,
       );
+      
+      print('✅ Reserva creada con ID: ${reserva.id}');
 
       // Obtener nombre del negocio y mesa para los emails
       final nombreNegocio = _negocioActual?.nombre ?? 'Restaurante';
@@ -230,11 +237,14 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       );
 
       // Enviar email de confirmación al cliente
+      print('📧 Enviando email de confirmación...');
       await _servicioEmail.notificarReservaConfirmada(
         reserva,
         nombreNegocio: nombreNegocio,
         nombreMesa: mesa.nombre,
       );
+      
+      print('✅ Proceso de reserva completado exitosamente');
 
       emit(
         ReservaCreada(
@@ -242,6 +252,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         ),
       );
     } catch (e) {
+      print('❌ Error creando reserva: $e');
       emit(
         DisponibilidadConError('Error al crear la reserva: ${e.toString()}'),
       );
