@@ -11,7 +11,7 @@ class CancelarReserva {
     this.negocioRepositorio,
   });
 
-  Future<void> ejecutar(String reservaId, {String negocioId = 'negocio_1'}) async {
+  Future<void> ejecutar(String reservaId, {required String negocioId}) async {
     final reserva = await reservaRepositorio.obtenerReservaPorId(reservaId);
     if (reserva == null) {
       throw Exception('Reserva no encontrada');

@@ -27,7 +27,7 @@ class CrearReserva {
     String? contactoCliente,
     String? nombreCliente,
     EstadoReserva estadoInicial = EstadoReserva.pendiente,
-    String negocioId = 'negocio_1', // ID del negocio por defecto
+    required String negocioId, // ID del negocio - ahora es requerido
   }) async {
     // Generar ID único para el cliente
     final String clienteId = const Uuid().v4();
