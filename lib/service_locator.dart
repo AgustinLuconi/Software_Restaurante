@@ -110,6 +110,7 @@ void setupServiceLocator() {
       getIt<MesaRepositorio>(),
       getIt<ReservaRepositorio>(),
       getIt<ServicioEmail>(),
+      getIt<HorarioAperturaRepositorio>(),
     ),
   );
   getIt.registerFactory(() => PantallaInicioCubit(getIt<NegocioRepositorio>()));

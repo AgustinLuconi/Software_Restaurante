@@ -174,50 +174,6 @@ class ServicioEmail {
     print('📧 Email de cancelación (por restaurante) enviado a: $emailCliente');
   }
 
-  /// Envía recordatorio de reserva (24h antes)
-  Future<void> enviarRecordatorioReserva({
-    required String emailCliente,
-    required String nombreCliente,
-    required String nombreNegocio,
-    required DateTime fechaHora,
-    required String nombreMesa,
-    required int numeroPersonas,
-  }) async {
-    final fecha = _formatearFecha(fechaHora);
-    final hora = _formatearHora(fechaHora);
-
-    final html = _wrapTemplate(
-      titulo: '🔔 Recordatorio',
-      contenido: '''
-        <h2 style="color: #333; margin-bottom: 20px;">🔔 Recordatorio de Reserva</h2>
-        
-        <p style="font-size: 18px; color: #666; font-weight: bold;">
-          ¡Tu reserva es mañana!
-        </p>
-
-        ${_buildDetallesReserva(nombreCliente: nombreCliente, nombreNegocio: nombreNegocio, nombreMesa: nombreMesa, fecha: fecha, hora: hora, personas: numeroPersonas)}
-
-        <div style="background-color: #E3F2FD; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0;">
-          <p style="margin: 0; color: #1565C0;">
-            <strong>⏰ Recuerda:</strong> Llega 10 minutos antes
-          </p>
-        </div>
-
-        <p style="color: #666; font-size: 14px;">
-          ¿Necesitas cancelar? Hazlo con al menos 2 horas de anticipación.
-        </p>
-      ''',
-    );
-
-    await _enviarEmail(
-      to: emailCliente,
-      subject: '🔔 Recordatorio: Tu reserva mañana en $nombreNegocio',
-      html: html,
-    );
-
-    print('📧 Email de recordatorio enviado a: $emailCliente');
-  }
-
   // ============================================================
   // EMAILS AL DUEÑO DEL RESTAURANTE
   // ============================================================

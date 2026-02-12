@@ -23,13 +23,6 @@ abstract class NegocioRepositorio {
 
   Future<bool> actualizarNegocio(Negocio negocio);
 
-  Future<Map<String, String>> obtenerHorariosServicio(String negocioId);
-
-  Future<bool> actualizarHorariosServicio(String negocioId, Map<String, String> horarios);
-
   /// Actualizar email del negocio
   Future<bool> actualizarEmail(String negocioId, String nuevoEmail);
-
-  /// Actualizar dirección del negocio
-  Future<bool> actualizarDireccion(String negocioId, String nuevaDireccion);
 }

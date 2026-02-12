@@ -4,6 +4,7 @@ import '../../dominio/entidades/negocio.dart';
 import '../../dominio/entidades/reserva.dart';
 import '../../dominio/repositorios/mesa_repositorio.dart';
 import '../../dominio/repositorios/negocio_repositorio.dart';
+import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/reserva_repositorio.dart';
 import '../../adaptadores/servicio_email.dart';
 import 'pantalla_dueno_estados_de_cubit.dart';
@@ -13,12 +14,14 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
   final MesaRepositorio mesaRepositorio;
   final ReservaRepositorio reservaRepositorio;
   final ServicioEmail servicioEmail;
+  final HorarioAperturaRepositorio horarioAperturaRepositorio;
 
   PantallaDuenoCubit(
     this.negocioRepositorio,
     this.mesaRepositorio,
     this.reservaRepositorio,
     this.servicioEmail,
+    this.horarioAperturaRepositorio,
   ) : super(const PantallaDuenoInicial());
 
   // Método para establecer un negocio autenticado directamente
@@ -90,8 +93,79 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     }
   }
 
+  Future<bool> actualizarNombre(
+    Negocio negocio,
+    String nuevoNombre,
+  ) async {
+    try {
+      final negocioActualizado = negocio.copyWith(
+        nombre: nuevoNombre,
+      );
+      final exito = await negocioRepositorio.actualizarNegocio(
+        negocioActualizado,
+      );
+
+      if (exito) {
+        emit(PantallaDuenoAutenticado(negocioActualizado));
+      }
+
+      return exito;
+    } catch (e) {
+      emit(PantallaDuenoConError('Error al actualizar nombre: $e'));
+      return false;
+    }
+  }
+
+  Future<bool> actualizarIcono(
+    Negocio negocio,
+    String nuevoIcono,
+  ) async {
+    try {
+      final negocioActualizado = negocio.copyWith(
+        icono: nuevoIcono,
+      );
+      final exito = await negocioRepositorio.actualizarNegocio(
+        negocioActualizado,
+      );
+
+      if (exito) {
+        emit(PantallaDuenoAutenticado(negocioActualizado));
+      }
+
+      return exito;
+    } catch (e) {
+      emit(PantallaDuenoConError('Error al actualizar icono: $e'));
+      return false;
+    }
+  }
+
+  Future<bool> actualizarDescripcion(
+    Negocio negocio,
+    String nuevaDescripcion,
+  ) async {
+    try {
+      final negocioActualizado = negocio.copyWith(
+        descripcion: nuevaDescripcion,
+      );
+      final exito = await negocioRepositorio.actualizarNegocio(
+        negocioActualizado,
+      );
+
+      if (exito) {
+        emit(PantallaDuenoAutenticado(negocioActualizado));
+      }
+
+      return exito;
+    } catch (e) {
+      emit(PantallaDuenoConError('Error al actualizar descripción: $e'));
+      return false;
+    }
+  }
+
   Future<Map<String, String>> obtenerHorarios(String negocioId) async {
-    return await negocioRepositorio.obtenerHorariosServicio(negocioId);
+    final horario = await horarioAperturaRepositorio.obtenerHorarioPorNegocio(negocioId);
+    if (horario == null) return {};
+    return horarioAperturaRepositorio.horarioAMapString(horario);
   }
 
   Future<bool> actualizarHorarios(
@@ -99,10 +173,8 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     Map<String, String> horarios,
   ) async {
     try {
-      return await negocioRepositorio.actualizarHorariosServicio(
-        negocioId,
-        horarios,
-      );
+      final horario = horarioAperturaRepositorio.mapStringAHorario(negocioId, horarios);
+      return await horarioAperturaRepositorio.guardarHorario(horario);
     } catch (e) {
       emit(PantallaDuenoConError('Error al actualizar horarios: $e'));
       return false;
@@ -235,7 +307,6 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       final reserva = reservas.firstWhere((r) => r.id == reservaId);
 
       print('🔍 Cancelando reserva: ${reserva.id}');
-      print('🔍 Cliente ID: ${reserva.clienteId}');
       print('🔍 Contacto Cliente: ${reserva.contactoCliente}');
 
       await reservaRepositorio.cancelarReserva(reservaId);

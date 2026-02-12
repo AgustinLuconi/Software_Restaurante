@@ -7,14 +7,12 @@ class Negocio {
   final String direccion;
   final String descripcion;
   final String especialidad;
+  final String icono; // sailing, restaurant, local_fire_department, etc.
   
   // Configuración de Tiempos
   final int minHorasParaCancelar;
   final int maxDiasAnticipacionReserva;
   final int duracionPromedioMinutos;
-  
-  // Visualización
-  final Map<String, String> horariosAtencion;
 
   Negocio({
     required this.id,
@@ -25,10 +23,10 @@ class Negocio {
     required this.direccion,
     this.descripcion = '',
     this.especialidad = '',
+    this.icono = 'restaurant',
     this.minHorasParaCancelar = 24,
     this.maxDiasAnticipacionReserva = 14,
     this.duracionPromedioMinutos = 60,
-    this.horariosAtencion = const {},
   });
 
   Negocio copyWith({
@@ -40,10 +38,10 @@ class Negocio {
     String? direccion,
     String? descripcion,
     String? especialidad,
+    String? icono,
     int? minHorasParaCancelar,
     int? maxDiasAnticipacionReserva,
     int? duracionPromedioMinutos,
-    Map<String, String>? horariosAtencion,
   }) {
     return Negocio(
       id: id ?? this.id,
@@ -54,10 +52,10 @@ class Negocio {
       direccion: direccion ?? this.direccion,
       descripcion: descripcion ?? this.descripcion,
       especialidad: especialidad ?? this.especialidad,
+      icono: icono ?? this.icono,
       minHorasParaCancelar: minHorasParaCancelar ?? this.minHorasParaCancelar,
       maxDiasAnticipacionReserva: maxDiasAnticipacionReserva ?? this.maxDiasAnticipacionReserva,
       duracionPromedioMinutos: duracionPromedioMinutos ?? this.duracionPromedioMinutos,
-      horariosAtencion: horariosAtencion ?? this.horariosAtencion,
     );
   }
 }

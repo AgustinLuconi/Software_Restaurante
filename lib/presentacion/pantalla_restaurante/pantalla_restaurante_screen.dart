@@ -257,7 +257,12 @@ class _PantallaRestauranteView extends StatelessWidget {
             context,
             icon: Icons.contact_phone,
             title: 'Contacto',
-            onTap: () => _showContactDialog(context),
+            onTap: () {
+              final state = context.read<PantallaRestauranteCubit>().state;
+              if (state is PantallaRestauranteExitoso) {
+                _showContactDialog(context, state.negocio.telefono, state.negocio.email);
+              }
+            },
           ),
         ),
       ],
@@ -311,7 +316,7 @@ class _PantallaRestauranteView extends StatelessWidget {
       builder: (context, state) {
         final horarios =
             state is PantallaRestauranteExitoso
-                ? state.horariosAtencion
+                ? state.horarios
                 : <String, String>{};
 
         return Card(
@@ -357,7 +362,7 @@ class _PantallaRestauranteView extends StatelessWidget {
                       size: 24,
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -371,8 +376,10 @@ class _PantallaRestauranteView extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Frente al mar • Vista panorámica',
-                            style: TextStyle(
+                            state is PantallaRestauranteExitoso 
+                                ? state.negocio.direccion 
+                                : 'Cargando...',
+                            style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF7F8C8D),
                             ),
@@ -460,7 +467,7 @@ class _PantallaRestauranteView extends StatelessWidget {
     );
   }
 
-  void _showContactDialog(BuildContext context) {
+  void _showContactDialog(BuildContext context, String telefono, String email) {
     showDialog(
       context: context,
       builder:
@@ -491,14 +498,14 @@ class _PantallaRestauranteView extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
-                const Text('+54 261 123-4567'),
+                Text(telefono.isNotEmpty ? telefono : 'No disponible'),
                 const SizedBox(height: 16),
                 const Text(
                   '📧 Email:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
-                const Text('chiringuito@restaurant.com'),
+                Text(email.isNotEmpty ? email : 'No disponible'),
               ],
             ),
             actions: [

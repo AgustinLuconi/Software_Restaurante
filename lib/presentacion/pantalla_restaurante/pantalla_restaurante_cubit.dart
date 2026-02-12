@@ -1,17 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/negocio_repositorio.dart';
 import '../../service_locator.dart';
 import 'pantalla_restaurante_estados_de_cubit.dart';
 
 class PantallaRestauranteCubit extends Cubit<PantallaRestauranteState> {
   final NegocioRepositorio _negocioRepositorio;
+  final HorarioAperturaRepositorio _horarioAperturaRepo;
   
   /// ID del negocio actual (se carga dinámicamente)
   String? _negocioId;
 
   PantallaRestauranteCubit()
       : _negocioRepositorio = getIt<NegocioRepositorio>(),
+        _horarioAperturaRepo = getIt<HorarioAperturaRepositorio>(),
         super(PantallaRestauranteInicial());
 
   /// Carga los datos del negocio (info + horarios)
@@ -35,22 +38,26 @@ class PantallaRestauranteCubit extends Cubit<PantallaRestauranteState> {
       }
       _negocioId = id;
 
-      final resultados = await Future.wait([
-        _negocioRepositorio.obtenerNegocioPorId(id),
-        _negocioRepositorio.obtenerHorariosServicio(id),
-      ]);
+      // Cargar negocio y horarios en paralelo
+      final negocioFuture = _negocioRepositorio.obtenerNegocioPorId(id);
+      final horarioFuture = _horarioAperturaRepo.obtenerHorarioPorNegocio(id);
 
-      final negocio = resultados[0] as dynamic;
-      final horarios = resultados[1] as Map<String, String>;
+      final negocio = await negocioFuture;
+      final horario = await horarioFuture;
 
       if (negocio == null) {
         emit(PantallaRestauranteConError('No se encontró el negocio'));
         return;
       }
 
+      // Convertir horario a Map<String, String> para la UI
+      final horariosMap = horario != null
+          ? _horarioAperturaRepo.horarioAMapString(horario)
+          : <String, String>{};
+
       emit(PantallaRestauranteExitoso(
         negocio: negocio,
-        horariosAtencion: horarios,
+        horarios: horariosMap,
       ));
     } catch (e) {
       emit(PantallaRestauranteConError('Error al cargar datos: ${e.toString()}'));

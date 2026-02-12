@@ -390,7 +390,7 @@ class _MisReservasViewState extends State<_MisReservasView> {
                 const SizedBox(height: 8),
                 Text('Número de Personas: ${reserva.numeroPersonas}'),
                 const SizedBox(height: 8),
-                Text('Cliente ID: ${reserva.clienteId}'),
+                Text('Cliente: ${reserva.nombreCliente ?? reserva.contactoCliente ?? 'Sin datos'}'),
               ],
             ),
             actions: [

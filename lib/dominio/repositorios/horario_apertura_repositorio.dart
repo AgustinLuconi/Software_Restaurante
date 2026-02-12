@@ -11,7 +11,15 @@ abstract class HorarioAperturaRepositorio {
   Future<String> obtenerMensajeHorarioCerrado(String negocioId, DateTime fecha);
   
   /// Obtiene los intervalos de horarios disponibles para una fecha específica
-  /// Retorna una lista de horarios en formato "HH:00 - HH:00"
-  /// El parámetro [intervaloMinutos] define la duración de cada intervalo (default: 60)
   Future<List<String>> obtenerIntervalosDisponibles(String negocioId, DateTime fecha, {int intervaloMinutos = 60});
+
+  /// Guarda o actualiza el horario de un negocio
+  Future<bool> guardarHorario(HorarioApertura horario);
+
+  /// Convierte HorarioApertura a Map<String, String> para mostrar en UI
+  /// Ejemplo: {'lunes': 'Cerrado', 'miercoles': '12:00 - 15:30 / 20:00 - 23:30'}
+  Map<String, String> horarioAMapString(HorarioApertura horario);
+
+  /// Convierte un Map<String, String> del editor a HorarioApertura
+  HorarioApertura mapStringAHorario(String negocioId, Map<String, String> mapa);
 }

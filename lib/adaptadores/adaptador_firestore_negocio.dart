@@ -39,7 +39,6 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
         'minHorasParaCancelar': 24,
         'maxDiasAnticipacionReserva': 14,
         'duracionPromedioMinutos': 60,
-        'horariosAtencion': <String, String>{},
       };
 
       final docRef = await _negociosRef.add(data);
@@ -148,36 +147,6 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
   }
 
   @override
-  Future<Map<String, String>> obtenerHorariosServicio(
-      String negocioId) async {
-    try {
-      final negocio = await obtenerNegocioPorId(negocioId);
-      if (negocio == null) return {};
-      return negocio.horariosAtencion;
-    } catch (e) {
-      print('❌ Error obteniendo horarios de servicio: $e');
-      return {};
-    }
-  }
-
-  @override
-  Future<bool> actualizarHorariosServicio(
-    String negocioId,
-    Map<String, String> horarios,
-  ) async {
-    try {
-      await _negociosRef.doc(negocioId).update({
-        'horariosAtencion': horarios,
-      });
-      print('✅ Horarios de servicio actualizados: $negocioId');
-      return true;
-    } catch (e) {
-      print('❌ Error actualizando horarios de servicio: $e');
-      return false;
-    }
-  }
-
-  @override
   Future<bool> actualizarEmail(String negocioId, String nuevoEmail) async {
     try {
       // Verificar que el nuevo email no esté en uso
@@ -196,19 +165,6 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
     }
   }
 
-  @override
-  Future<bool> actualizarDireccion(
-      String negocioId, String nuevaDireccion) async {
-    try {
-      await _negociosRef.doc(negocioId).update({'direccion': nuevaDireccion});
-      print('✅ Dirección actualizada para negocio: $negocioId');
-      return true;
-    } catch (e) {
-      print('❌ Error actualizando dirección: $e');
-      return false;
-    }
-  }
-
   // ============================================================
   // MÉTODOS DE CONVERSIÓN
   // ============================================================
@@ -222,23 +178,14 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
       'direccion': negocio.direccion,
       'descripcion': negocio.descripcion,
       'especialidad': negocio.especialidad,
+      'icono': negocio.icono,
       'minHorasParaCancelar': negocio.minHorasParaCancelar,
       'maxDiasAnticipacionReserva': negocio.maxDiasAnticipacionReserva,
       'duracionPromedioMinutos': negocio.duracionPromedioMinutos,
-      'horariosAtencion': negocio.horariosAtencion,
     };
   }
 
   Negocio _mapToNegocio(String id, Map<String, dynamic> data) {
-    // Convertir horariosAtencion de Map<String, dynamic> a Map<String, String>
-    Map<String, String> horarios = {};
-    if (data['horariosAtencion'] != null) {
-      final rawHorarios = data['horariosAtencion'] as Map<String, dynamic>;
-      horarios = rawHorarios.map((key, value) {
-        return MapEntry(key, value.toString());
-      });
-    }
-
     return Negocio(
       id: id,
       nombre: data['nombre'] ?? '',
@@ -248,10 +195,10 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
       direccion: data['direccion'] ?? '',
       descripcion: data['descripcion'] ?? '',
       especialidad: data['especialidad'] ?? '',
+      icono: data['icono'] ?? 'restaurant',
       minHorasParaCancelar: data['minHorasParaCancelar'] ?? 2,
       maxDiasAnticipacionReserva: data['maxDiasAnticipacionReserva'] ?? 30,
       duracionPromedioMinutos: data['duracionPromedioMinutos'] ?? 60,
-      horariosAtencion: horarios,
     );
   }
 }

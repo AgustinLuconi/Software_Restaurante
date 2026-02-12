@@ -325,29 +325,6 @@ class ServicioVerificacionCliente {
         .toList();
   }
 
-  /// Actualizar reserva
-  void actualizarReserva(Map<String, dynamic> reservaActualizada) {
-    final reservas = obtenerTodasReservas();
-    final index = reservas.indexWhere(
-      (r) => r['id'] == reservaActualizada['id'],
-    );
-
-    if (index != -1) {
-      reservas[index] = reservaActualizada;
-      html.window.localStorage[_keyReservas] = jsonEncode(reservas);
-    }
-  }
-
-  /// Obtener reserva por ID
-  Map<String, dynamic>? obtenerReservaPorId(String reservaId) {
-    final reservas = obtenerTodasReservas();
-    try {
-      return reservas.firstWhere((r) => r['id'] == reservaId);
-    } catch (e) {
-      return null;
-    }
-  }
-
   // ============================================================
   // SESIÓN TEMPORAL DEL CLIENTE
   // ============================================================
@@ -394,7 +371,4 @@ class ServicioVerificacionCliente {
   void limpiarSesionCliente() {
     html.window.localStorage.remove(_keyClienteActual);
   }
-
-  /// Verificar si hay sesión activa
-  bool get tieneSesionActiva => obtenerSesionCliente() != null;
 }

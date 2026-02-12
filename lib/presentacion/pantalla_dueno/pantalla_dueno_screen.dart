@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -299,6 +300,26 @@ class _PantallaDuenoView extends StatelessWidget {
             const SizedBox(height: 16),
 
             _buildInfoCard(
+              icon: Icons.store,
+              titulo: 'Nombre del Restaurante',
+              valor: negocio.nombre,
+              color: const Color(0xFF2980B9),
+              editable: true,
+              onEdit: () => _mostrarEditarNombre(context, negocio),
+            ),
+            const SizedBox(height: 12),
+
+            _buildInfoCard(
+              icon: _obtenerIcono(negocio.icono),
+              titulo: 'Icono/Logo',
+              valor: negocio.icono,
+              color: const Color(0xFF27AE60),
+              editable: true,
+              onEdit: () => _mostrarEditarIcono(context, negocio),
+            ),
+            const SizedBox(height: 12),
+
+            _buildInfoCard(
               icon: Icons.email,
               titulo: 'Correo Electrónico',
               valor: negocio.email,
@@ -335,6 +356,18 @@ class _PantallaDuenoView extends StatelessWidget {
               color: const Color(0xFF9B59B6),
               editable: true,
               onEdit: () => _mostrarEditarEspecialidad(context, negocio),
+            ),
+            const SizedBox(height: 12),
+
+            _buildInfoCard(
+              icon: Icons.description,
+              titulo: 'Descripción',
+              valor: negocio.descripcion.isEmpty 
+                  ? 'Sin descripción' 
+                  : negocio.descripcion,
+              color: const Color(0xFF16A085),
+              editable: true,
+              onEdit: () => _mostrarEditarDescripcion(context, negocio),
             ),
 
             const SizedBox(height: 24),
@@ -842,6 +875,302 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
+  // Helper para convertir string a IconData
+  IconData _obtenerIcono(String nombreIcono) {
+    switch (nombreIcono.toLowerCase()) {
+      case 'sailing':
+        return Icons.sailing;
+      case 'local_fire_department':
+        return Icons.local_fire_department;
+      case 'local_pizza':
+        return Icons.local_pizza;
+      case 'ramen_dining':
+        return Icons.ramen_dining;
+      case 'coffee':
+        return Icons.coffee;
+      case 'icecream':
+        return Icons.icecream;
+      case 'bakery_dining':
+        return Icons.bakery_dining;
+      case 'local_bar':
+        return Icons.local_bar;
+      case 'restaurant':
+      default:
+        return Icons.restaurant;
+    }
+  }
+
+  void _mostrarEditarNombre(BuildContext context, negocio) {
+    final controller = TextEditingController(text: negocio.nombre);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.store, color: Color(0xFF2980B9)),
+              SizedBox(width: 12),
+              Text('Editar Nombre'),
+            ],
+          ),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Nombre del restaurante',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final cubit = context.read<PantallaDuenoCubit>();
+                final exito = await cubit.actualizarNombre(
+                  negocio,
+                  controller.text.trim(),
+                );
+                Navigator.pop(dialogContext);
+                if (exito) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Nombre actualizado'),
+                      backgroundColor: Color(0xFF27AE60),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('❌ Error al actualizar nombre'),
+                      backgroundColor: Color(0xFFE74C3C),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2980B9),
+              ),
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarEditarIcono(BuildContext context, negocio) {
+    final iconos = [
+      {'nombre': 'restaurant', 'icono': Icons.restaurant, 'label': 'Restaurante'},
+      {'nombre': 'sailing', 'icono': Icons.sailing, 'label': 'Chiringuito/Playa'},
+      {'nombre': 'local_fire_department', 'icono': Icons.local_fire_department, 'label': 'Parrilla'},
+      {'nombre': 'local_pizza', 'icono': Icons.local_pizza, 'label': 'Pizzería'},
+      {'nombre': 'ramen_dining', 'icono': Icons.ramen_dining, 'label': 'Asiático'},
+      {'nombre': 'coffee', 'icono': Icons.coffee, 'label': 'Cafetería'},
+      {'nombre': 'icecream', 'icono': Icons.icecream, 'label': 'Heladería'},
+      {'nombre': 'bakery_dining', 'icono': Icons.bakery_dining, 'label': 'Panadería'},
+      {'nombre': 'local_bar', 'icono': Icons.local_bar, 'label': 'Bar'},
+    ];
+
+    String iconoSeleccionado = negocio.icono;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.image, color: Color(0xFF27AE60)),
+                  SizedBox(width: 12),
+                  Text('Seleccionar Icono'),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 1,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: iconos.length,
+                  itemBuilder: (context, index) {
+                    final item = iconos[index];
+                    final esSeleccionado = item['nombre'] == iconoSeleccionado;
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          iconoSeleccionado = item['nombre'] as String;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: esSeleccionado 
+                              ? const Color(0xFF27AE60).withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: esSeleccionado 
+                                ? const Color(0xFF27AE60)
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              item['icono'] as IconData,
+                              size: 32,
+                              color: esSeleccionado 
+                                  ? const Color(0xFF27AE60)
+                                  : Colors.grey[600],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item['label'] as String,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: esSeleccionado 
+                                    ? const Color(0xFF27AE60)
+                                    : Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final cubit = context.read<PantallaDuenoCubit>();
+                    final exito = await cubit.actualizarIcono(
+                      negocio,
+                      iconoSeleccionado,
+                    );
+                    Navigator.pop(dialogContext);
+                    if (exito) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Icono actualizado'),
+                          backgroundColor: Color(0xFF27AE60),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('❌ Error al actualizar icono'),
+                          backgroundColor: Color(0xFFE74C3C),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF27AE60),
+                  ),
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _mostrarEditarDescripcion(BuildContext context, negocio) {
+    final controller = TextEditingController(text: negocio.descripcion);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.description, color: Color(0xFF16A085)),
+              SizedBox(width: 12),
+              Text('Editar Descripción'),
+            ],
+          ),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Descripción del restaurante',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.description),
+              hintText: 'Describe tu restaurante...',
+            ),
+            maxLines: 4,
+            maxLength: 300,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final nuevaDescripcion = controller.text.trim();
+                final cubit = context.read<PantallaDuenoCubit>();
+                final exito = await cubit.actualizarDescripcion(
+                  negocio,
+                  nuevaDescripcion,
+                );
+
+                Navigator.pop(dialogContext);
+
+                if (exito) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        '✅ Descripción actualizada correctamente',
+                      ),
+                      backgroundColor: Color(0xFF27AE60),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('❌ Error al actualizar descripción'),
+                      backgroundColor: Color(0xFFE74C3C),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A085),
+              ),
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _mostrarEditarEmail(BuildContext context, negocio) {
     final auth = getIt<ServicioAutenticacion>();
     final nuevoEmailController = TextEditingController();
@@ -956,13 +1285,19 @@ class _PantallaDuenoView extends StatelessWidget {
                                   passwordActual: password,
                                 );
 
-                                // Actualizar en el repositorio local también
+                                // Actualizar en Firestore
                                 final cubit =
                                     context.read<PantallaDuenoCubit>();
                                 await cubit.negocioRepositorio.actualizarEmail(
                                   negocio.id,
                                   nuevoEmail,
                                 );
+
+                                // Actualizar estado local para refrescar la pantalla
+                                final negocioActualizado = negocio.copyWith(
+                                  email: nuevoEmail,
+                                );
+                                cubit.establecerNegocioAutenticado(negocioActualizado);
 
                                 Navigator.pop(dialogContext);
 
@@ -1048,8 +1383,15 @@ class _PantallaDuenoView extends StatelessWidget {
                 final nuevaDireccion = controller.text.trim();
                 if (nuevaDireccion.isNotEmpty) {
                   final cubit = context.read<PantallaDuenoCubit>();
+                  final negocioActualizado = negocio.copyWith(
+                    direccion: nuevaDireccion,
+                  );
                   final exito = await cubit.negocioRepositorio
-                      .actualizarDireccion(negocio.id, nuevaDireccion);
+                      .actualizarNegocio(negocioActualizado);
+
+                  if (exito) {
+                    cubit.establecerNegocioAutenticado(negocioActualizado);
+                  }
 
                   Navigator.pop(dialogContext);
 
@@ -1263,6 +1605,20 @@ class _PantallaDuenoView extends StatelessWidget {
                                   passwordActual: passwordActual,
                                   passwordNueva: passwordNueva,
                                 );
+
+                                // También actualizar en Firestore
+                                final cubit = context.read<PantallaDuenoCubit>();
+                                final state = cubit.state;
+                                if (state is PantallaDuenoAutenticado) {
+                                  await cubit.negocioRepositorio.actualizarNegocio(
+                                    state.negocio.copyWith(),
+                                  );
+                                  // Actualizar el campo password directamente
+                                  await FirebaseFirestore.instance
+                                      .collection('negocios')
+                                      .doc(state.negocio.id)
+                                      .update({'password': passwordNueva});
+                                }
 
                                 Navigator.pop(dialogContext);
 
@@ -2212,7 +2568,7 @@ class _PantallaDuenoView extends StatelessWidget {
                       _buildInfoRowSmall(
                         Icons.person,
                         'Cliente',
-                        reserva.clienteId,
+                        reserva.nombreCliente ?? reserva.contactoCliente ?? 'Sin datos',
                       ),
                       const SizedBox(height: 8),
                       _buildInfoRowSmall(

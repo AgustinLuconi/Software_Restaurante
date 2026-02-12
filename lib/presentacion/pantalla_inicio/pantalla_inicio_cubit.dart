@@ -42,9 +42,4 @@ class PantallaInicioCubit extends Cubit<PantallaInicioState> {
 
     return null;
   }
-
-  // Reiniciar al estado inicial manteniendo los negocios
-  void reiniciar() {
-    emit(PantallaInicioInicial(negocios: state.negocios));
-  }
 }

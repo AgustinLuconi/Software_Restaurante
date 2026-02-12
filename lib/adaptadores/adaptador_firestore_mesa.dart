@@ -41,47 +41,15 @@ class MesaRepositorioFirestore implements MesaRepositorio {
   }
 
   @override
-  Future<List<Mesa>> obtenerMesasDisponibles(
-    DateTime fecha,
-    DateTime hora,
-    int numeroPersonas,
-  ) async {
-    try {
-      final todasLasMesas = await obtenerMesas();
-      final mesasDisponibles = <Mesa>[];
-
-      for (final mesa in todasLasMesas) {
-        if (!mesa.puedeAcomodar(numeroPersonas)) continue;
-
-        final disponible = await _reservaRepositorio.mesaDisponible(
-          mesaId: mesa.id,
-          fecha: fecha,
-          hora: hora,
-          duracionMinutos: 60,
-        );
-
-        if (disponible) {
-          mesasDisponibles.add(mesa);
-        }
-      }
-
-      // Ordenar por capacidad (menor desperdicio primero)
-      mesasDisponibles.sort((a, b) => a.capacidad.compareTo(b.capacidad));
-      
-      return mesasDisponibles;
-    } catch (e) {
-      print('❌ Error obteniendo mesas disponibles: $e');
-      return [];
-    }
-  }
-
-  @override
   Future<List<Mesa>> obtenerMesasPorNegocio(String negocioId) async {
     try {
+      print('🔍 Buscando mesas con negocioId: $negocioId');
       final snapshot = await _mesasRef
           .where('negocioId', isEqualTo: negocioId)
           .orderBy('nombre')
           .get();
+      
+      print('📊 Mesas encontradas: ${snapshot.docs.length}');
       
       return snapshot.docs
           .map((doc) => _mapToMesa(doc.id, doc.data()))

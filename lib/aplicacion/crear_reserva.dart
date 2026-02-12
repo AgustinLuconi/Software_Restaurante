@@ -1,5 +1,3 @@
-import 'package:uuid/uuid.dart';
-
 import '../dominio/entidades/reserva.dart';
 import '../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../dominio/repositorios/mesa_repositorio.dart';
@@ -29,9 +27,6 @@ class CrearReserva {
     EstadoReserva estadoInicial = EstadoReserva.pendiente,
     required String negocioId, // ID del negocio - ahora es requerido
   }) async {
-    // Generar ID único para el cliente
-    final String clienteId = const Uuid().v4();
-    
     final now = DateTime.now();
     final fechaHora = DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute);
     if (fechaHora.isBefore(now)) {
@@ -117,9 +112,8 @@ class CrearReserva {
       throw Exception('La mesa seleccionada ya está reservada en ese horario. Por favor elige otra mesa u otro horario.');
     }
     
-    final reserva = Reserva(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      clienteId: clienteId,
+    final reservaTemporal = Reserva(
+      id: '',
       mesaId: mesaId,
       fechaHora: fechaHora,
       numeroPersonas: numeroPersonas,
@@ -128,7 +122,8 @@ class CrearReserva {
       contactoCliente: contactoCliente,
       nombreCliente: nombreCliente,
     );
-    await reservaRepositorio.crearReserva(reserva);
+    // Firestore genera el ID automáticamente
+    final reserva = await reservaRepositorio.crearReserva(reservaTemporal);
     return reserva;
   }
 }

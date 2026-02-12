@@ -6,18 +6,16 @@ enum EstadoReserva {
 
 class Reserva {
 	final String id;
-	final String clienteId;
 	final String mesaId;
 	final DateTime fechaHora;
 	final int numeroPersonas;
 	final int duracionMinutos;
 	EstadoReserva estado;
-	final String? contactoCliente; // Email o teléfono del cliente
+	final String? contactoCliente; // Email del cliente para notificaciones
 	final String? nombreCliente; // Nombre opcional del cliente
 
 	Reserva({
 		required this.id,
-		required this.clienteId,
 		required this.mesaId,
 		required this.fechaHora,
 		required this.numeroPersonas,
@@ -40,16 +38,8 @@ class Reserva {
 		estado = EstadoReserva.confirmada;
 	}
 
-	void cancelar() {
-		if (estado == EstadoReserva.cancelada) {
-			throw Exception('La reserva ya está cancelada.');
-		}
-		estado = EstadoReserva.cancelada;
-	}
-
 	Reserva copyWith({
 		String? id,
-		String? clienteId,
 		String? mesaId,
 		DateTime? fechaHora,
 		int? numeroPersonas,
@@ -60,7 +50,6 @@ class Reserva {
 	}) {
 		return Reserva(
 			id: id ?? this.id,
-			clienteId: clienteId ?? this.clienteId,
 			mesaId: mesaId ?? this.mesaId,
 			fechaHora: fechaHora ?? this.fechaHora,
 			numeroPersonas: numeroPersonas ?? this.numeroPersonas,

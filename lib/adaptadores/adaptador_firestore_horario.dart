@@ -3,6 +3,7 @@ import '../dominio/entidades/horario_apertura.dart';
 import '../dominio/repositorios/horario_apertura_repositorio.dart';
 
 /// Adaptador de Firestore para el repositorio de horarios de apertura
+/// Lee y escribe desde la colección 'horarios_apertura' en Firestore
 class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -35,7 +36,6 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
   Future<bool> estaAbiertoEn(String negocioId, DateTime fechaHora) async {
     final horario = await obtenerHorarioPorNegocio(negocioId);
     if (horario == null) {
-      // Si no hay horario definido, asumir que está abierto
       return true;
     }
     return horario.estaAbiertoEn(fechaHora);
@@ -69,7 +69,6 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
     final intervalos = <String>[];
     final diaSemana = fecha.weekday;
 
-    // Buscar el horario del día correspondiente
     HorarioDia? horarioDia;
     for (final h in horario.horariosSemanal) {
       if (_obtenerNumeroDia(h.nombreDia) == diaSemana) {
@@ -80,7 +79,6 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
 
     if (horarioDia == null || horarioDia.cerrado) return [];
 
-    // Generar intervalos de tiempo para cada período abierto
     for (final intervalo in horarioDia.intervalos) {
       var horaActual = intervalo.horaInicio;
       var minutoActual = intervalo.minutoInicio;
@@ -88,7 +86,6 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
       while (horaActual < intervalo.horaFin ||
           (horaActual == intervalo.horaFin && minutoActual < intervalo.minutoFin)) {
         
-        // Calcular hora de fin del intervalo
         var horaFin = horaActual;
         var minutoFin = minutoActual + intervaloMinutos;
         if (minutoFin >= 60) {
@@ -96,11 +93,13 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
           minutoFin = minutoFin - 60;
         }
 
-        final horaInicioStr = '${horaActual.toString().padLeft(2, '0')}:${minutoActual.toString().padLeft(2, '0')}';
-        final horaFinStr = '${horaFin.toString().padLeft(2, '0')}:${minutoFin.toString().padLeft(2, '0')}';
+        final horaInicioMostrar = horaActual % 24;
+        final horaFinMostrar = horaFin % 24;
+        
+        final horaInicioStr = '${horaInicioMostrar.toString().padLeft(2, '0')}:${minutoActual.toString().padLeft(2, '0')}';
+        final horaFinStr = '${horaFinMostrar.toString().padLeft(2, '0')}:${minutoFin.toString().padLeft(2, '0')}';
         intervalos.add('$horaInicioStr - $horaFinStr');
 
-        // Avanzar según el intervalo
         minutoActual += intervaloMinutos;
         if (minutoActual >= 60) {
           horaActual++;
@@ -113,20 +112,18 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
   }
 
   /// Guarda o actualiza el horario de un negocio
+  @override
   Future<bool> guardarHorario(HorarioApertura horario) async {
     try {
-      // Buscar si ya existe un documento para este negocio
       final snapshot = await _horariosRef
           .where('negocioId', isEqualTo: horario.negocioId)
           .limit(1)
           .get();
 
       if (snapshot.docs.isEmpty) {
-        // Crear nuevo documento
         await _horariosRef.add(_horarioToMap(horario));
         print('✅ Horario creado para negocio: ${horario.negocioId}');
       } else {
-        // Actualizar documento existente
         await _horariosRef
             .doc(snapshot.docs.first.id)
             .update(_horarioToMap(horario));
@@ -139,9 +136,91 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
     }
   }
 
+  /// Convierte HorarioApertura a Map<String, String> para mostrar en pantalla
+  /// Ejemplo: {'lunes': 'Cerrado', 'miercoles': '12:00 - 15:30 / 20:00 - 23:30'}
+  @override
+  Map<String, String> horarioAMapString(HorarioApertura horario) {
+    final mapa = <String, String>{};
+    for (final dia in horario.horariosSemanal) {
+      if (dia.cerrado) {
+        mapa[dia.nombreDia] = 'Cerrado';
+      } else if (dia.intervalos.isEmpty) {
+        mapa[dia.nombreDia] = 'Sin horario';
+      } else {
+        mapa[dia.nombreDia] = dia.intervalos.map((i) {
+          final hi = (i.horaInicio % 24).toString().padLeft(2, '0');
+          final mi = i.minutoInicio.toString().padLeft(2, '0');
+          final hf = (i.horaFin % 24).toString().padLeft(2, '0');
+          final mf = i.minutoFin.toString().padLeft(2, '0');
+          return '$hi:$mi - $hf:$mf';
+        }).join(' / ');
+      }
+    }
+    return mapa;
+  }
+
+  /// Convierte un Map<String, String> (del editor) a HorarioApertura
+  @override
+  HorarioApertura mapStringAHorario(String negocioId, Map<String, String> mapa) {
+    final horariosSemanal = <HorarioDia>[];
+
+    for (final entry in mapa.entries) {
+      final nombreDia = entry.key;
+      final valorStr = entry.value.trim();
+
+      if (valorStr.toLowerCase() == 'cerrado') {
+        horariosSemanal.add(HorarioDia(
+          nombreDia: nombreDia,
+          cerrado: true,
+        ));
+      } else {
+        final intervalos = _parsearIntervalos(valorStr);
+        horariosSemanal.add(HorarioDia(
+          nombreDia: nombreDia,
+          cerrado: false,
+          intervalos: intervalos,
+        ));
+      }
+    }
+
+    return HorarioApertura(
+      negocioId: negocioId,
+      horariosSemanal: horariosSemanal,
+    );
+  }
+
   // ============================================================
-  // MÉTODOS DE CONVERSIÓN
+  // MÉTODOS PRIVADOS
   // ============================================================
+
+  /// Parsea un string como "12:00 - 15:30 / 20:00 - 23:30" a lista de intervalos
+  List<IntervaloHorario> _parsearIntervalos(String texto) {
+    final intervalos = <IntervaloHorario>[];
+    final turnos = texto.split('/');
+    
+    for (final turno in turnos) {
+      final partes = turno.trim().split('-');
+      if (partes.length != 2) continue;
+
+      final inicio = partes[0].trim().split(':');
+      final fin = partes[1].trim().split(':');
+
+      if (inicio.length != 2 || fin.length != 2) continue;
+
+      try {
+        intervalos.add(IntervaloHorario(
+          horaInicio: int.parse(inicio[0]),
+          minutoInicio: int.parse(inicio[1]),
+          horaFin: int.parse(fin[0]),
+          minutoFin: int.parse(fin[1]),
+        ));
+      } catch (e) {
+        print('⚠️ Error parseando intervalo: "$turno" - $e');
+      }
+    }
+
+    return intervalos;
+  }
 
   Map<String, dynamic> _horarioToMap(HorarioApertura horario) {
     return {

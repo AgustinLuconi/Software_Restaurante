@@ -11,10 +11,11 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
       _firestore.collection('reservas');
 
   @override
-  Future<void> crearReserva(Reserva reserva) async {
+  Future<Reserva> crearReserva(Reserva reserva) async {
     try {
-      await _reservasRef.doc(reserva.id).set(_reservaToMap(reserva));
-      print('✅ Reserva creada en Firestore: ${reserva.id}');
+      final docRef = await _reservasRef.add(_reservaToMap(reserva));
+      print('✅ Reserva creada en Firestore: ${docRef.id}');
+      return reserva.copyWith(id: docRef.id);
     } catch (e) {
       print('❌ Error creando reserva en Firestore: $e');
       rethrow;
@@ -135,7 +136,6 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
 
   Map<String, dynamic> _reservaToMap(Reserva reserva) {
     return {
-      'clienteId': reserva.clienteId,
       'mesaId': reserva.mesaId,
       'fechaHora': Timestamp.fromDate(reserva.fechaHora),
       'numeroPersonas': reserva.numeroPersonas,
@@ -151,7 +151,6 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
   Reserva _mapToReserva(String id, Map<String, dynamic> data) {
     return Reserva(
       id: id,
-      clienteId: data['clienteId'] ?? '',
       mesaId: data['mesaId'] ?? '',
       fechaHora: (data['fechaHora'] as Timestamp).toDate(),
       numeroPersonas: data['numeroPersonas'] ?? 1,

@@ -13,15 +13,3 @@ abstract class PantallaInicioState {
 class PantallaInicioInicial extends PantallaInicioState {
   const PantallaInicioInicial({super.negocios});
 }
-
-// Estado de carga
-class PantallaInicioCargando extends PantallaInicioState {
-  const PantallaInicioCargando({super.negocios});
-}
-
-// Estado de error
-class PantallaInicioConError extends PantallaInicioState {
-  final String mensaje;
-
-  const PantallaInicioConError(this.mensaje, {super.negocios});
-}

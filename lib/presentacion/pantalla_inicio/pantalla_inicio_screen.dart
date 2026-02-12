@@ -53,34 +53,7 @@ class _PantallaInicioView extends StatelessWidget {
       ),
       body: BlocBuilder<PantallaInicioCubit, PantallaInicioState>(
         builder: (context, state) {
-          if (state is PantallaInicioCargando) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          if (state is PantallaInicioConError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    state.mensaje,
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<PantallaInicioCubit>().reiniciar();
-                    },
-                    child: const Text('Reintentar'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // Estado inicial - Lista de restaurantes
+          // Lista de restaurantes
           return Column(
               children: [
                 // Header mejorado
@@ -148,7 +121,7 @@ class _PantallaInicioView extends StatelessWidget {
                                 especialidad: negocio.especialidad.isEmpty 
                                     ? negocio.direccion 
                                     : negocio.especialidad,
-                                icono: esChiringuito ? Icons.sailing : Icons.restaurant,
+                                icono: _obtenerIcono(negocio.icono),
                                 color: esChiringuito 
                                     ? const Color(0xFF3498DB) 
                                     : const Color(0xFF9B59B6),
@@ -230,6 +203,31 @@ class _PantallaInicioView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  // Helper para convertir string a IconData
+  IconData _obtenerIcono(String nombreIcono) {
+    switch (nombreIcono.toLowerCase()) {
+      case 'sailing':
+        return Icons.sailing;
+      case 'local_fire_department':
+        return Icons.local_fire_department;
+      case 'local_pizza':
+        return Icons.local_pizza;
+      case 'ramen_dining':
+        return Icons.ramen_dining;
+      case 'coffee':
+        return Icons.coffee;
+      case 'icecream':
+        return Icons.icecream;
+      case 'bakery_dining':
+        return Icons.bakery_dining;
+      case 'local_bar':
+        return Icons.local_bar;
+      case 'restaurant':
+      default:
+        return Icons.restaurant;
+    }
   }
 
   void _mostrarProximamente(BuildContext context) {

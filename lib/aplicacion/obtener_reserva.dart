@@ -16,19 +16,3 @@ class ObtenerReserva {
     }
   }
 }
-
-class ObtenerReservaPorId {
-  final ReservaRepositorio reservaRepositorio;
-
-  ObtenerReservaPorId(this.reservaRepositorio);
-
-  Future<Reserva?> ejecutar(String reservaId) async {
-    final reserva = await reservaRepositorio.obtenerReservaPorId(reservaId);
-    if (reserva == null) {
-      // Puedes lanzar una excepción o retornar null
-      // throw Exception('Reserva no encontrada');
-      return null;
-    }
-    return reserva;
-  }
-}

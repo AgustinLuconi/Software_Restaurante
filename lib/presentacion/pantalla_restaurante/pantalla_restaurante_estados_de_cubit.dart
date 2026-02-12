@@ -15,11 +15,11 @@ class PantallaRestauranteCargando extends PantallaRestauranteState {}
 // Estado exitoso con datos del negocio
 class PantallaRestauranteExitoso extends PantallaRestauranteState {
   final Negocio negocio;
-  final Map<String, String> horariosAtencion;
+  final Map<String, String> horarios;
 
   PantallaRestauranteExitoso({
     required this.negocio,
-    required this.horariosAtencion,
+    required this.horarios,
   });
 }
 

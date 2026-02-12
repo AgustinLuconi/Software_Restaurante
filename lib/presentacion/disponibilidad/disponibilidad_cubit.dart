@@ -55,57 +55,15 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       final resultados = await Future.wait([
         _mesaRepositorio.obtenerMesas(),
         _negocioRepositorio.obtenerNegocioPorId(_negocioId!),
-        _negocioRepositorio.obtenerHorariosServicio(_negocioId!),
+        _horarioAperturaRepo.obtenerHorarioPorNegocio(_negocioId!),
       ]);
 
       final mesas = resultados[0] as List<Mesa>;
       _negocioActual = resultados[1] as Negocio?;
-      final horarios = resultados[2] as Map<String, String>;
-
-      emit(
-        DisponibilidadExitosa(
-          mesas,
-          negocio: _negocioActual,
-          horariosServicio: horarios,
-        ),
-      );
-    } catch (e) {
-      emit(
-        DisponibilidadConError('Error al cargar los datos: ${e.toString()}'),
-      );
-    }
-  }
-
-  /// Carga inicial de datos (mesas + configuración del negocio + horarios)
-  Future<void> cargarDatosIniciales({String? negocioId}) async {
-    try {
-      emit(DisponibilidadCargando());
-
-      // Si no tenemos negocioId, cargar el primer negocio disponible
-      if (negocioId == null && _negocioId == null) {
-        final negocios = await _negocioRepositorio.obtenerTodosLosNegocios();
-        if (negocios.isNotEmpty) {
-          negocioId = negocios.first.id;
-        }
-      }
-
-      // Usar el negocioId proporcionado o el actual
-      final id = negocioId ?? _negocioId;
-      if (id == null) {
-        emit(DisponibilidadConError('No hay negocios registrados'));
-        return;
-      }
-      _negocioId = id;
-
-      final resultados = await Future.wait([
-        _mesaRepositorio.obtenerMesas(),
-        _negocioRepositorio.obtenerNegocioPorId(id),
-        _negocioRepositorio.obtenerHorariosServicio(id),
-      ]);
-
-      final mesas = resultados[0] as List<Mesa>;
-      _negocioActual = resultados[1] as Negocio?;
-      final horarios = resultados[2] as Map<String, String>;
+      final horario = resultados[2] as dynamic;
+      final horarios = horario != null
+          ? _horarioAperturaRepo.horarioAMapString(horario)
+          : <String, String>{};
 
       emit(
         DisponibilidadExitosa(
