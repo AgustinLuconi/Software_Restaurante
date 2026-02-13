@@ -5,6 +5,7 @@ import 'adaptadores/adaptador_firestore_reserva.dart';
 import 'adaptadores/adaptador_firestore_mesa.dart';
 import 'adaptadores/adaptador_firestore_negocio.dart';
 import 'adaptadores/adaptador_firestore_horario.dart';
+import 'adaptadores/adaptador_firestore_zona.dart';
 
 // Servicios
 import 'adaptadores/servicio_autenticacion_firebase.dart';
@@ -21,6 +22,7 @@ import 'dominio/repositorios/horario_apertura_repositorio.dart';
 import 'dominio/repositorios/mesa_repositorio.dart';
 import 'dominio/repositorios/negocio_repositorio.dart';
 import 'dominio/repositorios/reserva_repositorio.dart';
+import 'dominio/repositorios/zona_repositorio.dart';
 
 // Cubits
 import 'presentacion/pantalla_dueno/pantalla_dueno_cubit.dart';
@@ -77,6 +79,9 @@ void setupServiceLocator() {
     () => HorarioAperturaRepositorioFirestore(),
   );
 
+  // Repositorio de zonas
+  getIt.registerLazySingleton<ZonaRepositorio>(() => AdaptadorFirestoreZona());
+
   // ============================================================
   // CASOS DE USO
   // ============================================================
@@ -111,6 +116,7 @@ void setupServiceLocator() {
       getIt<ReservaRepositorio>(),
       getIt<ServicioEmail>(),
       getIt<HorarioAperturaRepositorio>(),
+      getIt<ZonaRepositorio>(),
     ),
   );
   getIt.registerFactory(() => PantallaInicioCubit(getIt<NegocioRepositorio>()));

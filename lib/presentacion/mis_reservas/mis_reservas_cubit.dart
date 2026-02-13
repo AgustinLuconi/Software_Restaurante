@@ -17,10 +17,10 @@ class MisReservasCubit extends Cubit<MisReservasState> {
         _reservaRepositorio = getIt<ReservaRepositorio>(),
         super(MisReservasInicial());
 
-  Future<void> cargarReservas() async {
+  Future<void> cargarReservas({String? contactoCliente}) async {
     try {
       emit(MisReservasCargando());
-      final reservas = await _obtenerReserva.ejecutar();
+      final reservas = await _obtenerReserva.ejecutar(contactoCliente: contactoCliente);
       emit(MisReservasExitoso(reservas));
     } catch (e) {
       emit(MisReservasConError('Error al cargar las reservas: ${e.toString()}'));

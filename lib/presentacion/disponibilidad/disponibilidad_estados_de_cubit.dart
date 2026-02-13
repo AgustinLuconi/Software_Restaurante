@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../dominio/entidades/mesa.dart';
 import '../../dominio/entidades/negocio.dart';
+import '../../dominio/entidades/zona.dart';
 
 @immutable
 abstract class DisponibilidadState {}
@@ -15,13 +16,18 @@ class DisponibilidadExitosa extends DisponibilidadState {
   final Negocio? negocio;
   final Map<String, String>? horariosServicio;
 
-  DisponibilidadExitosa(this.mesasDisponibles, {this.negocio, this.horariosServicio});
+  DisponibilidadExitosa(
+    this.mesasDisponibles, {
+    this.negocio,
+    this.horariosServicio,
+  });
 
   /// Duración promedio de reserva en minutos (default: 60)
   int get duracionPromedioMinutos => negocio?.duracionPromedioMinutos ?? 60;
 
   /// Máximos días de anticipación para reservar (default: 14)
-  int get maxDiasAnticipacionReserva => negocio?.maxDiasAnticipacionReserva ?? 14;
+  int get maxDiasAnticipacionReserva =>
+      negocio?.maxDiasAnticipacionReserva ?? 14;
 
   /// Mínimas horas para cancelar (default: 24)
   int get minHorasParaCancelar => negocio?.minHorasParaCancelar ?? 24;
@@ -42,7 +48,7 @@ class ReservaCreada extends DisponibilidadState {
 /// Estado cuando se encuentra una mesa disponible en la zona seleccionada
 class MesaEncontrada extends DisponibilidadState {
   final Mesa mesa;
-  final ZonaMesa zona;
+  final Zona zona;
   final int duracionPromedioMinutos;
 
   MesaEncontrada(this.mesa, this.zona, this.duracionPromedioMinutos);

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
+import '../dominio/utilidades/telefono_utils.dart';
 
 /// Servicio de autenticación con Firebase
 class ServicioAutenticacion {
@@ -393,74 +394,10 @@ class ServicioAutenticacion {
 
   /// Formatear número de teléfono a formato E.164
   /// Ejemplo: "11 1234-5678" → "+5491112345678"
-  String _formatearNumeroTelefono(String numero) {
-    // Remover espacios, guiones y paréntesis
-    String limpio = numero.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-
-    // Si no empieza con +, agregar código de Argentina
-    if (!limpio.startsWith('+')) {
-      // Si empieza con 0, removerlo
-      if (limpio.startsWith('0')) {
-        limpio = limpio.substring(1);
-      }
-      // Si empieza con 15 (formato local), removerlo y agregar 9
-      if (limpio.startsWith('15')) {
-        limpio = '9${limpio.substring(2)}';
-      }
-      // Si no tiene el 9 después del código de área
-      if (!limpio.startsWith('9') && limpio.length == 10) {
-        limpio = '9$limpio';
-      }
-      // Agregar código de Argentina
-      limpio = '+54$limpio';
-    }
-
-    return limpio;
-  }
+  String _formatearNumeroTelefono(String numero) => TelefonoUtils.normalizar(numero);
 
   /// Validar formato de teléfono argentino
-  Map<String, dynamic> validarTelefonoArgentino(String telefono) {
-    try {
-      final formateado = _formatearNumeroTelefono(telefono);
-
-      // Validar longitud (Argentina: +54 + 9 + 10 dígitos = 13-14 dígitos)
-      if (formateado.length < 13 || formateado.length > 14) {
-        return {
-          'valido': false,
-          'error': 'Número de teléfono inválido para Argentina',
-        };
-      }
-
-      // Validar que empiece con +54
-      if (!formateado.startsWith('+54')) {
-        return {'valido': false, 'error': 'Debe ser un número argentino (+54)'};
-      }
-
-      return {
-        'valido': true,
-        'formateado': formateado,
-        'nacional': _formatoNacional(formateado),
-      };
-    } catch (e) {
-      return {'valido': false, 'error': 'Formato de teléfono inválido'};
-    }
-  }
-
-  String _formatoNacional(String e164) {
-    // +5491112345678 → 011 15-1234-5678
-    if (e164.length < 13) return e164;
-    final sinCodigo = e164.substring(3); // Quitar +54
-    final tiene9 = sinCodigo.startsWith('9');
-    final numero = tiene9 ? sinCodigo.substring(1) : sinCodigo;
-
-    if (numero.length == 10) {
-      // Código de área 2 dígitos (Buenos Aires)
-      final area = numero.substring(0, 2);
-      final resto = numero.substring(2);
-      return '0$area 15-${resto.substring(0, 4)}-${resto.substring(4)}';
-    }
-    return e164;
-  }
+  Map<String, dynamic> validarTelefonoArgentino(String telefono) => TelefonoUtils.validar(telefono);
 
   // ============================================================
   // MANEJO DE ERRORES

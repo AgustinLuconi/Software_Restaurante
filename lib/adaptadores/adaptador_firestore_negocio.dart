@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../dominio/entidades/negocio.dart';
 import '../dominio/repositorios/negocio_repositorio.dart';
+import 'adaptador_firestore_zona.dart';
 
 /// Adaptador de Firestore para el repositorio de negocios
 class NegocioRepositorioFirestore implements NegocioRepositorio {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AdaptadorFirestoreZona _zonaRepositorio = AdaptadorFirestoreZona();
 
   /// Referencia a la colección de negocios
   CollectionReference<Map<String, dynamic>> get _negociosRef =>
@@ -43,7 +45,11 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
 
       final docRef = await _negociosRef.add(data);
       print('✅ Negocio registrado: ${docRef.id}');
-      
+
+      // Crear zonas iniciales para el nuevo negocio
+      await _zonaRepositorio.crearZonasIniciales(docRef.id);
+      print('✅ Zonas iniciales creadas para el negocio');
+
       return Negocio(
         id: docRef.id,
         nombre: nombre,
@@ -64,10 +70,8 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
     required String password,
   }) async {
     try {
-      final snapshot = await _negociosRef
-          .where('email', isEqualTo: email)
-          .limit(1)
-          .get();
+      final snapshot =
+          await _negociosRef.where('email', isEqualTo: email).limit(1).get();
 
       if (snapshot.docs.isEmpty) {
         print('⚠️ No existe negocio con email: $email');
@@ -120,10 +124,8 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
   @override
   Future<Negocio?> obtenerNegocioPorEmail(String email) async {
     try {
-      final snapshot = await _negociosRef
-          .where('email', isEqualTo: email)
-          .limit(1)
-          .get();
+      final snapshot =
+          await _negociosRef.where('email', isEqualTo: email).limit(1).get();
 
       if (snapshot.docs.isEmpty) return null;
       final doc = snapshot.docs.first;
@@ -165,6 +167,19 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
     }
   }
 
+  @override
+  Future<bool> actualizarPassword(String negocioId, String nuevaPassword) async {
+    try {
+      // NOTA: En producción, hashear la contraseña antes de guardarla
+      await _negociosRef.doc(negocioId).update({'password': nuevaPassword});
+      print('✅ Password actualizado para negocio: $negocioId');
+      return true;
+    } catch (e) {
+      print('❌ Error actualizando password: $e');
+      return false;
+    }
+  }
+
   // ============================================================
   // MÉTODOS DE CONVERSIÓN
   // ============================================================
@@ -196,8 +211,8 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
       descripcion: data['descripcion'] ?? '',
       especialidad: data['especialidad'] ?? '',
       icono: data['icono'] ?? 'restaurant',
-      minHorasParaCancelar: data['minHorasParaCancelar'] ?? 2,
-      maxDiasAnticipacionReserva: data['maxDiasAnticipacionReserva'] ?? 30,
+      minHorasParaCancelar: data['minHorasParaCancelar'] ?? 24,
+      maxDiasAnticipacionReserva: data['maxDiasAnticipacionReserva'] ?? 14,
       duracionPromedioMinutos: data['duracionPromedioMinutos'] ?? 60,
     );
   }

@@ -5,15 +5,15 @@ import '../../dominio/repositorios/negocio_repositorio.dart';
 import 'pantalla_inicio_estados_de_cubit.dart';
 
 class PantallaInicioCubit extends Cubit<PantallaInicioState> {
-  final NegocioRepositorio negocioRepositorio;
+  final NegocioRepositorio _negocioRepositorio;
 
-  PantallaInicioCubit(this.negocioRepositorio) : super(const PantallaInicioInicial()) {
+  PantallaInicioCubit(this._negocioRepositorio) : super(const PantallaInicioInicial()) {
     _cargarNegocios();
   }
 
   // Cargar negocios existentes
   Future<void> _cargarNegocios() async {
-    final negocios = await negocioRepositorio.obtenerTodosLosNegocios();
+    final negocios = await _negocioRepositorio.obtenerTodosLosNegocios();
     emit(PantallaInicioInicial(negocios: negocios));
   }
 
@@ -26,7 +26,7 @@ class PantallaInicioCubit extends Cubit<PantallaInicioState> {
     required String direccion,
     required String password,
   }) async {
-    final negocio = await negocioRepositorio.registrarNegocio(
+    final negocio = await _negocioRepositorio.registrarNegocio(
       nombre: nombre,
       nombreResponsable: nombreResponsable,
       email: email,
@@ -41,5 +41,26 @@ class PantallaInicioCubit extends Cubit<PantallaInicioState> {
     }
 
     return null;
+  }
+
+  /// Autentica con email/password y retorna el negocio
+  Future<Negocio?> autenticarYObtener(String email, String password) async {
+    try {
+      return await _negocioRepositorio.autenticarNegocio(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Busca un negocio por email
+  Future<Negocio?> obtenerNegocioPorEmail(String email) async {
+    try {
+      return await _negocioRepositorio.obtenerNegocioPorEmail(email);
+    } catch (e) {
+      return null;
+    }
   }
 }

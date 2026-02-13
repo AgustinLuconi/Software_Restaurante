@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../adaptadores/servicio_verificacion_cliente.dart';
 import '../../dominio/entidades/mesa.dart';
+import '../../dominio/entidades/zona.dart';
 import '../../service_locator.dart';
 import 'disponibilidad_cubit.dart';
 import 'disponibilidad_estados_de_cubit.dart';
@@ -32,7 +33,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   String?
   _intervaloSeleccionado; // Cambio: ahora guardamos el intervalo como String
   int _numeroPersonas = 2;
-  ZonaMesa? _zonaSeleccionada; // Nueva variable para la zona
+  Zona? _zonaSeleccionada; // Zona personalizada del restaurante
   Future<List<String>>? _intervalosFuture; // Cache del Future de intervalos
 
   @override
@@ -416,110 +417,105 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildSelectorZona() {
     return BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
       builder: (context, state) {
-        // Obtener zonas desde las mesas ya cargadas
-        List<ZonaMesa> zonas = [];
-        if (state is DisponibilidadExitosa) {
-          zonas = state.mesasDisponibles.map((m) => m.zona).toSet().toList();
-        }
+        return FutureBuilder<List<Zona>>(
+          future: context.read<DisponibilidadCubit>().obtenerZonasDisponibles(),
+          builder: (context, snapshot) {
+            final zonas = snapshot.data ?? [];
 
-        return Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF9B59B6).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.location_on, color: Color(0xFF9B59B6)),
+            return Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Zona',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF9B59B6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 4),
-                      zonas.isEmpty
-                          ? const Text(
-                              'Cargando zonas...',
-                              style: TextStyle(color: Colors.grey),
-                            )
-                          : DropdownButton<ZonaMesa>(
-                              value: _zonaSeleccionada,
-                              hint: const Text('Seleccionar zona'),
-                              isExpanded: true,
-                              underline: const SizedBox(),
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                              dropdownColor: Colors.white,
-                              focusColor: Colors.transparent,
-                              items: zonas.map((zona) {
-                                return DropdownMenuItem<ZonaMesa>(
-                                  value: zona,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        _obtenerIconoZona(zona),
-                                        size: 20,
-                                        color: _obtenerColorZona(zona),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(zona.nombre),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (zona) {
-                                setState(() {
-                                  _zonaSeleccionada = zona;
-                                });
-                              },
+                      child: const Icon(
+                        Icons.location_on,
+                        color: Color(0xFF9B59B6),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Zona',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
                             ),
-                    ],
-                  ),
+                          ),
+                          const SizedBox(height: 4),
+                          zonas.isEmpty
+                              ? const Text(
+                                'Cargando zonas...',
+                                style: TextStyle(color: Colors.grey),
+                              )
+                              : DropdownButton<Zona>(
+                                value: _zonaSeleccionada,
+                                hint: const Text('Seleccionar zona'),
+                                isExpanded: true,
+                                underline: const SizedBox(),
+                                icon: const Icon(Icons.keyboard_arrow_down),
+                                dropdownColor: Colors.white,
+                                focusColor: Colors.transparent,
+                                items:
+                                    zonas.map((zona) {
+                                      return DropdownMenuItem<Zona>(
+                                        value: zona,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_on,
+                                              size: 20,
+                                              color: _colorDesdeHex(
+                                                zona.colorHex,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(zona.nombre),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                onChanged: (zona) {
+                                  setState(() {
+                                    _zonaSeleccionada = zona;
+                                  });
+                                },
+                              ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  IconData _obtenerIconoZona(ZonaMesa zona) {
-    switch (zona) {
-      case ZonaMesa.terraza:
-        return Icons.deck;
-      case ZonaMesa.salon:
-        return Icons.chair;
-      case ZonaMesa.jardin:
-        return Icons.grass;
-      case ZonaMesa.barraBar:
-        return Icons.local_bar;
-      case ZonaMesa.vip:
-        return Icons.star;
-    }
-  }
-
-  Color _obtenerColorZona(ZonaMesa zona) {
-    switch (zona) {
-      case ZonaMesa.terraza:
-        return const Color(0xFFE67E22);
-      case ZonaMesa.salon:
-        return const Color(0xFF3498DB);
-      case ZonaMesa.jardin:
-        return const Color(0xFF27AE60);
-      case ZonaMesa.barraBar:
-        return const Color(0xFF9B59B6);
-      case ZonaMesa.vip:
-        return const Color(0xFFF1C40F);
+  /// Convierte un color hex string a Color
+  Color _colorDesdeHex(String? hex) {
+    if (hex == null || hex.isEmpty) return const Color(0xFF3498DB);
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return const Color(0xFF3498DB);
     }
   }
 
@@ -815,16 +811,17 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   /// Widget que muestra la mesa encontrada automáticamente en la zona
   Widget _buildTarjetaMesaEncontrada(
     Mesa mesa,
-    ZonaMesa zona,
+    Zona zona,
     DateTime? fecha,
     String? intervaloSeleccionado,
     int numeroPersonas,
   ) {
+    final zonaColor = _colorDesdeHex(zona.colorHex);
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: _obtenerColorZona(zona), width: 2),
+        side: BorderSide(color: zonaColor, width: 2),
       ),
       child: Column(
         children: [
@@ -832,7 +829,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _obtenerColorZona(zona).withOpacity(0.1),
+              color: zonaColor.withOpacity(0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(14),
                 topRight: Radius.circular(14),
@@ -843,14 +840,10 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _obtenerColorZona(zona).withOpacity(0.2),
+                    color: zonaColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    _obtenerIconoZona(zona),
-                    color: _obtenerColorZona(zona),
-                    size: 28,
-                  ),
+                  child: Icon(Icons.location_on, color: zonaColor, size: 28),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1859,7 +1852,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
       'negocioId': mesa.negocioId,
       'mesaId': mesa.id,
       'nombreMesa': mesa.nombre,
-      'zona': mesa.zona.toString(),
+      'zona': mesa.zonaId,
       'fecha': fecha.toIso8601String(),
       'horario': intervaloSeleccionado,
       'personas': numeroPersonas,
@@ -1876,6 +1869,8 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     // Guardar sesión del cliente
     servicioVerificacion.guardarSesionCliente(telefono, email);
 
-    print('📋 Reserva guardada localmente: ${mesa.nombre} - $intervaloSeleccionado - $numeroPersonas personas');
+    print(
+      '📋 Reserva guardada localmente: ${mesa.nombre} - $intervaloSeleccionado - $numeroPersonas personas',
+    );
   }
 }

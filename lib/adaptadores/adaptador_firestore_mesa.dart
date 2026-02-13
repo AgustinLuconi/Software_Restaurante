@@ -7,9 +7,9 @@ import '../dominio/repositorios/reserva_repositorio.dart';
 class MesaRepositorioFirestore implements MesaRepositorio {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ReservaRepositorio _reservaRepositorio;
-  
+
   MesaRepositorioFirestore({required ReservaRepositorio reservaRepositorio})
-      : _reservaRepositorio = reservaRepositorio;
+    : _reservaRepositorio = reservaRepositorio;
 
   /// Referencia a la colección de mesas
   CollectionReference<Map<String, dynamic>> get _mesasRef =>
@@ -44,16 +44,18 @@ class MesaRepositorioFirestore implements MesaRepositorio {
   Future<List<Mesa>> obtenerMesasPorNegocio(String negocioId) async {
     try {
       print('🔍 Buscando mesas con negocioId: $negocioId');
-      final snapshot = await _mesasRef
-          .where('negocioId', isEqualTo: negocioId)
-          .orderBy('nombre')
-          .get();
-      
+      final snapshot =
+          await _mesasRef.where('negocioId', isEqualTo: negocioId).get();
+
       print('📊 Mesas encontradas: ${snapshot.docs.length}');
-      
-      return snapshot.docs
-          .map((doc) => _mapToMesa(doc.id, doc.data()))
-          .toList();
+
+      final mesas =
+          snapshot.docs.map((doc) => _mapToMesa(doc.id, doc.data())).toList();
+
+      // Ordenar en memoria por nombre
+      mesas.sort((a, b) => a.nombre.compareTo(b.nombre));
+
+      return mesas;
     } catch (e) {
       print('❌ Error obteniendo mesas por negocio: $e');
       return [];
@@ -97,11 +99,11 @@ class MesaRepositorioFirestore implements MesaRepositorio {
   }
 
   @override
-  Future<List<ZonaMesa>> obtenerZonasDisponibles(String negocioId) async {
+  Future<List<String>> obtenerZonasDisponibles(String negocioId) async {
     try {
       final mesas = await obtenerMesasPorNegocio(negocioId);
-      final zonas = mesas.map((m) => m.zona).toSet().toList();
-      return zonas;
+      final zonasIds = mesas.map((m) => m.zonaId).toSet().toList();
+      return zonasIds;
     } catch (e) {
       print('❌ Error obteniendo zonas: $e');
       return [];
@@ -110,7 +112,7 @@ class MesaRepositorioFirestore implements MesaRepositorio {
 
   @override
   Future<Mesa?> buscarMesaDisponibleEnZona({
-    required ZonaMesa zona,
+    required String zonaId,
     required DateTime fecha,
     required DateTime hora,
     required int numeroPersonas,
@@ -118,11 +120,14 @@ class MesaRepositorioFirestore implements MesaRepositorio {
   }) async {
     try {
       final mesas = await obtenerMesasPorNegocio(negocioId);
-      
+
       // Filtrar mesas de la zona que puedan acomodar al grupo
-      final mesasZona = mesas
-          .where((m) => m.zona == zona && m.puedeAcomodar(numeroPersonas))
-          .toList();
+      final mesasZona =
+          mesas
+              .where(
+                (m) => m.zonaId == zonaId && m.puedeAcomodar(numeroPersonas),
+              )
+              .toList();
 
       // Ordenar por capacidad (priorizar las que mejor se ajustan)
       mesasZona.sort((a, b) => a.capacidad.compareTo(b.capacidad));
@@ -157,7 +162,7 @@ class MesaRepositorioFirestore implements MesaRepositorio {
       'nombre': mesa.nombre,
       'capacidad': mesa.capacidad,
       'negocioId': mesa.negocioId,
-      'zona': mesa.zona.name,
+      'zonaId': mesa.zonaId,
     };
   }
 
@@ -167,24 +172,7 @@ class MesaRepositorioFirestore implements MesaRepositorio {
       nombre: data['nombre'] ?? '',
       capacidad: data['capacidad'] ?? 2,
       negocioId: data['negocioId'] ?? '',
-      zona: _stringToZona(data['zona']),
+      zonaId: data['zonaId'] ?? '',
     );
-  }
-
-  ZonaMesa _stringToZona(String? zona) {
-    switch (zona) {
-      case 'terraza':
-        return ZonaMesa.terraza;
-      case 'salon':
-        return ZonaMesa.salon;
-      case 'jardin':
-        return ZonaMesa.jardin;
-      case 'barraBar':
-        return ZonaMesa.barraBar;
-      case 'vip':
-        return ZonaMesa.vip;
-      default:
-        return ZonaMesa.salon;
-    }
   }
 }

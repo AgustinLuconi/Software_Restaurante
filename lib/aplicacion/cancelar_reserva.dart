@@ -4,11 +4,11 @@ import '../dominio/repositorios/reserva_repositorio.dart';
 
 class CancelarReserva {
   final ReservaRepositorio reservaRepositorio;
-  final NegocioRepositorio? negocioRepositorio;
+  final NegocioRepositorio negocioRepositorio;
 
   CancelarReserva(
     this.reservaRepositorio, {
-    this.negocioRepositorio,
+    required this.negocioRepositorio,
   });
 
   Future<void> ejecutar(String reservaId, {required String negocioId}) async {
@@ -17,24 +17,20 @@ class CancelarReserva {
       throw Exception('Reserva no encontrada');
     }
     
-    // Obtener configuración del negocio
-    int minHorasParaCancelar = 24; // Valor por defecto
-    
-    if (negocioRepositorio != null) {
-      final negocio = await negocioRepositorio!.obtenerNegocioPorId(negocioId);
-      if (negocio != null) {
-        minHorasParaCancelar = negocio.minHorasParaCancelar;
-      }
-    }
-    
-    final ahora = DateTime.now();
-    final diferencia = reserva.fechaHora.difference(ahora);
     if (reserva.estado != EstadoReserva.confirmada && reserva.estado != EstadoReserva.pendiente) {
       throw Exception('Solo se pueden cancelar reservas confirmadas o pendientes.');
     }
+    
+    final ahora = DateTime.now();
     if (reserva.fechaHora.isBefore(ahora)) {
       throw Exception('No se puede cancelar una reserva cuya hora ya pasó.');
     }
+    
+    // Obtener configuración del negocio
+    final negocio = await negocioRepositorio.obtenerNegocioPorId(negocioId);
+    final minHorasParaCancelar = negocio?.minHorasParaCancelar ?? 24;
+    
+    final diferencia = reserva.fechaHora.difference(ahora);
     if (diferencia.inHours < minHorasParaCancelar) {
       throw Exception('Solo se puede cancelar con $minHorasParaCancelar horas de anticipación.');
     }

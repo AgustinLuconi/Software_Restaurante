@@ -543,7 +543,7 @@ class _RegistroNegocioStepperState extends State<RegistroNegocioStepper> {
         final nombre = resultado.user!.displayName ?? '';
         
         // Verificar si ya existe un negocio con ese email
-        final negocioExistente = await widget.cubit.negocioRepositorio.obtenerNegocioPorEmail(email);
+        final negocioExistente = await widget.cubit.obtenerNegocioPorEmail(email);
         
         if (negocioExistente != null) {
           // Ya existe - ir directamente al panel
