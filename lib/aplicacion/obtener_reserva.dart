@@ -6,16 +6,12 @@ class ObtenerReserva {
 
   ObtenerReserva(this.reservaRepositorio);
 
-  /// Obtiene reservas filtradas por contacto del cliente.
-  /// Si [contactoCliente] se proporciona, solo retorna las de ese cliente.
-  /// Si no, retorna todas (uso administrativo).
-  Future<List<Reserva>> ejecutar({String? contactoCliente}) async {
+  Future<List<Reserva>> ejecutar() async {
     try {
-      if (contactoCliente != null && contactoCliente.isNotEmpty) {
-        return await reservaRepositorio.obtenerReservasPorContacto(contactoCliente);
-      }
       return await reservaRepositorio.obtenerReserva();
     } catch (e) {
+      // Puedes lanzar la excepción o retornar lista vacía
+      // throw Exception('Error al obtener reservas: $e');
       return [];
     }
   }

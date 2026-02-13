@@ -3,7 +3,6 @@ import 'package:firebase_auth_platform_interface/firebase_auth_platform_interfac
 import 'dart:html' as html;
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../dominio/utilidades/telefono_utils.dart';
 
 /// Servicio de verificación para clientes (sin login permanente)
 /// Maneja verificación por SMS y almacenamiento local de reservas
@@ -246,10 +245,47 @@ class ServicioVerificacionCliente {
   // ============================================================
 
   /// Normalizar teléfono a formato E.164
-  String normalizarTelefono(String telefono) => TelefonoUtils.normalizar(telefono);
+  String normalizarTelefono(String telefono) {
+    String normalizado = telefono.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+
+    if (!normalizado.startsWith('+')) {
+      // Remover 0 inicial si existe
+      if (normalizado.startsWith('0')) {
+        normalizado = normalizado.substring(1);
+      }
+      // Si empieza con 15 (formato local), removerlo
+      if (normalizado.startsWith('15')) {
+        normalizado = '9${normalizado.substring(2)}';
+      }
+      // Si no tiene el 9 después del código de área
+      if (!normalizado.startsWith('9') && normalizado.length == 10) {
+        normalizado = '9$normalizado';
+      }
+      // Agregar código de Argentina
+      normalizado = '+54$normalizado';
+    }
+
+    return normalizado;
+  }
 
   /// Validar formato de teléfono
-  Map<String, dynamic> validarTelefono(String telefono) => TelefonoUtils.validar(telefono);
+  Map<String, dynamic> validarTelefono(String telefono) {
+    try {
+      final formateado = normalizarTelefono(telefono);
+
+      if (formateado.length < 13 || formateado.length > 14) {
+        return {'valido': false, 'error': 'Número de teléfono inválido'};
+      }
+
+      if (!formateado.startsWith('+54')) {
+        return {'valido': false, 'error': 'Debe ser un número argentino (+54)'};
+      }
+
+      return {'valido': true, 'formateado': formateado};
+    } catch (e) {
+      return {'valido': false, 'error': 'Formato de teléfono inválido'};
+    }
+  }
 
   // ============================================================
   // ALMACENAMIENTO LOCAL DE RESERVAS

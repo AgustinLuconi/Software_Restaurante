@@ -10,11 +10,11 @@ class Reserva {
 	final DateTime fechaHora;
 	final int numeroPersonas;
 	final int duracionMinutos;
-	final EstadoReserva estado;
+	EstadoReserva estado;
 	final String? contactoCliente; // Email del cliente para notificaciones
 	final String? nombreCliente; // Nombre opcional del cliente
 
-	const Reserva({
+	Reserva({
 		required this.id,
 		required this.mesaId,
 		required this.fechaHora,
@@ -28,8 +28,15 @@ class Reserva {
 	/// Hora de finalización calculada de la reserva
 	DateTime get horaFin => fechaHora.add(Duration(minutes: duracionMinutos));
 
-	/// Indica si la reserva está activa (pendiente o confirmada)
-	bool get estaActiva => estado != EstadoReserva.cancelada;
+	void confirmar() {
+		if (estado == EstadoReserva.cancelada) {
+			throw Exception('No se puede confirmar una reserva cancelada.');
+		}
+		if (estado == EstadoReserva.confirmada) {
+			throw Exception('La reserva ya está confirmada.');
+		}
+		estado = EstadoReserva.confirmada;
+	}
 
 	Reserva copyWith({
 		String? id,

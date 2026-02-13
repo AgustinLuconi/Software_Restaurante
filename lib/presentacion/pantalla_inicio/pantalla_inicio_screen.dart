@@ -499,9 +499,9 @@ class _PantallaInicioView extends StatelessWidget {
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
                   // Autenticar usando el repositorio capturado
-                  final negocio = await cubit.autenticarYObtener(
-                    emailController.text,
-                    passwordController.text,
+                  final negocio = await cubit.negocioRepositorio.autenticarNegocio(
+                    email: emailController.text,
+                    password: passwordController.text,
                   );
                   
                   Navigator.pop(context);
@@ -662,7 +662,7 @@ class _PantallaInicioView extends StatelessWidget {
         final nombre = resultado.user!.displayName ?? 'Usuario';
         
         // Buscar si existe un negocio con ese email
-        final negocio = await cubit.obtenerNegocioPorEmail(email ?? '');
+        final negocio = await cubit.negocioRepositorio.obtenerNegocioPorEmail(email ?? '');
         
         if (negocio != null) {
           // Negocio encontrado - ir al panel del dueño

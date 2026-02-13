@@ -5,7 +5,7 @@ import '../dominio/repositorios/reserva_repositorio.dart';
 /// Adaptador de Firestore para el repositorio de reservas
 class ReservaRepositorioFirestore implements ReservaRepositorio {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+  
   /// Referencia a la colección de reservas
   CollectionReference<Map<String, dynamic>> get _reservasRef =>
       _firestore.collection('reservas');
@@ -25,9 +25,10 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
   @override
   Future<List<Reserva>> obtenerReserva() async {
     try {
-      final snapshot =
-          await _reservasRef.orderBy('fechaHora', descending: true).get();
-
+      final snapshot = await _reservasRef
+          .orderBy('fechaHora', descending: true)
+          .get();
+      
       return snapshot.docs
           .map((doc) => _mapToReserva(doc.id, doc.data()))
           .toList();
@@ -52,20 +53,6 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
   }
 
   @override
-  Future<void> confirmarReserva(String reservaId) async {
-    try {
-      await _reservasRef.doc(reservaId).update({
-        'estado': 'confirmada',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      print('✅ Reserva confirmada: $reservaId');
-    } catch (e) {
-      print('❌ Error confirmando reserva: $e');
-      rethrow;
-    }
-  }
-
-  @override
   Future<Reserva?> obtenerReservaPorId(String reservaId) async {
     try {
       final doc = await _reservasRef.doc(reservaId).get();
@@ -78,50 +65,6 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
   }
 
   @override
-  Future<List<Reserva>> obtenerReservasPorMesaIds(List<String> mesaIds) async {
-    if (mesaIds.isEmpty) return [];
-    try {
-      // Firestore whereIn soporta máximo 30 elementos
-      final List<Reserva> todasReservas = [];
-      for (int i = 0; i < mesaIds.length; i += 30) {
-        final batch = mesaIds.sublist(
-          i,
-          i + 30 > mesaIds.length ? mesaIds.length : i + 30,
-        );
-        final snapshot = await _reservasRef
-            .where('mesaId', whereIn: batch)
-            .orderBy('fechaHora', descending: true)
-            .get();
-        todasReservas.addAll(
-          snapshot.docs.map((doc) => _mapToReserva(doc.id, doc.data())),
-        );
-      }
-      return todasReservas;
-    } catch (e) {
-      print('❌ Error obteniendo reservas por mesa IDs: $e');
-      return [];
-    }
-  }
-
-  @override
-  Future<List<Reserva>> obtenerReservasPorContacto(String contactoCliente) async {
-    if (contactoCliente.isEmpty) return [];
-    try {
-      final snapshot = await _reservasRef
-          .where('contactoCliente', isEqualTo: contactoCliente)
-          .orderBy('fechaHora', descending: true)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => _mapToReserva(doc.id, doc.data()))
-          .toList();
-    } catch (e) {
-      print('❌ Error obteniendo reservas por contacto: $e');
-      return [];
-    }
-  }
-
-  @override
   Future<List<Reserva>> obtenerReservasPorMesaYHorario({
     required String mesaId,
     required DateTime fecha,
@@ -129,23 +72,18 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
   }) async {
     try {
       // Buscar reservas del mismo día para la mesa
-      // Solo filtramos por mesaId para evitar requerir índice compuesto
-      final snapshot =
-          await _reservasRef.where('mesaId', isEqualTo: mesaId).get();
-
       final inicioDia = DateTime(fecha.year, fecha.month, fecha.day);
       final finDia = inicioDia.add(const Duration(days: 1));
 
+      final snapshot = await _reservasRef
+          .where('mesaId', isEqualTo: mesaId)
+          .where('fechaHora', isGreaterThanOrEqualTo: Timestamp.fromDate(inicioDia))
+          .where('fechaHora', isLessThan: Timestamp.fromDate(finDia))
+          .get();
+
       return snapshot.docs
           .map((doc) => _mapToReserva(doc.id, doc.data()))
-          .where(
-            (r) =>
-                r.estado != EstadoReserva.cancelada &&
-                r.fechaHora.isAfter(
-                  inicioDia.subtract(const Duration(seconds: 1)),
-                ) &&
-                r.fechaHora.isBefore(finDia),
-          )
+          .where((r) => r.estado != EstadoReserva.cancelada)
           .toList();
     } catch (e) {
       print('❌ Error obteniendo reservas por mesa y horario: $e');
@@ -177,8 +115,7 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
         final horaFinExistente = reserva.horaFin;
 
         // Hay colisión si los intervalos se superponen
-        final hayColision =
-            horaInicioNueva.isBefore(horaFinExistente) &&
+        final hayColision = horaInicioNueva.isBefore(horaFinExistente) &&
             horaFinNueva.isAfter(horaInicioExistente);
 
         if (hayColision) {

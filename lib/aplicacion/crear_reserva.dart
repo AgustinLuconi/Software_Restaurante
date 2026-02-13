@@ -6,15 +6,15 @@ import '../dominio/repositorios/reserva_repositorio.dart';
 
 class CrearReserva {
   final ReservaRepositorio reservaRepositorio;
-  final MesaRepositorio mesaRepositorio;
-  final HorarioAperturaRepositorio horarioAperturaRepositorio;
-  final NegocioRepositorio negocioRepositorio;
+  final MesaRepositorio? mesaRepositorio;
+  final HorarioAperturaRepositorio? horarioAperturaRepositorio;
+  final NegocioRepositorio? negocioRepositorio;
 
   CrearReserva(
     this.reservaRepositorio, {
-    required this.mesaRepositorio,
-    required this.horarioAperturaRepositorio,
-    required this.negocioRepositorio,
+    this.mesaRepositorio,
+    this.horarioAperturaRepositorio,
+    this.negocioRepositorio,
   });
 
   Future<Reserva> ejecutar(
@@ -25,7 +25,7 @@ class CrearReserva {
     String? contactoCliente,
     String? nombreCliente,
     EstadoReserva estadoInicial = EstadoReserva.pendiente,
-    required String negocioId,
+    required String negocioId, // ID del negocio - ahora es requerido
   }) async {
     final now = DateTime.now();
     final fechaHora = DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute);
@@ -34,9 +34,16 @@ class CrearReserva {
     }
     
     // Obtener configuración del negocio
-    final negocio = await negocioRepositorio.obtenerNegocioPorId(negocioId);
-    final maxDiasAnticipacion = negocio?.maxDiasAnticipacionReserva ?? 14;
-    final duracionMinutos = negocio?.duracionPromedioMinutos ?? 60;
+    int maxDiasAnticipacion = 14; // Valor por defecto
+    int duracionMinutos = 60; // Valor por defecto
+    
+    if (negocioRepositorio != null) {
+      final negocio = await negocioRepositorio!.obtenerNegocioPorId(negocioId);
+      if (negocio != null) {
+        maxDiasAnticipacion = negocio.maxDiasAnticipacionReserva;
+        duracionMinutos = negocio.duracionPromedioMinutos;
+      }
+    }
     
     // Validar que la reserva no sea mayor al límite configurado
     final maximoFechaReserva = now.add(Duration(days: maxDiasAnticipacion));
@@ -49,42 +56,48 @@ class CrearReserva {
     }
     
     // Validar que la mesa tenga capacidad adecuada para el número de personas
-    final mesa = await mesaRepositorio.obtenerMesaPorId(mesaId);
-    
-    if (mesa == null) {
-      throw Exception('La mesa seleccionada no existe.');
-    }
-    
-    // Verificar que la mesa puede acomodar al grupo
-    if (!mesa.puedeAcomodar(numeroPersonas)) {
-      if (mesa.capacidad < numeroPersonas) {
-        throw Exception(
-          'La mesa seleccionada tiene capacidad para ${mesa.capacidad} persona${mesa.capacidad > 1 ? 's' : ''}, '
-          'pero has indicado ${numeroPersonas} personas. '
-          'Por favor, selecciona una mesa con mayor capacidad.'
-        );
-      } else {
-        final diferencia = mesa.capacidad - numeroPersonas;
-        throw Exception(
-          'La mesa seleccionada tiene capacidad para ${mesa.capacidad} personas, '
-          'pero solo necesitas ${numeroPersonas}. La diferencia es de $diferencia lugares. '
-          'Por favor, selecciona una mesa más adecuada (máximo +3 lugares de diferencia).'
-        );
+    if (mesaRepositorio != null) {
+      final mesa = await mesaRepositorio!.obtenerMesaPorId(mesaId);
+      
+      if (mesa == null) {
+        throw Exception('La mesa seleccionada no existe.');
+      }
+      
+      // Verificar que la mesa puede acomodar al grupo
+      if (!mesa.puedeAcomodar(numeroPersonas)) {
+        // Determinar el mensaje específico según el problema
+        if (mesa.capacidad < numeroPersonas) {
+          throw Exception(
+            'La mesa seleccionada tiene capacidad para ${mesa.capacidad} persona${mesa.capacidad > 1 ? 's' : ''}, '
+            'pero has indicado ${numeroPersonas} personas. '
+            'Por favor, selecciona una mesa con mayor capacidad.'
+          );
+        } else {
+          // La mesa es demasiado grande (diferencia > 3)
+          final diferencia = mesa.capacidad - numeroPersonas;
+          throw Exception(
+            'La mesa seleccionada tiene capacidad para ${mesa.capacidad} personas, '
+            'pero solo necesitas ${numeroPersonas}. La diferencia es de $diferencia lugares. '
+            'Por favor, selecciona una mesa más adecuada (máximo +3 lugares de diferencia).'
+          );
+        }
       }
     }
     
     // Verificar que el restaurante esté abierto en ese horario
-    final estaAbierto = await horarioAperturaRepositorio.estaAbiertoEn(
-      negocioId,
-      fechaHora,
-    );
-    
-    if (!estaAbierto) {
-      final mensajeError = await horarioAperturaRepositorio.obtenerMensajeHorarioCerrado(
+    if (horarioAperturaRepositorio != null) {
+      final estaAbierto = await horarioAperturaRepositorio!.estaAbiertoEn(
         negocioId,
         fechaHora,
       );
-      throw Exception(mensajeError);
+      
+      if (!estaAbierto) {
+        final mensajeError = await horarioAperturaRepositorio!.obtenerMensajeHorarioCerrado(
+          negocioId,
+          fechaHora,
+        );
+        throw Exception(mensajeError);
+      }
     }
     
     // Verificar que la mesa esté disponible en ese horario

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,9 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../adaptadores/servicio_autenticacion_firebase.dart';
 import '../../dominio/entidades/historia_restaurante.dart';
 import '../../dominio/entidades/mesa.dart';
-import '../../dominio/entidades/negocio.dart';
 import '../../dominio/entidades/reserva.dart';
-import '../../dominio/entidades/zona.dart';
 import '../../service_locator.dart';
 import 'pantalla_dueno_cubit.dart';
 import 'pantalla_dueno_estados_de_cubit.dart';
@@ -143,8 +142,8 @@ class _PantallaDuenoView extends StatelessWidget {
                         color: colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        _obtenerIcono(negocio.icono),
+                      child: const Icon(
+                        Icons.restaurant,
                         size: 40,
                         color: Colors.white,
                       ),
@@ -253,17 +252,6 @@ class _PantallaDuenoView extends StatelessWidget {
                   const SizedBox(width: 16),
                   _buildDashboardCard(
                     context,
-                    icon: Icons.location_on,
-                    title: 'Zonas',
-                    subtitle: 'Administrar',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
-                    ),
-                    onTap: () => _mostrarGestionZonas(context, negocio),
-                  ),
-                  const SizedBox(width: 16),
-                  _buildDashboardCard(
-                    context,
                     icon: Icons.bar_chart,
                     title: 'Métricas',
                     subtitle: 'Análisis',
@@ -324,7 +312,7 @@ class _PantallaDuenoView extends StatelessWidget {
             _buildInfoCard(
               icon: _obtenerIcono(negocio.icono),
               titulo: 'Icono/Logo',
-              valor: _obtenerNombreIcono(negocio.icono),
+              valor: negocio.icono,
               color: const Color(0xFF27AE60),
               editable: true,
               onEdit: () => _mostrarEditarIcono(context, negocio),
@@ -374,10 +362,9 @@ class _PantallaDuenoView extends StatelessWidget {
             _buildInfoCard(
               icon: Icons.description,
               titulo: 'Descripción',
-              valor:
-                  negocio.descripcion.isEmpty
-                      ? 'Sin descripción'
-                      : negocio.descripcion,
+              valor: negocio.descripcion.isEmpty 
+                  ? 'Sin descripción' 
+                  : negocio.descripcion,
               color: const Color(0xFF16A085),
               editable: true,
               onEdit: () => _mostrarEditarDescripcion(context, negocio),
@@ -838,12 +825,7 @@ class _PantallaDuenoView extends StatelessWidget {
               labelText: 'Especialidad',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.restaurant_menu),
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 12,
-              ),
             ),
-            textAlignVertical: TextAlignVertical.center,
             maxLines: 2,
           ),
           actions: [
@@ -918,30 +900,6 @@ class _PantallaDuenoView extends StatelessWidget {
     }
   }
 
-  String _obtenerNombreIcono(String nombreIcono) {
-    switch (nombreIcono.toLowerCase()) {
-      case 'sailing':
-        return 'Playa';
-      case 'local_fire_department':
-        return 'Parrilla';
-      case 'local_pizza':
-        return 'Pizzería';
-      case 'ramen_dining':
-        return 'Asiático';
-      case 'coffee':
-        return 'Cafetería';
-      case 'icecream':
-        return 'Heladería';
-      case 'bakery_dining':
-        return 'Panadería';
-      case 'local_bar':
-        return 'Bar';
-      case 'restaurant':
-      default:
-        return 'Restaurante';
-    }
-  }
-
   void _mostrarEditarNombre(BuildContext context, negocio) {
     final controller = TextEditingController(text: negocio.nombre);
 
@@ -1008,39 +966,18 @@ class _PantallaDuenoView extends StatelessWidget {
 
   void _mostrarEditarIcono(BuildContext context, negocio) {
     final iconos = [
-      {
-        'nombre': 'restaurant',
-        'icono': Icons.restaurant,
-        'label': 'Restaurante',
-      },
-      {'nombre': 'sailing', 'icono': Icons.sailing, 'label': 'Playa'},
-      {
-        'nombre': 'local_fire_department',
-        'icono': Icons.local_fire_department,
-        'label': 'Parrilla',
-      },
-      {
-        'nombre': 'local_pizza',
-        'icono': Icons.local_pizza,
-        'label': 'Pizzería',
-      },
-      {
-        'nombre': 'ramen_dining',
-        'icono': Icons.ramen_dining,
-        'label': 'Asiático',
-      },
+      {'nombre': 'restaurant', 'icono': Icons.restaurant, 'label': 'Restaurante'},
+      {'nombre': 'sailing', 'icono': Icons.sailing, 'label': 'Chiringuito/Playa'},
+      {'nombre': 'local_fire_department', 'icono': Icons.local_fire_department, 'label': 'Parrilla'},
+      {'nombre': 'local_pizza', 'icono': Icons.local_pizza, 'label': 'Pizzería'},
+      {'nombre': 'ramen_dining', 'icono': Icons.ramen_dining, 'label': 'Asiático'},
       {'nombre': 'coffee', 'icono': Icons.coffee, 'label': 'Cafetería'},
       {'nombre': 'icecream', 'icono': Icons.icecream, 'label': 'Heladería'},
-      {
-        'nombre': 'bakery_dining',
-        'icono': Icons.bakery_dining,
-        'label': 'Panadería',
-      },
+      {'nombre': 'bakery_dining', 'icono': Icons.bakery_dining, 'label': 'Panadería'},
       {'nombre': 'local_bar', 'icono': Icons.local_bar, 'label': 'Bar'},
     ];
 
     String iconoSeleccionado = negocio.icono;
-    final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
@@ -1060,88 +997,59 @@ class _PantallaDuenoView extends StatelessWidget {
               ),
               content: SizedBox(
                 width: double.maxFinite,
-                height: 400,
-                child: ListView.builder(
+                child: GridView.builder(
                   shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 1,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
                   itemCount: iconos.length,
                   itemBuilder: (context, index) {
                     final item = iconos[index];
                     final esSeleccionado = item['nombre'] == iconoSeleccionado;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            iconoSeleccionado = item['nombre'] as String;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 16,
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          iconoSeleccionado = item['nombre'] as String;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: esSeleccionado 
+                              ? const Color(0xFF27AE60).withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: esSeleccionado 
+                                ? const Color(0xFF27AE60)
+                                : Colors.transparent,
+                            width: 2,
                           ),
-                          decoration: BoxDecoration(
-                            color:
-                                esSeleccionado
-                                    ? const Color(0xFF27AE60).withOpacity(0.15)
-                                    : Colors.grey.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color:
-                                  esSeleccionado
-                                      ? const Color(0xFF27AE60)
-                                      : Colors.grey.withOpacity(0.3),
-                              width: esSeleccionado ? 2 : 1,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              item['icono'] as IconData,
+                              size: 32,
+                              color: esSeleccionado 
+                                  ? const Color(0xFF27AE60)
+                                  : Colors.grey[600],
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color:
-                                      esSeleccionado
-                                          ? const Color(
-                                            0xFF27AE60,
-                                          ).withOpacity(0.2)
-                                          : Colors.grey.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  item['icono'] as IconData,
-                                  size: 28,
-                                  color:
-                                      esSeleccionado
-                                          ? const Color(0xFF27AE60)
-                                          : Colors.grey[700],
-                                ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item['label'] as String,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: esSeleccionado 
+                                    ? const Color(0xFF27AE60)
+                                    : Colors.grey[600],
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  item['label'] as String,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight:
-                                        esSeleccionado
-                                            ? FontWeight.w600
-                                            : FontWeight.normal,
-                                    color:
-                                        esSeleccionado
-                                            ? const Color(0xFF27AE60)
-                                            : Colors.grey[800],
-                                  ),
-                                ),
-                              ),
-                              if (esSeleccionado)
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: Color(0xFF27AE60),
-                                  size: 24,
-                                ),
-                            ],
-                          ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -1155,6 +1063,7 @@ class _PantallaDuenoView extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () async {
+                    final cubit = context.read<PantallaDuenoCubit>();
                     final exito = await cubit.actualizarIcono(
                       negocio,
                       iconoSeleccionado,
@@ -1236,7 +1145,9 @@ class _PantallaDuenoView extends StatelessWidget {
                 if (exito) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('✅ Descripción actualizada correctamente'),
+                      content: Text(
+                        '✅ Descripción actualizada correctamente',
+                      ),
                       backgroundColor: Color(0xFF27AE60),
                     ),
                   );
@@ -1377,7 +1288,7 @@ class _PantallaDuenoView extends StatelessWidget {
                                 // Actualizar en Firestore
                                 final cubit =
                                     context.read<PantallaDuenoCubit>();
-                                await cubit.actualizarEmailNegocio(
+                                await cubit.negocioRepositorio.actualizarEmail(
                                   negocio.id,
                                   nuevoEmail,
                                 );
@@ -1386,9 +1297,7 @@ class _PantallaDuenoView extends StatelessWidget {
                                 final negocioActualizado = negocio.copyWith(
                                   email: nuevoEmail,
                                 );
-                                cubit.establecerNegocioAutenticado(
-                                  negocioActualizado,
-                                );
+                                cubit.establecerNegocioAutenticado(negocioActualizado);
 
                                 Navigator.pop(dialogContext);
 
@@ -1461,12 +1370,7 @@ class _PantallaDuenoView extends StatelessWidget {
               labelText: 'Dirección',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.location_on),
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 12,
-              ),
             ),
-            textAlignVertical: TextAlignVertical.center,
             maxLines: 2,
           ),
           actions: [
@@ -1479,10 +1383,15 @@ class _PantallaDuenoView extends StatelessWidget {
                 final nuevaDireccion = controller.text.trim();
                 if (nuevaDireccion.isNotEmpty) {
                   final cubit = context.read<PantallaDuenoCubit>();
-                  final exito = await cubit.actualizarDireccion(
-                    negocio,
-                    nuevaDireccion,
+                  final negocioActualizado = negocio.copyWith(
+                    direccion: nuevaDireccion,
                   );
+                  final exito = await cubit.negocioRepositorio
+                      .actualizarNegocio(negocioActualizado);
+
+                  if (exito) {
+                    cubit.establecerNegocioAutenticado(negocioActualizado);
+                  }
 
                   Navigator.pop(dialogContext);
 
@@ -1698,14 +1607,17 @@ class _PantallaDuenoView extends StatelessWidget {
                                 );
 
                                 // También actualizar en Firestore
-                                final cubit =
-                                    context.read<PantallaDuenoCubit>();
+                                final cubit = context.read<PantallaDuenoCubit>();
                                 final state = cubit.state;
                                 if (state is PantallaDuenoAutenticado) {
-                                  await cubit.actualizarPassword(
-                                    state.negocio.id,
-                                    passwordNueva,
+                                  await cubit.negocioRepositorio.actualizarNegocio(
+                                    state.negocio.copyWith(),
                                   );
+                                  // Actualizar el campo password directamente
+                                  await FirebaseFirestore.instance
+                                      .collection('negocios')
+                                      .doc(state.negocio.id)
+                                      .update({'password': passwordNueva});
                                 }
 
                                 Navigator.pop(dialogContext);
@@ -2470,7 +2382,6 @@ class _PantallaDuenoView extends StatelessWidget {
                                           nombre: 'Desconocida',
                                           capacidad: 0,
                                           negocioId: '',
-                                          zonaId: '',
                                         ),
                                   );
 
@@ -2657,9 +2568,7 @@ class _PantallaDuenoView extends StatelessWidget {
                       _buildInfoRowSmall(
                         Icons.person,
                         'Cliente',
-                        reserva.nombreCliente ??
-                            reserva.contactoCliente ??
-                            'Sin datos',
+                        reserva.nombreCliente ?? reserva.contactoCliente ?? 'Sin datos',
                       ),
                       const SizedBox(height: 8),
                       _buildInfoRowSmall(
@@ -2883,505 +2792,6 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
-  // ─── GESTIÓN DE ZONAS ─────────────────────────────────────
-
-  void _mostrarGestionZonas(BuildContext context, Negocio negocio) async {
-    final cubit = context.read<PantallaDuenoCubit>();
-    List<Zona> zonas = [];
-
-    try {
-      zonas = await cubit.obtenerZonasDelNegocio(negocio.id);
-    } catch (e) {
-      zonas = [];
-    }
-
-    if (!context.mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (statefulContext, setState) {
-            Future<void> recargarZonas() async {
-              final nuevas = await cubit.obtenerZonasDelNegocio(
-                negocio.id,
-              );
-              setState(() {
-                zonas = nuevas;
-              });
-            }
-
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Container(
-                width: MediaQuery.of(dialogContext).size.width * 0.9,
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(dialogContext).size.height * 0.8,
-                  maxWidth: 600,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
-                        ),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'Gestión de Zonas',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.add_circle,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                            tooltip: 'Agregar zona',
-                            onPressed: () {
-                              _mostrarFormularioZona(
-                                dialogContext,
-                                negocio,
-                                cubit,
-                                null,
-                                () async {
-                                  await recargarZonas();
-                                },
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.close,
-                              color: Colors.white70,
-                            ),
-                            onPressed: () => Navigator.pop(dialogContext),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Lista de zonas
-                    Flexible(
-                      child:
-                          zonas.isEmpty
-                              ? const Padding(
-                                padding: EdgeInsets.all(40),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.location_off,
-                                      size: 64,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      'No hay zonas configuradas',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Agrega zonas para organizar tus mesas',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                              : ListView.separated(
-                                shrinkWrap: true,
-                                padding: const EdgeInsets.all(16),
-                                itemCount: zonas.length,
-                                separatorBuilder:
-                                    (_, __) => const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final zona = zonas[index];
-                                  final color = _colorDesdeHexZona(
-                                    zona.colorHex,
-                                  );
-                                  return Card(
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      side: BorderSide(
-                                        color: color.withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: ListTile(
-                                      leading: Container(
-                                        width: 42,
-                                        height: 42,
-                                        decoration: BoxDecoration(
-                                          color: color.withOpacity(0.15),
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.location_on,
-                                          color: color,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        zona.nombre,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      subtitle:
-                                          zona.descripcion.isNotEmpty
-                                              ? Text(
-                                                zona.descripcion,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              )
-                                              : null,
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              color: Color(0xFF3498DB),
-                                            ),
-                                            tooltip: 'Editar',
-                                            onPressed: () {
-                                              _mostrarFormularioZona(
-                                                dialogContext,
-                                                negocio,
-                                                cubit,
-                                                zona,
-                                                () async {
-                                                  await recargarZonas();
-                                                },
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Color(0xFFE74C3C),
-                                            ),
-                                            tooltip: 'Eliminar',
-                                            onPressed: () async {
-                                              final tieneMesas =
-                                                  await cubit.tieneMesasEnZona(
-                                                        zona.id,
-                                                      );
-                                              if (tieneMesas) {
-                                                if (!dialogContext.mounted)
-                                                  return;
-                                                ScaffoldMessenger.of(
-                                                  dialogContext,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'No se puede eliminar: hay mesas asignadas a esta zona',
-                                                    ),
-                                                    backgroundColor:
-                                                        Colors.orange,
-                                                  ),
-                                                );
-                                                return;
-                                              }
-                                              if (!dialogContext.mounted)
-                                                return;
-                                              final confirmar = await showDialog<
-                                                bool
-                                              >(
-                                                context: dialogContext,
-                                                builder:
-                                                    (ctx) => AlertDialog(
-                                                      title: const Text(
-                                                        'Eliminar zona',
-                                                      ),
-                                                      content: Text(
-                                                        '¿Eliminar la zona "${zona.nombre}"?',
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed:
-                                                              () =>
-                                                                  Navigator.pop(
-                                                                    ctx,
-                                                                    false,
-                                                                  ),
-                                                          child: const Text(
-                                                            'Cancelar',
-                                                          ),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed:
-                                                              () =>
-                                                                  Navigator.pop(
-                                                                    ctx,
-                                                                    true,
-                                                                  ),
-                                                          child: const Text(
-                                                            'Eliminar',
-                                                            style: TextStyle(
-                                                              color: Colors.red,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                              );
-                                              if (confirmar == true) {
-                                                await cubit
-                                                    .eliminarZona(zona.id);
-                                                await recargarZonas();
-                                              }
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  /// Formulario para agregar o editar una zona
-  void _mostrarFormularioZona(
-    BuildContext parentContext,
-    Negocio negocio,
-    PantallaDuenoCubit cubitZona,
-    Zona? zonaExistente,
-    Future<void> Function() onGuardado,
-  ) {
-    final nombreController = TextEditingController(
-      text: zonaExistente?.nombre ?? '',
-    );
-    final descripcionController = TextEditingController(
-      text: zonaExistente?.descripcion ?? '',
-    );
-    String colorSeleccionado = zonaExistente?.colorHex ?? '#3498DB';
-
-    final coloresDisponibles = [
-      '#3498DB',
-      '#27AE60',
-      '#E74C3C',
-      '#F39C12',
-      '#9B59B6',
-      '#1ABC9C',
-      '#E67E22',
-      '#2C3E50',
-      '#16A085',
-      '#C0392B',
-      '#8E44AD',
-      '#2980B9',
-      '#D35400',
-      '#7F8C8D',
-    ];
-
-    showDialog(
-      context: parentContext,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (stCtx, setFormState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Text(
-                zonaExistente == null ? 'Agregar Zona' : 'Editar Zona',
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: nombreController,
-                      decoration: InputDecoration(
-                        labelText: 'Nombre de la zona',
-                        hintText: 'Ej: Salón Principal, Terraza...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        prefixIcon: const Icon(Icons.label),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: descripcionController,
-                      decoration: InputDecoration(
-                        labelText: 'Descripción (opcional)',
-                        hintText: 'Ej: Zona interior con aire acondicionado',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        prefixIcon: const Icon(Icons.description),
-                      ),
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Color:',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children:
-                          coloresDisponibles.map((hex) {
-                            final isSelected = colorSeleccionado == hex;
-                            final color = _colorDesdeHexZona(hex);
-                            return GestureDetector(
-                              onTap: () {
-                                setFormState(() {
-                                  colorSeleccionado = hex;
-                                });
-                              },
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                  border:
-                                      isSelected
-                                          ? Border.all(
-                                            color: Colors.black87,
-                                            width: 3,
-                                          )
-                                          : Border.all(
-                                            color: Colors.grey.shade300,
-                                          ),
-                                  boxShadow:
-                                      isSelected
-                                          ? [
-                                            BoxShadow(
-                                              color: color.withOpacity(0.5),
-                                              blurRadius: 6,
-                                            ),
-                                          ]
-                                          : null,
-                                ),
-                                child:
-                                    isSelected
-                                        ? const Icon(
-                                          Icons.check,
-                                          color: Colors.white,
-                                          size: 20,
-                                        )
-                                        : null,
-                              ),
-                            );
-                          }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1ABC9C),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () async {
-                    final nombre = nombreController.text.trim();
-                    if (nombre.isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text('El nombre es obligatorio'),
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (zonaExistente == null) {
-                      // Crear nueva zona
-                      final nuevaZona = Zona(
-                        id: '',
-                        nombre: nombre,
-                        descripcion: descripcionController.text.trim(),
-                        negocioId: negocio.id,
-                        colorHex: colorSeleccionado,
-                      );
-                      await cubitZona.crearZona(nuevaZona);
-                    } else {
-                      // Editar zona existente
-                      final zonaActualizada = Zona(
-                        id: zonaExistente.id,
-                        nombre: nombre,
-                        descripcion: descripcionController.text.trim(),
-                        negocioId: zonaExistente.negocioId,
-                        colorHex: colorSeleccionado,
-                      );
-                      await cubitZona.actualizarZona(zonaActualizada);
-                    }
-
-                    if (!ctx.mounted) return;
-                    Navigator.pop(ctx);
-                    await onGuardado();
-                  },
-                  child: Text(zonaExistente == null ? 'Agregar' : 'Guardar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  /// Convierte color hex a Color para la gestión de zonas
-  Color _colorDesdeHexZona(String? hex) {
-    if (hex == null || hex.isEmpty) return const Color(0xFF3498DB);
-    try {
-      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
-    } catch (_) {
-      return const Color(0xFF3498DB);
-    }
-  }
-
   void _mostrarGestionMesas(BuildContext context, negocio) async {
     final cubit = context.read<PantallaDuenoCubit>();
 
@@ -3454,29 +2864,8 @@ class _PantallaDuenoView extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Capacidad: ${mesa.capacidad} personas'),
-                                FutureBuilder<List<Zona>>(
-                                  future:
-                                      cubit.obtenerZonasDelNegocio(negocio.id),
-                                  builder: (context, snapshot) {
-                                    final zonas = snapshot.data ?? [];
-                                    final zona =
-                                        zonas
-                                            .where((z) => z.id == mesa.zonaId)
-                                            .firstOrNull;
-                                    return Text(
-                                      'Zona: ${zona?.nombre ?? "Sin zona"}',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
+                            subtitle: Text(
+                              'Capacidad: ${mesa.capacidad} personas',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -3591,167 +2980,120 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
-  void _mostrarAgregarMesa(BuildContext context, negocio) async {
+  void _mostrarAgregarMesa(BuildContext context, negocio) {
     final nombreController = TextEditingController();
     final capacidadController = TextEditingController();
     // Capturar el cubit FUERA del diálogo
     final cubit = context.read<PantallaDuenoCubit>();
 
-    // Cargar zonas del negocio
-    final zonas = await cubit.obtenerZonasDelNegocio(negocio.id);
-
-    if (zonas.isEmpty && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⚠️ No hay zonas configuradas. Agrega zonas primero.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    Zona zonaSeleccionada = zonas.first;
-
-    if (!context.mounted) return;
-
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: const Row(
-                children: [
-                  Icon(Icons.add_circle, color: Color(0xFF27AE60)),
-                  SizedBox(width: 12),
-                  Text('Agregar Mesa'),
-                ],
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nombreController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de la Mesa',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.table_bar),
-                        hintText: 'Ej: Mesa 5',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: capacidadController,
-                      decoration: const InputDecoration(
-                        labelText: 'Capacidad (personas)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.people),
-                        hintText: 'Ej: 4',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<Zona>(
-                      value: zonaSeleccionada,
-                      decoration: const InputDecoration(
-                        labelText: 'Zona',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on),
-                      ),
-                      items:
-                          zonas.map((zona) {
-                            return DropdownMenuItem(
-                              value: zona,
-                              child: Text(zona.nombre),
-                            );
-                          }).toList(),
-                      onChanged: (Zona? nuevaZona) {
-                        if (nuevaZona != null) {
-                          setState(() {
-                            zonaSeleccionada = nuevaZona;
-                          });
-                        }
-                      },
-                    ),
-                  ],
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.add_circle, color: Color(0xFF27AE60)),
+              SizedBox(width: 12),
+              Text('Agregar Mesa'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nombreController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de la Mesa',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.table_bar),
+                  hintText: 'Ej: Mesa 5',
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: capacidadController,
+                decoration: const InputDecoration(
+                  labelText: 'Capacidad (personas)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.people),
+                  hintText: 'Ej: 4',
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final nombre = nombreController.text.trim();
-                    final capacidadStr = capacidadController.text.trim();
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final nombre = nombreController.text.trim();
+                final capacidadStr = capacidadController.text.trim();
 
-                    if (nombre.isEmpty || capacidadStr.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Por favor completa todos los campos'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
+                if (nombre.isEmpty || capacidadStr.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor completa todos los campos'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
 
-                    final capacidad = int.tryParse(capacidadStr);
-                    if (capacidad == null || capacidad < 1) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'La capacidad debe ser un número válido mayor a 0',
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
+                final capacidad = int.tryParse(capacidadStr);
+                if (capacidad == null || capacidad < 1) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'La capacidad debe ser un número válido mayor a 0',
+                      ),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
 
-                    // Cerrar el diálogo
-                    Navigator.pop(dialogContext);
+                // Cerrar el diálogo
+                Navigator.pop(dialogContext);
 
-                    // Ejecutar la acción (usando el cubit capturado arriba)
-                    final nuevaMesa = await cubit.agregarMesa(
-                      negocio.id,
-                      nombre,
-                      capacidad,
-                      zonaSeleccionada.id,
-                    );
+                // Ejecutar la acción (usando el cubit capturado arriba)
+                final nuevaMesa = await cubit.agregarMesa(
+                  negocio.id,
+                  nombre,
+                  capacidad,
+                );
 
-                    if (nuevaMesa != null && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '✅ ${nuevaMesa.nombre} agregada correctamente',
-                          ),
-                          backgroundColor: const Color(0xFF27AE60),
-                        ),
-                      );
-                      // Reabrir el diálogo de gestión de mesas
-                      _mostrarGestionMesas(context, negocio);
-                    } else if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('❌ Error al agregar mesa'),
-                          backgroundColor: Color(0xFFE74C3C),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF27AE60),
-                  ),
-                  child: const Text('Agregar'),
-                ),
-              ],
-            );
-          },
+                if (nuevaMesa != null && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '✅ ${nuevaMesa.nombre} agregada correctamente',
+                      ),
+                      backgroundColor: const Color(0xFF27AE60),
+                    ),
+                  );
+                  // Reabrir el diálogo de gestión de mesas
+                  _mostrarGestionMesas(context, negocio);
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('❌ Error al agregar mesa'),
+                      backgroundColor: Color(0xFFE74C3C),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF27AE60),
+              ),
+              child: const Text('Agregar'),
+            ),
+          ],
         );
       },
     );
@@ -3762,7 +3104,7 @@ class _PantallaDuenoView extends StatelessWidget {
     negocio,
     Mesa mesa,
     StateSetter setState,
-  ) async {
+  ) {
     final nombreController = TextEditingController(text: mesa.nombre);
     final capacidadController = TextEditingController(
       text: mesa.capacidad.toString(),
@@ -3770,154 +3112,111 @@ class _PantallaDuenoView extends StatelessWidget {
     // Capturar el cubit FUERA del diálogo
     final cubit = context.read<PantallaDuenoCubit>();
 
-    // Cargar zonas del negocio
-    final zonas = await cubit.obtenerZonasDelNegocio(negocio.id);
-
-    if (zonas.isEmpty) return;
-
-    // Buscar la zona actual de la mesa, o usar la primera disponible
-    Zona zonaSeleccionada = zonas.firstWhere(
-      (z) => z.id == mesa.zonaId,
-      orElse: () => zonas.first,
-    );
-
-    if (!context.mounted) return;
-
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: const Row(
-                children: [
-                  Icon(Icons.edit, color: Color(0xFF3498DB)),
-                  SizedBox(width: 12),
-                  Text('Editar Mesa'),
-                ],
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nombreController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de la Mesa',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.table_bar),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: capacidadController,
-                      decoration: const InputDecoration(
-                        labelText: 'Capacidad (personas)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.people),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<Zona>(
-                      value: zonaSeleccionada,
-                      decoration: const InputDecoration(
-                        labelText: 'Zona',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on),
-                      ),
-                      items:
-                          zonas.map((zona) {
-                            return DropdownMenuItem(
-                              value: zona,
-                              child: Text(zona.nombre),
-                            );
-                          }).toList(),
-                      onChanged: (Zona? nuevaZona) {
-                        if (nuevaZona != null) {
-                          setStateDialog(() {
-                            zonaSeleccionada = nuevaZona;
-                          });
-                        }
-                      },
-                    ),
-                  ],
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.edit, color: Color(0xFF3498DB)),
+              SizedBox(width: 12),
+              Text('Editar Mesa'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nombreController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de la Mesa',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.table_bar),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: capacidadController,
+                decoration: const InputDecoration(
+                  labelText: 'Capacidad (personas)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.people),
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final nombre = nombreController.text.trim();
-                    final capacidadStr = capacidadController.text.trim();
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final nombre = nombreController.text.trim();
+                final capacidadStr = capacidadController.text.trim();
 
-                    if (nombre.isEmpty || capacidadStr.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Por favor completa todos los campos'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
+                if (nombre.isEmpty || capacidadStr.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor completa todos los campos'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
 
-                    final capacidad = int.tryParse(capacidadStr);
-                    if (capacidad == null || capacidad < 1) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'La capacidad debe ser un número válido mayor a 0',
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
+                final capacidad = int.tryParse(capacidadStr);
+                if (capacidad == null || capacidad < 1) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'La capacidad debe ser un número válido mayor a 0',
+                      ),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
 
-                    final mesaActualizada = mesa.copyWith(
-                      nombre: nombre,
-                      capacidad: capacidad,
-                      zonaId: zonaSeleccionada.id,
-                    );
+                final mesaActualizada = mesa.copyWith(
+                  nombre: nombre,
+                  capacidad: capacidad,
+                );
 
-                    // Cerrar el diálogo
-                    Navigator.pop(dialogContext);
+                // Cerrar el diálogo
+                Navigator.pop(dialogContext);
 
-                    // Ejecutar la acción (usando el cubit capturado arriba)
-                    final exito = await cubit.actualizarMesa(mesaActualizada);
+                // Ejecutar la acción (usando el cubit capturado arriba)
+                final exito = await cubit.actualizarMesa(mesaActualizada);
 
-                    if (exito && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('✅ Mesa actualizada correctamente'),
-                          backgroundColor: Color(0xFF27AE60),
-                        ),
-                      );
-                      // Reabrir el diálogo de gestión de mesas
-                      _mostrarGestionMesas(context, negocio);
-                    } else if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('❌ Error al actualizar mesa'),
-                          backgroundColor: Color(0xFFE74C3C),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3498DB),
-                  ),
-                  child: const Text('Guardar'),
-                ),
-              ],
-            );
-          },
+                if (exito && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Mesa actualizada correctamente'),
+                      backgroundColor: Color(0xFF27AE60),
+                    ),
+                  );
+                  // Reabrir el diálogo de gestión de mesas
+                  _mostrarGestionMesas(context, negocio);
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('❌ Error al actualizar mesa'),
+                      backgroundColor: Color(0xFFE74C3C),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3498DB),
+              ),
+              child: const Text('Guardar'),
+            ),
+          ],
         );
       },
     );

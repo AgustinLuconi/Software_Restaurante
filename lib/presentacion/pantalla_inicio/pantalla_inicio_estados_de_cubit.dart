@@ -12,13 +12,4 @@ abstract class PantallaInicioState {
 // Estado inicial
 class PantallaInicioInicial extends PantallaInicioState {
   const PantallaInicioInicial({super.negocios});
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PantallaInicioInicial &&
-          listEquals(negocios, other.negocios);
-
-  @override
-  int get hashCode => Object.hashAll(negocios);
 }

@@ -4,11 +4,9 @@ import '../../aplicacion/crear_reserva.dart';
 import '../../dominio/entidades/mesa.dart';
 import '../../dominio/entidades/negocio.dart';
 import '../../dominio/entidades/reserva.dart';
-import '../../dominio/entidades/zona.dart';
 import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/mesa_repositorio.dart';
 import '../../dominio/repositorios/negocio_repositorio.dart';
-import '../../dominio/repositorios/zona_repositorio.dart';
 import '../../adaptadores/servicio_email.dart';
 import '../../service_locator.dart';
 import 'disponibilidad_estados_de_cubit.dart';
@@ -19,7 +17,6 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   final CrearReserva _crearReserva;
   final ServicioEmail _servicioEmail;
   final HorarioAperturaRepositorio _horarioAperturaRepo;
-  final ZonaRepositorio _zonaRepositorio;
 
   /// Negocio cacheado para acceso rápido
   Negocio? _negocioActual;
@@ -31,7 +28,6 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       _crearReserva = getIt<CrearReserva>(),
       _servicioEmail = getIt<ServicioEmail>(),
       _horarioAperturaRepo = getIt<HorarioAperturaRepositorio>(),
-      _zonaRepositorio = getIt<ZonaRepositorio>(),
       super(DisponibilidadInicial());
 
   /// ID del negocio actual (se carga dinámicamente)
@@ -65,10 +61,9 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       final mesas = resultados[0] as List<Mesa>;
       _negocioActual = resultados[1] as Negocio?;
       final horario = resultados[2] as dynamic;
-      final horarios =
-          horario != null
-              ? _horarioAperturaRepo.horarioAMapString(horario)
-              : <String, String>{};
+      final horarios = horario != null
+          ? _horarioAperturaRepo.horarioAMapString(horario)
+          : <String, String>{};
 
       emit(
         DisponibilidadExitosa(
@@ -84,12 +79,12 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     }
   }
 
-  /// Obtiene las zonas disponibles del restaurante (zonas personalizadas)
-  Future<List<Zona>> obtenerZonasDisponibles() async {
+  /// Obtiene las zonas disponibles del restaurante
+  Future<List<ZonaMesa>> obtenerZonasDisponibles() async {
     try {
       final id = _negocioActual?.id ?? _negocioId;
       if (id == null) return [];
-      return await _zonaRepositorio.obtenerZonasPorNegocio(id);
+      return await _mesaRepositorio.obtenerZonasDisponibles(id);
     } catch (e) {
       return [];
     }
@@ -97,7 +92,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
 
   /// Busca automáticamente una mesa disponible en la zona especificada
   Future<void> buscarMesaEnZona({
-    required Zona zona,
+    required ZonaMesa zona,
     required DateTime fecha,
     required DateTime hora,
     required int numeroPersonas,
@@ -107,7 +102,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
 
       final negocioId = _negocioActual?.id ?? _negocioId ?? 'default';
       final mesa = await _mesaRepositorio.buscarMesaDisponibleEnZona(
-        zonaId: zona.id,
+        zona: zona,
         fecha: fecha,
         hora: hora,
         numeroPersonas: numeroPersonas,
@@ -141,7 +136,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     try {
       final id = _negocioActual?.id ?? _negocioId;
       if (id == null) return [];
-
+      
       return await _horarioAperturaRepo.obtenerIntervalosDisponibles(
         id,
         fecha,
@@ -166,7 +161,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   }) async {
     try {
       emit(DisponibilidadCargando());
-
+      
       print('🔄 Creando reserva verificada por SMS...');
       print('   📧 Email: $emailCliente');
       print('   📱 Teléfono: $telefonoVerificado');
@@ -188,7 +183,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         estadoInicial: EstadoReserva.confirmada,
         negocioId: negocioId,
       );
-
+      
       print('✅ Reserva creada con ID: ${reserva.id}');
 
       // Obtener nombre del negocio y mesa para los emails
@@ -206,7 +201,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         nombreNegocio: nombreNegocio,
         nombreMesa: mesa.nombre,
       );
-
+      
       print('✅ Proceso de reserva completado exitosamente');
 
       emit(
