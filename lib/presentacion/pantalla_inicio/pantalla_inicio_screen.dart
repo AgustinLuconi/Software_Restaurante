@@ -119,7 +119,7 @@ class _PantallaInicioView extends StatelessWidget {
                                     ? 'Nuevo restaurante' 
                                     : negocio.descripcion,
                                 especialidad: negocio.especialidad.isEmpty 
-                                    ? negocio.direccion 
+                                    ? 'Especialidad no definida' 
                                     : negocio.especialidad,
                                 icono: _obtenerIcono(negocio.icono),
                                 color: esChiringuito 
@@ -127,11 +127,7 @@ class _PantallaInicioView extends StatelessWidget {
                                     : const Color(0xFF9B59B6),
                                 destacado: esChiringuito,
                                 onTap: () {
-                                  if (esChiringuito) {
-                                    context.go('/restaurante');
-                                  } else {
-                                    _mostrarProximamente(context);
-                                  }
+                                  context.go('/restaurante', extra: negocio.id);
                                 },
                               ),
                               const SizedBox(height: 16),
@@ -504,12 +500,33 @@ class _PantallaInicioView extends StatelessWidget {
                     password: passwordController.text,
                   );
                   
-                  Navigator.pop(context);
-                  
                   if (negocio != null) {
+                    // También crear sesión en Firebase Auth
+                    final auth = getIt<ServicioAutenticacion>();
+                    try {
+                      await auth.iniciarSesionConEmail(
+                        email: emailController.text,
+                        password: passwordController.text,
+                      );
+                    } catch (_) {
+                      // Si el usuario no existe en Firebase Auth (cuenta legacy),
+                      // crearlo automáticamente
+                      try {
+                        await auth.registrarConEmail(
+                          email: emailController.text,
+                          password: passwordController.text,
+                        );
+                      } catch (_) {
+                        // Si ya existe o hay otro error, ignorar
+                        // La funcionalidad básica del panel seguirá funcionando
+                      }
+                    }
+
+                    Navigator.pop(context);
                     // Autenticación exitosa - navegar a pantalla_dueño
                     context.go('/dueno', extra: negocio);
                   } else {
+                    Navigator.pop(context);
                     // Credenciales incorrectas
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

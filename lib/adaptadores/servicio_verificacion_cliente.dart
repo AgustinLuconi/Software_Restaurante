@@ -180,10 +180,8 @@ class ServicioVerificacionCliente {
 
       final telefonoVerificado = result.user!.phoneNumber ?? '';
 
-      // Cerrar sesión temporal (el cliente no necesita estar logueado)
-      await _auth.signOut();
-
-      // Limpiar estado y recaptcha
+      // Limpiar estado interno y recaptcha (no hacer signOut para no interrumpir
+      // otras operaciones de Firestore que dependen de la sesión)
       _limpiarEstado();
 
       return telefonoVerificado;

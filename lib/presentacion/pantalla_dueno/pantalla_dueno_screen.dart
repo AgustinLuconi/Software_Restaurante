@@ -733,70 +733,93 @@ class _PantallaDuenoView extends StatelessWidget {
 
   void _mostrarEditarTelefono(BuildContext context, negocio) {
     final controller = TextEditingController(text: negocio.telefono);
+    String? errorMessage;
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.phone, color: Color(0xFF27AE60)),
-              SizedBox(width: 12),
-              Text('Editar Teléfono'),
-            ],
-          ),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Número de Teléfono',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.phone),
-            ),
-            keyboardType: TextInputType.phone,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final nuevoTelefono = controller.text.trim();
-                if (nuevoTelefono.isNotEmpty) {
-                  final cubit = context.read<PantallaDuenoCubit>();
-                  final exito = await cubit.actualizarTelefono(
-                    negocio,
-                    nuevoTelefono,
-                  );
-
-                  Navigator.pop(dialogContext);
-
-                  if (exito) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('✅ Teléfono actualizado correctamente'),
-                        backgroundColor: Color(0xFF27AE60),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('❌ Error al actualizar teléfono'),
-                        backgroundColor: Color(0xFFE74C3C),
-                      ),
-                    );
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF27AE60),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: const Text('Guardar'),
-            ),
-          ],
+              title: const Row(
+                children: [
+                  Icon(Icons.phone, color: Color(0xFF27AE60)),
+                  SizedBox(width: 12),
+                  Text('Editar Teléfono'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      labelText: 'Número de Teléfono',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.phone),
+                      hintText: 'Ej: +54 9 261 123-4567',
+                      errorText: errorMessage,
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final nuevoTelefono = controller.text.trim();
+                    if (nuevoTelefono.isEmpty) {
+                      setState(() => errorMessage = 'El teléfono no puede estar vacío');
+                      return;
+                    }
+
+                    // Validar formato de teléfono argentino
+                    final auth = getIt<ServicioAutenticacion>();
+                    final validacion = auth.validarTelefonoArgentino(nuevoTelefono);
+                    if (validacion['valido'] != true) {
+                      setState(() => errorMessage = validacion['error'] as String?);
+                      return;
+                    }
+
+                    final cubit = context.read<PantallaDuenoCubit>();
+                    final exito = await cubit.actualizarTelefono(
+                      negocio,
+                      nuevoTelefono,
+                    );
+
+                    Navigator.pop(dialogContext);
+
+                    if (exito) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Teléfono actualizado correctamente'),
+                          backgroundColor: Color(0xFF27AE60),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('❌ Error al actualizar teléfono'),
+                          backgroundColor: Color(0xFFE74C3C),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF27AE60),
+                  ),
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

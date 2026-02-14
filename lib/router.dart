@@ -29,7 +29,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/restaurante',
       name: 'restaurante',
-      builder: (context, state) => const PantallaRestauranteScreen(),
+      builder: (context, state) {
+        final negocioId = state.extra as String?;
+        return PantallaRestauranteScreen(negocioId: negocioId);
+      },
     ),
     GoRoute(
       path: '/historia',

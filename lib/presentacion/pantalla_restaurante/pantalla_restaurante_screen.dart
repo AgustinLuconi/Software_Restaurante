@@ -6,12 +6,14 @@ import 'pantalla_restaurante_cubit.dart';
 import 'pantalla_restaurante_estados_de_cubit.dart';
 
 class PantallaRestauranteScreen extends StatelessWidget {
-  const PantallaRestauranteScreen({super.key});
+  final String? negocioId;
+  
+  const PantallaRestauranteScreen({super.key, this.negocioId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => PantallaRestauranteCubit()..cargarDatosNegocio(),
+      create: (context) => PantallaRestauranteCubit()..cargarDatosNegocio(negocioId: negocioId),
       child: const _PantallaRestauranteView(),
     );
   }

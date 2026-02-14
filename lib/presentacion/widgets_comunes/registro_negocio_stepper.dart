@@ -454,6 +454,25 @@ class _RegistroNegocioStepperState extends State<RegistroNegocioStepper> {
     });
 
     try {
+      // Crear usuario en Firebase Auth primero (si no es Google)
+      final auth = getIt<ServicioAutenticacion>();
+      try {
+        await auth.registrarConEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+      } catch (_) {
+        // Si ya existe en Firebase Auth, intentar iniciar sesión
+        try {
+          await auth.iniciarSesionConEmail(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } catch (_) {
+          // Continuar igualmente con el registro en Firestore
+        }
+      }
+
       final nuevoNegocio = await widget.cubit.registrarNegocio(
         nombre: _nombreNegocioController.text.trim(),
         nombreResponsable: _nombreResponsableController.text.trim(),

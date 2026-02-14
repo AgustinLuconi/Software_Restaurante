@@ -1524,13 +1524,13 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
         int tiempoRestante = 0;
 
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (dialogBuildContext, setState) {
             // Timer de reenvío
             void iniciarTimer() {
               tiempoRestante = 60;
               Future.doWhile(() async {
                 await Future.delayed(const Duration(seconds: 1));
-                if (tiempoRestante > 0 && context.mounted) {
+                if (tiempoRestante > 0 && dialogBuildContext.mounted) {
                   setState(() => tiempoRestante--);
                   return true;
                 }
@@ -1569,7 +1569,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   // Verificación automática en Android
                   Navigator.of(dialogContext).pop();
                   await _crearReservaVerificada(
-                    context,
+                    context, // usar el context externo (del widget)
                     telefono: telefonoVerificado,
                     email: email,
                     nombre: nombre,
@@ -1597,22 +1597,27 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
 
                 Navigator.of(dialogContext).pop();
 
-                await _crearReservaVerificada(
-                  context,
-                  telefono: telefonoVerificado,
-                  email: email,
-                  nombre: nombre,
-                  mesa: mesa,
-                  fecha: fecha,
-                  horaInicio: horaInicio,
-                  numeroPersonas: numeroPersonas,
-                  intervaloSeleccionado: intervaloSeleccionado,
-                );
+                // Usar el context externo (del widget, no del diálogo)
+                if (context.mounted) {
+                  await _crearReservaVerificada(
+                    context,
+                    telefono: telefonoVerificado,
+                    email: email,
+                    nombre: nombre,
+                    mesa: mesa,
+                    fecha: fecha,
+                    horaInicio: horaInicio,
+                    numeroPersonas: numeroPersonas,
+                    intervaloSeleccionado: intervaloSeleccionado,
+                  );
+                }
               } catch (e) {
-                setState(() {
-                  isLoading = false;
-                  errorMessage = e.toString().replaceAll('Exception: ', '');
-                });
+                if (dialogBuildContext.mounted) {
+                  setState(() {
+                    isLoading = false;
+                    errorMessage = e.toString().replaceAll('Exception: ', '');
+                  });
+                }
               }
             }
 
