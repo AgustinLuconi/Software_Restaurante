@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../adaptadores/servicio_verificacion_cliente.dart';
 import '../../dominio/entidades/reserva.dart';
 import '../../service_locator.dart';
+import '../widgets_comunes/badge_estado.dart';
 import 'mis_reservas_cubit.dart';
 import 'mis_reservas_estados_de_cubit.dart';
 
@@ -251,33 +252,10 @@ class _MisReservasViewState extends State<_MisReservasView> {
                     color: Color(0xFF2C3E50),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: getEstadoColor(reserva.estado).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        getEstadoIcono(reserva.estado),
-                        size: 16,
-                        color: getEstadoColor(reserva.estado),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        getEstadoTexto(reserva.estado),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: getEstadoColor(reserva.estado),
-                        ),
-                      ),
-                    ],
-                  ),
+                BadgeEstado(
+                  texto: getEstadoTexto(reserva.estado),
+                  color: getEstadoColor(reserva.estado),
+                  icon: getEstadoIcono(reserva.estado),
                 ),
               ],
             ),
@@ -877,29 +855,10 @@ class _MisReservasViewState extends State<_MisReservasView> {
                     color: Color(0xFF2C3E50),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: getEstadoColor().withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(getEstadoIcono(), size: 16, color: getEstadoColor()),
-                      const SizedBox(width: 6),
-                      Text(
-                        estado.toString().toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: getEstadoColor(),
-                        ),
-                      ),
-                    ],
-                  ),
+                BadgeEstado(
+                  texto: estado.toString().toUpperCase(),
+                  color: getEstadoColor(),
+                  icon: getEstadoIcono(),
                 ),
               ],
             ),

@@ -8,6 +8,8 @@ import '../../dominio/entidades/historia_restaurante.dart';
 import '../../dominio/entidades/mesa.dart';
 import '../../dominio/entidades/reserva.dart';
 import '../../service_locator.dart';
+import '../widgets_comunes/tarjeta_accion_gradiente.dart';
+import '../widgets_comunes/tarjeta_info.dart';
 import 'pantalla_dueno_cubit.dart';
 import 'pantalla_dueno_estados_de_cubit.dart';
 
@@ -217,70 +219,82 @@ class _PantallaDuenoView extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 children: [
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.event_note,
-                    title: 'Reservas',
-                    subtitle: 'Gestionar',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
+                  SizedBox(
+                    width: 150,
+                    child: TarjetaAccionGradiente(
+                      icon: Icons.event_note,
+                      title: 'Reservas',
+                      subtitle: 'Gestionar',
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
+                      ),
+                      onTap: () => _mostrarReservas(context, negocio),
                     ),
-                    onTap: () => _mostrarReservas(context, negocio),
                   ),
                   const SizedBox(width: 16),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.table_bar,
-                    title: 'Mesas',
-                    subtitle: 'Configurar',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF27AE60), Color(0xFF229954)],
+                  SizedBox(
+                    width: 150,
+                    child: TarjetaAccionGradiente(
+                      icon: Icons.table_bar,
+                      title: 'Mesas',
+                      subtitle: 'Configurar',
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF27AE60), Color(0xFF229954)],
+                      ),
+                      onTap: () => _mostrarGestionMesas(context, negocio),
                     ),
-                    onTap: () => _mostrarGestionMesas(context, negocio),
                   ),
                   const SizedBox(width: 16),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.schedule,
-                    title: 'Horarios',
-                    subtitle: 'Definir',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE67E22), Color(0xFFD35400)],
+                  SizedBox(
+                    width: 150,
+                    child: TarjetaAccionGradiente(
+                      icon: Icons.schedule,
+                      title: 'Horarios',
+                      subtitle: 'Definir',
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE67E22), Color(0xFFD35400)],
+                      ),
+                      onTap: () => _mostrarGestionHorarios(context, negocio),
                     ),
-                    onTap: () => _mostrarGestionHorarios(context, negocio),
                   ),
                   const SizedBox(width: 16),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.bar_chart,
-                    title: 'Métricas',
-                    subtitle: 'Análisis',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF9B59B6), Color(0xFF8E44AD)],
+                  SizedBox(
+                    width: 150,
+                    child: TarjetaAccionGradiente(
+                      icon: Icons.bar_chart,
+                      title: 'Métricas',
+                      subtitle: 'Análisis',
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF9B59B6), Color(0xFF8E44AD)],
+                      ),
+                      onTap: () => _mostrarMetricas(context, negocio),
                     ),
-                    onTap: () => _mostrarMetricas(context, negocio),
                   ),
                   const SizedBox(width: 16),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.settings_suggest,
-                    title: 'Reglas',
-                    subtitle: 'Tiempos',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7F8C8D), Color(0xFF2C3E50)],
+                  SizedBox(
+                    width: 150,
+                    child: TarjetaAccionGradiente(
+                      icon: Icons.settings_suggest,
+                      title: 'Reglas',
+                      subtitle: 'Tiempos',
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF7F8C8D), Color(0xFF2C3E50)],
+                      ),
+                      onTap: () => _mostrarConfiguracionReglas(context, negocio),
                     ),
-                    onTap: () => _mostrarConfiguracionReglas(context, negocio),
                   ),
                   const SizedBox(width: 16),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.history_edu,
-                    title: 'Historia',
-                    subtitle: 'Editar Contenido',
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF8E44AD), Color(0xFF6C3483)],
+                  SizedBox(
+                    width: 150,
+                    child: TarjetaAccionGradiente(
+                      icon: Icons.history_edu,
+                      title: 'Historia',
+                      subtitle: 'Editar Contenido',
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8E44AD), Color(0xFF6C3483)],
+                      ),
+                      onTap: () => _mostrarEditorHistoria(context),
                     ),
-                    onTap: () => _mostrarEditorHistoria(context),
                   ),
                   const SizedBox(width: 4),
                 ],
@@ -299,75 +313,103 @@ class _PantallaDuenoView extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            _buildInfoCard(
+            TarjetaInfo(
               icon: Icons.store,
               titulo: 'Nombre del Restaurante',
-              valor: negocio.nombre,
+              subtitulo: negocio.nombre,
               color: const Color(0xFF2980B9),
-              editable: true,
-              onEdit: () => _mostrarEditarNombre(context, negocio),
+              onTap: () => _mostrarEditarNombre(context, negocio),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                onPressed: () => _mostrarEditarNombre(context, negocio),
+                tooltip: 'Editar',
+              ),
             ),
             const SizedBox(height: 12),
 
-            _buildInfoCard(
+            TarjetaInfo(
               icon: _obtenerIcono(negocio.icono),
               titulo: 'Icono/Logo',
-              valor: negocio.icono,
+              subtitulo: negocio.icono,
               color: const Color(0xFF27AE60),
-              editable: true,
-              onEdit: () => _mostrarEditarIcono(context, negocio),
+              onTap: () => _mostrarEditarIcono(context, negocio),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                onPressed: () => _mostrarEditarIcono(context, negocio),
+                tooltip: 'Editar',
+              ),
             ),
             const SizedBox(height: 12),
 
-            _buildInfoCard(
+            TarjetaInfo(
               icon: Icons.email,
               titulo: 'Correo Electrónico',
-              valor: negocio.email,
+              subtitulo: negocio.email,
               color: colorScheme.primary,
-              editable: true,
-              onEdit: () => _mostrarEditarEmail(context, negocio),
+              onTap: () => _mostrarEditarEmail(context, negocio),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                onPressed: () => _mostrarEditarEmail(context, negocio),
+                tooltip: 'Editar',
+              ),
             ),
             const SizedBox(height: 12),
 
-            _buildInfoCard(
+            TarjetaInfo(
               icon: Icons.phone,
               titulo: 'Teléfono',
-              valor: negocio.telefono,
+              subtitulo: negocio.telefono,
               color: colorScheme.secondary,
-              editable: true,
-              onEdit: () => _mostrarEditarTelefono(context, negocio),
+              onTap: () => _mostrarEditarTelefono(context, negocio),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                onPressed: () => _mostrarEditarTelefono(context, negocio),
+                tooltip: 'Editar',
+              ),
             ),
             const SizedBox(height: 12),
 
-            _buildInfoCard(
+            TarjetaInfo(
               icon: Icons.location_on,
               titulo: 'Dirección',
-              valor: negocio.direccion,
+              subtitulo: negocio.direccion,
               color: colorScheme.tertiary,
-              editable: true,
-              onEdit: () => _mostrarEditarDireccion(context, negocio),
+              onTap: () => _mostrarEditarDireccion(context, negocio),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                onPressed: () => _mostrarEditarDireccion(context, negocio),
+                tooltip: 'Editar',
+              ),
             ),
             const SizedBox(height: 12),
 
-            _buildInfoCard(
+            TarjetaInfo(
               icon: Icons.restaurant_menu,
               titulo: 'Especialidad',
-              valor: negocio.especialidad,
+              subtitulo: negocio.especialidad,
               color: const Color(0xFF9B59B6),
-              editable: true,
-              onEdit: () => _mostrarEditarEspecialidad(context, negocio),
+              onTap: () => _mostrarEditarEspecialidad(context, negocio),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                onPressed: () => _mostrarEditarEspecialidad(context, negocio),
+                tooltip: 'Editar',
+              ),
             ),
             const SizedBox(height: 12),
 
-            _buildInfoCard(
+            TarjetaInfo(
               icon: Icons.description,
               titulo: 'Descripción',
-              valor: negocio.descripcion.isEmpty 
+              subtitulo: negocio.descripcion.isEmpty 
                   ? 'Sin descripción' 
                   : negocio.descripcion,
               color: const Color(0xFF16A085),
-              editable: true,
-              onEdit: () => _mostrarEditarDescripcion(context, negocio),
+              onTap: () => _mostrarEditarDescripcion(context, negocio),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                onPressed: () => _mostrarEditarDescripcion(context, negocio),
+                tooltip: 'Editar',
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -383,8 +425,7 @@ class _PantallaDuenoView extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Botón de cambiar contraseña
-            _buildSecurityCard(
-              context,
+            TarjetaInfo(
               icon: Icons.lock_outline,
               titulo: 'Cambiar Contraseña',
               subtitulo: 'Actualiza tu contraseña de acceso',
@@ -395,8 +436,7 @@ class _PantallaDuenoView extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Botón de verificar teléfono
-            _buildSecurityCardConEstado(
-              context,
+            TarjetaInfoConEstado(
               icon: Icons.phone_android,
               titulo: 'Verificar Teléfono',
               subtitulo: _obtenerSubtituloTelefono(),
@@ -412,61 +452,6 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
-  Widget _buildSecurityCard(
-    BuildContext context, {
-    required IconData icon,
-    required String titulo,
-    required String subtitulo,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitulo,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   String _obtenerSubtituloTelefono() {
     final auth = getIt<ServicioAutenticacion>();
     if (auth.telefonoVerificado) {
@@ -474,221 +459,6 @@ class _PantallaDuenoView extends StatelessWidget {
       return 'Verificado: $telefono';
     }
     return 'Verifica tu número para mayor seguridad';
-  }
-
-  Widget _buildSecurityCardConEstado(
-    BuildContext context, {
-    required IconData icon,
-    required String titulo,
-    required String subtitulo,
-    required Color color,
-    required bool estaVerificado,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          titulo,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C3E50),
-                          ),
-                        ),
-                        if (estaVerificado) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF27AE60).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  size: 14,
-                                  color: Color(0xFF27AE60),
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Verificado',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF27AE60),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitulo,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Gradient gradient,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      width: 150,
-      child: Card(
-        elevation: 8,
-        shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 32, color: Colors.white),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String titulo,
-    required String valor,
-    required Color color,
-    bool editable = false,
-    VoidCallback? onEdit,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titulo,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    valor,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2C3E50),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (editable)
-              IconButton(
-                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
-                onPressed: onEdit,
-                tooltip: 'Editar',
-              ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _mostrarConfirmacionCerrarSesion(BuildContext context) {

@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../adaptadores/servicio_verificacion_cliente.dart';
 import '../../dominio/entidades/mesa.dart';
 import '../../service_locator.dart';
+import '../widgets_comunes/constantes_diseno.dart';
+import '../widgets_comunes/icono_circular.dart';
+import '../widgets_comunes/panel_informativo.dart';
 import 'disponibilidad_cubit.dart';
 import 'disponibilidad_estados_de_cubit.dart';
 
@@ -311,57 +314,12 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
 
   /// Widget para la tarjeta de info de intervalos (dinámico)
   Widget _buildInfoIntervalosCard(int duracionMinutos) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF3498DB).withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.schedule,
-              color: Color(0xFF3498DB),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Reservas por intervalos de $duracionMinutos minutos',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C3E50),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Cada mesa se reserva por $duracionMinutos minutos. Si una mesa está reservada, no estará disponible en ese horario.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return PanelInformativo(
+      icon: Icons.schedule,
+      titulo: 'Reservas por intervalos de $duracionMinutos minutos',
+      descripcion:
+          'Cada mesa se reserva por $duracionMinutos minutos. Si una mesa está reservada, no estará disponible en ese horario.',
+      color: AppColores.info,
     );
   }
 
@@ -429,13 +387,12 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF9B59B6).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.location_on, color: Color(0xFF9B59B6)),
+                IconoCircular(
+                  icon: Icons.location_on,
+                  color: const Color(0xFF9B59B6),
+                  size: 24,
+                  padding: 8,
+                  borderRadius: 8,
                 ),
                 const SizedBox(width: 16),
                 Expanded(

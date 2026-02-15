@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../dominio/entidades/historia_restaurante.dart';
+import '../widgets_comunes/icono_circular.dart';
+import '../widgets_comunes/seccion_titulo.dart';
 
 class HistoriaScreen extends StatefulWidget {
   const HistoriaScreen({super.key});
@@ -60,13 +62,11 @@ class _HistoriaScreenState extends State<HistoriaScreen> {
                     alignment: Alignment.topLeft,
                     child: InkWell(
                       onTap: () => context.go('/restaurante'),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.arrow_back, color: Colors.white),
+                      child: IconoCircular.circulo(
+                        icon: Icons.arrow_back,
+                        color: Colors.white,
+                        padding: 8,
+                        backgroundColor: Colors.white.withOpacity(0.2),
                       ),
                     ),
                   ),
@@ -120,19 +120,10 @@ class _HistoriaScreenState extends State<HistoriaScreen> {
                   const SizedBox(height: 24),
 
                   // Título Platos
-                  Row(
-                    children: [
-                      Icon(Icons.restaurant_menu, color: theme.colorScheme.primary),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Nuestras Especialidades',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
+                  SeccionTitulo(
+                    icon: Icons.restaurant_menu,
+                    titulo: 'Nuestras Especialidades',
+                    color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
 
@@ -158,20 +149,11 @@ class _HistoriaScreenState extends State<HistoriaScreen> {
                         ),
                         child: ListTile(
                           contentPadding: const EdgeInsets.all(16),
-                          leading: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary, // Fondo Azul Marca
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: theme.colorScheme.primary.withOpacity(0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Icon(e.icono, color: Colors.white, size: 24), // Icono Blanco
+                          leading: IconoCircular(
+                            icon: e.icono,
+                            color: Colors.white,
+                            size: 24,
+                            backgroundColor: theme.colorScheme.primary,
                           ),
                           title: Text(
                             e.nombre,

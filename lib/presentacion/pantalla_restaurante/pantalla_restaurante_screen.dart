@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../widgets_comunes/icono_circular.dart';
 import 'pantalla_restaurante_cubit.dart';
 import 'pantalla_restaurante_estados_de_cubit.dart';
 
@@ -290,13 +291,11 @@ class _PantallaRestauranteView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 28, color: theme.colorScheme.primary),
+              IconoCircular.circulo(
+                icon: icon,
+                color: theme.colorScheme.primary,
+                size: 28,
+                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
               ),
               const SizedBox(height: 12),
               Text(
@@ -479,13 +478,11 @@ class _PantallaRestauranteView extends StatelessWidget {
             ),
             title: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.phone, color: Colors.purple.shade700),
+                IconoCircular.circulo(
+                  icon: Icons.phone,
+                  color: Colors.purple.shade700,
+                  padding: 10,
+                  backgroundColor: Colors.purple.shade100,
                 ),
                 const SizedBox(width: 12),
                 const Text('Contacto'),
