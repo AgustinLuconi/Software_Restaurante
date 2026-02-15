@@ -25,16 +25,14 @@ class _HistoriaScreenState extends State<HistoriaScreen> {
   }
 
   Future<HistoriaRestaurante?> _buscarHistoria() async {
-    if (widget.negocioId == null) return HistoriaData.actual;
+    if (widget.negocioId == null) return null;
     // Intentar buscar en BD
     try {
       final repo = getIt<HistoriaRepositorio>();
-      final historia = await repo.obtenerHistoria(widget.negocioId!);
-      // Si no existe, devolver la por defecto (o null si prefieres mostrar vacio)
-      return historia ?? HistoriaData.actual;
+      return await repo.obtenerHistoria(widget.negocioId!);
     } catch (e) {
       print('Error cargando historia: $e');
-      return HistoriaData.actual;
+      return null;
     }
   }
 
@@ -51,12 +49,49 @@ class _HistoriaScreenState extends State<HistoriaScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final historia = snapshot.data ?? HistoriaData.actual;
+          final historia = snapshot.data;
 
           return SingleChildScrollView(
             child: Column(
               children: [
                 // --- ENCABEZADO TIPO BANNER ---
+                if (historia == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 100),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.history_edu, size: 80, color: Colors.grey[300]),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Historia no disponible',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'El restaurante aún no ha cargado su historia.',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                          const SizedBox(height: 32),
+                          ElevatedButton.icon(
+                            onPressed: () => context.pop(),
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Volver'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),

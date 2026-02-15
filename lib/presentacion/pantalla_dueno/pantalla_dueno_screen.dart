@@ -3717,17 +3717,23 @@ class _EditorHistoriaScreenState extends State<EditorHistoriaScreen>
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() => setState(() {}));
 
-    final datos = widget.historiaInicial ?? HistoriaData.actual;
-
-    _tituloController = TextEditingController(text: datos.titulo);
-    _subtituloController = TextEditingController(text: datos.subtitulo);
-    _parrafosController = TextEditingController(
-      text: datos.parrafosHistoria.join('\n\n'),
-    );
-    _platosEditables =
-        datos.especialidades
-            .map((e) => EspecialidadItemEditable.fromItem(e))
-            .toList();
+    if (widget.historiaInicial != null) {
+      final datos = widget.historiaInicial!;
+      _tituloController = TextEditingController(text: datos.titulo);
+      _subtituloController = TextEditingController(text: datos.subtitulo);
+      _parrafosController = TextEditingController(
+        text: datos.parrafosHistoria.join('\n\n'),
+      );
+      _platosEditables =
+          datos.especialidades
+              .map((e) => EspecialidadItemEditable.fromItem(e))
+              .toList();
+    } else {
+      _tituloController = TextEditingController();
+      _subtituloController = TextEditingController();
+      _parrafosController = TextEditingController();
+      _platosEditables = [];
+    }
   }
 
   @override
