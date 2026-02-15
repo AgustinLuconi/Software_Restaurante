@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'router.dart';
 import 'service_locator.dart';
+import 'infraestructura/semilla_datos.dart';
 
 void main() async {
   // Asegurar que los widgets estén inicializados
@@ -26,6 +27,13 @@ void main() async {
   
   // Inicializar el service locator (GetIt)
   setupServiceLocator();
+  
+  // MIGRACIÓN DATOS: Inyectar historia de "El Chiringuito" si falta
+  try {
+     await SemillaDatos.inicializarDatosChiringuito();
+  } catch (e) {
+    print('Error en migración: $e');
+  }
   
   runApp(const MyApp());
 }
