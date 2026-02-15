@@ -71,14 +71,46 @@ class HistoriaRepositorioFirestore implements HistoriaRepositorio {
   }
 
   EspecialidadItem _mapToEspecialidad(Map<String, dynamic> data) {
+    final code = data['iconoCode'] as int? ?? 0xe532; // Default restaurant
+    
     return EspecialidadItem(
       nombre: data['nombre'] ?? '',
       descripcion: data['descripcion'] ?? '',
-      icono: IconData(
-        data['iconoCode'] ?? 0xe84e, // Default to something like dining
-        fontFamily: data['iconoFontFamily'] ?? 'MaterialIcons',
-        fontPackage: data['iconoFontPackage'],
-      ),
+      icono: _getIconFromCode(code),
     );
+  }
+
+  IconData _getIconFromCode(int code) {
+    // Lista blanca de iconos permitidos para evitar problemas de tree-shaking
+    // y "non-constant invocations of IconData" en Flutter Web Release.
+    const allowedIcons = [
+      Icons.restaurant,
+      Icons.restaurant_menu,
+      Icons.rice_bowl,
+      Icons.set_meal,
+      Icons.dining,
+      Icons.local_cafe,
+      Icons.local_pizza,
+      Icons.local_bar,
+      Icons.fastfood,
+      Icons.cake,
+      Icons.icecream,
+      Icons.local_dining,
+      Icons.lunch_dining,
+      Icons.brunch_dining,
+      Icons.breakfast_dining,
+      Icons.dinner_dining,
+      Icons.bakery_dining,
+      Icons.ramen_dining,
+      Icons.kebab_dining,
+      Icons.tapas,
+      Icons.soup_kitchen,
+    ];
+
+    try {
+      return allowedIcons.firstWhere((icon) => icon.codePoint == code);
+    } catch (_) {
+      return Icons.restaurant; // Fallback seguro
+    }
   }
 }

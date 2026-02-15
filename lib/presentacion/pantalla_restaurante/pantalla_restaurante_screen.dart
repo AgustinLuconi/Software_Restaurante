@@ -15,13 +15,14 @@ class PantallaRestauranteScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => PantallaRestauranteCubit()..cargarDatosNegocio(negocioId: negocioId),
-      child: const _PantallaRestauranteView(),
+      child: _PantallaRestauranteView(negocioId: negocioId),
     );
   }
 }
 
 class _PantallaRestauranteView extends StatelessWidget {
-  const _PantallaRestauranteView();
+  final String? negocioId;
+  const _PantallaRestauranteView({this.negocioId});
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +31,12 @@ class _PantallaRestauranteView extends StatelessWidget {
         // Obtener datos del negocio para toda la pantalla
         String nombreNegocio = 'Restaurante';
         String especialidad = 'Gastronomía';
+        String? idNegocioActual = negocioId;
 
         if (state is PantallaRestauranteExitoso) {
           nombreNegocio = state.negocio.nombre;
           especialidad = state.negocio.especialidad;
+          idNegocioActual = state.negocio.id;
         }
 
         return Scaffold(
@@ -47,7 +50,7 @@ class _PantallaRestauranteView extends StatelessWidget {
             ),
             title: Text(nombreNegocio),
           ),
-          body: _buildBody(context, state, nombreNegocio, especialidad),
+          body: _buildBody(context, state, nombreNegocio, especialidad, idNegocioActual),
         );
       },
     );
@@ -58,6 +61,7 @@ class _PantallaRestauranteView extends StatelessWidget {
     PantallaRestauranteState state,
     String nombreNegocio,
     String especialidad,
+    String? idActual,
   ) {
     if (state is PantallaRestauranteConError) {
       return Center(
@@ -93,7 +97,7 @@ class _PantallaRestauranteView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Botón principal - Reservar Mesa
-                _buildPrimaryButton(context),
+                _buildPrimaryButton(context, idActual),
 
                 const SizedBox(height: 24),
 
@@ -201,13 +205,13 @@ class _PantallaRestauranteView extends StatelessWidget {
     );
   }
 
-  Widget _buildPrimaryButton(BuildContext context) {
+  Widget _buildPrimaryButton(BuildContext context, String? idActual) {
     final theme = Theme.of(context);
 
     return SizedBox(
       height: 64,
       child: ElevatedButton(
-        onPressed: () => context.push('/disponibilidad', extra: negocioId),
+        onPressed: () => context.push('/disponibilidad', extra: idActual),
         style: ElevatedButton.styleFrom(
           backgroundColor: theme.colorScheme.primary,
           foregroundColor: Colors.white,
@@ -249,6 +253,7 @@ class _PantallaRestauranteView extends StatelessWidget {
         Expanded(
           child: _buildOptionCard(
             context,
+            icon: Icons.history,
             title: 'Historia',
             onTap: () {
                final state = context.read<PantallaRestauranteCubit>().state;
