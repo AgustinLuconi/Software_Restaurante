@@ -6,6 +6,8 @@ import '../../dominio/repositorios/mesa_repositorio.dart';
 import '../../dominio/repositorios/negocio_repositorio.dart';
 import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/reserva_repositorio.dart';
+import '../../dominio/repositorios/historia_repositorio.dart';
+import '../../dominio/entidades/historia_restaurante.dart';
 import '../../adaptadores/servicio_email.dart';
 import 'pantalla_dueno_estados_de_cubit.dart';
 
@@ -15,6 +17,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
   final ReservaRepositorio reservaRepositorio;
   final ServicioEmail servicioEmail;
   final HorarioAperturaRepositorio horarioAperturaRepositorio;
+  final HistoriaRepositorio historiaRepositorio;
 
   PantallaDuenoCubit(
     this.negocioRepositorio,
@@ -22,6 +25,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     this.reservaRepositorio,
     this.servicioEmail,
     this.horarioAperturaRepositorio,
+    this.historiaRepositorio,
   ) : super(const PantallaDuenoInicial());
 
   // Método para establecer un negocio autenticado directamente
@@ -177,6 +181,28 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
       return await horarioAperturaRepositorio.guardarHorario(horario);
     } catch (e) {
       emit(PantallaDuenoConError('Error al actualizar horarios: $e'));
+      return false;
+    }
+  }
+
+  // Métodos para historia
+  Future<HistoriaRestaurante?> obtenerHistoria(String negocioId) async {
+    try {
+      return await historiaRepositorio.obtenerHistoria(negocioId);
+    } catch (e) {
+      print('Error al obtener historia: $e');
+      return null;
+    }
+  }
+
+  Future<bool> guardarHistoria(
+    String negocioId,
+    HistoriaRestaurante historia,
+  ) async {
+    try {
+      return await historiaRepositorio.guardarHistoria(negocioId, historia);
+    } catch (e) {
+      emit(PantallaDuenoConError('Error al guardar historia: $e'));
       return false;
     }
   }

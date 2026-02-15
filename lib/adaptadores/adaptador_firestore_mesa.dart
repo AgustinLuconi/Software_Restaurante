@@ -46,14 +46,18 @@ class MesaRepositorioFirestore implements MesaRepositorio {
       print('🔍 Buscando mesas con negocioId: $negocioId');
       final snapshot = await _mesasRef
           .where('negocioId', isEqualTo: negocioId)
-          .orderBy('nombre')
           .get();
       
       print('📊 Mesas encontradas: ${snapshot.docs.length}');
       
-      return snapshot.docs
+      final mesas = snapshot.docs
           .map((doc) => _mapToMesa(doc.id, doc.data()))
           .toList();
+          
+      // Ordenar en memoria para evitar necesidad de índice compuesto
+      mesas.sort((a, b) => a.nombre.compareTo(b.nombre));
+      
+      return mesas;
     } catch (e) {
       print('❌ Error obteniendo mesas por negocio: $e');
       return [];

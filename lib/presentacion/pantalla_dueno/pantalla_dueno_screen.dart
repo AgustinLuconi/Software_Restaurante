@@ -3655,18 +3655,49 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
-  void _mostrarEditorHistoria(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const EditorHistoriaScreen()),
+  void _mostrarEditorHistoria(BuildContext context) async {
+    final cubit = context.read<PantallaDuenoCubit>();
+    final state = cubit.state;
+
+    if (state is! PantallaDuenoAutenticado) return;
+    final negocioId = state.negocio.id;
+
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
+
+    final historia = await cubit.obtenerHistoria(negocioId);
+
+    if (context.mounted) {
+      Navigator.pop(context); // Cerrar loading
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => EditorHistoriaScreen(
+                negocioId: negocioId,
+                historiaInicial: historia,
+              ),
+        ),
+      );
+    }
   }
 }
 
 // --- CLASES DEL EDITOR DE HISTORIA ---
 
 class EditorHistoriaScreen extends StatefulWidget {
-  const EditorHistoriaScreen({super.key});
+  final String negocioId;
+  final HistoriaRestaurante? historiaInicial;
+
+  const EditorHistoriaScreen({
+    super.key,
+    required this.negocioId,
+    this.historiaInicial,
+  });
 
   @override
   State<EditorHistoriaScreen> createState() => _EditorHistoriaScreenState();
@@ -3685,7 +3716,9 @@ class _EditorHistoriaScreenState extends State<EditorHistoriaScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() => setState(() {}));
-    final datos = HistoriaData.actual;
+
+    final datos = widget.historiaInicial ?? HistoriaData.actual;
+
     _tituloController = TextEditingController(text: datos.titulo);
     _subtituloController = TextEditingController(text: datos.subtitulo);
     _parrafosController = TextEditingController(
@@ -3709,23 +3742,54 @@ class _EditorHistoriaScreenState extends State<EditorHistoriaScreen>
     super.dispose();
   }
 
-  void _guardarCambios() {
+  void _guardarCambios() async {
     final nuevosParrafos =
         _parrafosController.text
             .split('\n\n')
             .where((p) => p.trim().isNotEmpty)
             .toList();
     final nuevosPlatos = _platosEditables.map((e) => e.toItem()).toList();
-    HistoriaData.actual = HistoriaRestaurante(
+
+    final nuevaHistoria = HistoriaRestaurante(
       titulo: _tituloController.text.trim(),
       subtitulo: _subtituloController.text.trim(),
       parrafosHistoria: nuevosParrafos.isEmpty ? ['...'] : nuevosParrafos,
       especialidades: nuevosPlatos,
     );
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('✅ Historia actualizada')));
-    Navigator.pop(context);
+
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final cubit = context.read<PantallaDuenoCubit>();
+    final exito = await cubit.guardarHistoria(
+      widget.negocioId,
+      nuevaHistoria,
+    );
+
+    if (context.mounted) {
+      Navigator.pop(context); // Cerrar loading
+
+      if (exito) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Historia actualizada correctamente'),
+            backgroundColor: Color(0xFF27AE60),
+          ),
+        );
+        Navigator.pop(context); // Cerrar pantalla
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error al guardar historia'),
+            backgroundColor: Color(0xFFE74C3C),
+          ),
+        );
+      }
+    }
   }
 
   @override

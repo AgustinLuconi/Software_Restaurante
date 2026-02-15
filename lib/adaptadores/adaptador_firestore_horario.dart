@@ -194,32 +194,68 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
   // ============================================================
 
   /// Parsea un string como "12:00 - 15:30 / 20:00 - 23:30" a lista de intervalos
+  /// Acepta formatos flexibles: "9-13", "09:00 - 13:00", "9 - 13:30"
   List<IntervaloHorario> _parsearIntervalos(String texto) {
     final intervalos = <IntervaloHorario>[];
-    final turnos = texto.split('/');
+    if (texto.trim().isEmpty) return intervalos;
+
+    // Normalizar separadores de turnos
+    final turnos = texto.replaceAll(' y ', '/').split('/');
     
     for (final turno in turnos) {
-      final partes = turno.trim().split('-');
+      // Normalizar separadores de rango (permitir "a", "hasta", "-")
+      final parteLimpia = turno.replaceAll(' a ', '-').replaceAll(' hasta ', '-');
+      final partes = parteLimpia.trim().split('-');
+
       if (partes.length != 2) continue;
 
-      final inicio = partes[0].trim().split(':');
-      final fin = partes[1].trim().split(':');
-
-      if (inicio.length != 2 || fin.length != 2) continue;
-
       try {
-        intervalos.add(IntervaloHorario(
-          horaInicio: int.parse(inicio[0]),
-          minutoInicio: int.parse(inicio[1]),
-          horaFin: int.parse(fin[0]),
-          minutoFin: int.parse(fin[1]),
-        ));
+        final inicio = _parsearHoraMinuto(partes[0].trim());
+        final fin = _parsearHoraMinuto(partes[1].trim());
+
+        if (inicio != null && fin != null) {
+          intervalos.add(IntervaloHorario(
+            horaInicio: inicio.hour,
+            minutoInicio: inicio.minute,
+            horaFin: fin.hour,
+            minutoFin: fin.minute,
+          ));
+        }
       } catch (e) {
         print('⚠️ Error parseando intervalo: "$turno" - $e');
       }
     }
 
     return intervalos;
+  }
+
+  /// Intenta parsear texto a TimeOfDay (usando DateTime temporalmente)
+  /// Acepta: "9", "09", "9:00", "09:30", "930" (quizás no este último por ambigüedad)
+  DateTime? _parsearHoraMinuto(String texto) {
+    if (texto.isEmpty) return null;
+    
+    try {
+      // Caso: "9" o "13"
+      if (!texto.contains(':')) {
+        final hora = int.parse(texto);
+        if (hora >= 0 && hora <= 24) {
+          return DateTime(2000, 1, 1, hora, 0);
+        }
+        return null;
+      }
+
+      // Caso: "9:30" o "09:30"
+      final partes = texto.split(':');
+      if (partes.length == 2) {
+        final hora = int.parse(partes[0]);
+        final minuto = int.parse(partes[1]);
+        if (hora >= 0 && hora <= 24 && minuto >= 0 && minuto < 60) {
+          return DateTime(2000, 1, 1, hora, minuto);
+        }
+      }
+    } catch (_) {}
+    
+    return null;
   }
 
   Map<String, dynamic> _horarioToMap(HorarioApertura horario) {

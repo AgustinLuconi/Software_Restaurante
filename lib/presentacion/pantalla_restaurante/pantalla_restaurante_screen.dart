@@ -207,7 +207,7 @@ class _PantallaRestauranteView extends StatelessWidget {
     return SizedBox(
       height: 64,
       child: ElevatedButton(
-        onPressed: () => context.go('/disponibilidad'),
+        onPressed: () => context.push('/disponibilidad', extra: negocioId),
         style: ElevatedButton.styleFrom(
           backgroundColor: theme.colorScheme.primary,
           foregroundColor: Colors.white,
@@ -249,9 +249,13 @@ class _PantallaRestauranteView extends StatelessWidget {
         Expanded(
           child: _buildOptionCard(
             context,
-            icon: Icons.menu_book,
             title: 'Historia',
-            onTap: () => context.go('/historia'),
+            onTap: () {
+               final state = context.read<PantallaRestauranteCubit>().state;
+               if (state is PantallaRestauranteExitoso) {
+                 context.push('/historia', extra: state.negocio.id);
+               }
+            },
           ),
         ),
         const SizedBox(width: 12),

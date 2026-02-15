@@ -12,12 +12,14 @@ import 'disponibilidad_cubit.dart';
 import 'disponibilidad_estados_de_cubit.dart';
 
 class DisponibilidadScreen extends StatelessWidget {
-  const DisponibilidadScreen({super.key});
+  final String? negocioId;
+
+  const DisponibilidadScreen({super.key, this.negocioId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => DisponibilidadCubit()..cargarTodasLasMesas(),
+      create: (context) => DisponibilidadCubit()..cargarTodasLasMesas(negocioId),
       child: const _DisponibilidadView(),
     );
   }
@@ -45,7 +47,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
         title: const Text('Buscar Disponibilidad'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/restaurante'),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(

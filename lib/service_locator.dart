@@ -18,6 +18,8 @@ import 'aplicacion/obtener_reserva.dart';
 
 // Repositorios (interfaces)
 import 'dominio/repositorios/horario_apertura_repositorio.dart';
+import 'dominio/repositorios/historia_repositorio.dart';
+import 'adaptadores/adaptador_firestore_historia.dart';
 import 'dominio/repositorios/mesa_repositorio.dart';
 import 'dominio/repositorios/negocio_repositorio.dart';
 import 'dominio/repositorios/reserva_repositorio.dart';
@@ -77,6 +79,10 @@ void setupServiceLocator() {
     () => HorarioAperturaRepositorioFirestore(),
   );
 
+  getIt.registerLazySingleton<HistoriaRepositorio>(
+    () => HistoriaRepositorioFirestore(),
+  );
+
   // ============================================================
   // CASOS DE USO
   // ============================================================
@@ -111,6 +117,7 @@ void setupServiceLocator() {
       getIt<ReservaRepositorio>(),
       getIt<ServicioEmail>(),
       getIt<HorarioAperturaRepositorio>(),
+      getIt<HistoriaRepositorio>(),
     ),
   );
   getIt.registerFactory(() => PantallaInicioCubit(getIt<NegocioRepositorio>()));

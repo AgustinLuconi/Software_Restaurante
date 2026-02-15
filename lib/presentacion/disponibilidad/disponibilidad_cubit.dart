@@ -33,9 +33,14 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   /// ID del negocio actual (se carga dinámicamente)
   String? _negocioId;
 
-  Future<void> cargarTodasLasMesas() async {
+  Future<void> cargarTodasLasMesas([String? negocioId]) async {
     try {
       emit(DisponibilidadCargando());
+      
+      // Si nos pasan un ID explícito, usarlo
+      if (negocioId != null) {
+        _negocioId = negocioId;
+      }
 
       // Si no tenemos negocioId, cargar el primer negocio disponible
       if (_negocioId == null) {
@@ -53,7 +58,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
 
       // Cargar mesas, negocio y horarios en paralelo
       final resultados = await Future.wait([
-        _mesaRepositorio.obtenerMesas(),
+        _mesaRepositorio.obtenerMesasPorNegocio(_negocioId!),
         _negocioRepositorio.obtenerNegocioPorId(_negocioId!),
         _horarioAperturaRepo.obtenerHorarioPorNegocio(_negocioId!),
       ]);
