@@ -256,10 +256,11 @@ class _HistoriaScreenState extends State<HistoriaScreen> {
                       ),
                     ],
                   ),
-                ],
+                ),
               ],
-            ),
-          );
+            ],
+          ),
+        );
         },
       ),
     );
