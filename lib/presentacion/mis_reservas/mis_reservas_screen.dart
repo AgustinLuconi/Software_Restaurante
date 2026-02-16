@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../adaptadores/servicio_verificacion_cliente.dart';
 import '../../dominio/entidades/reserva.dart';
+import '../../dominio/repositorios/mesa_repositorio.dart'; // Importar repositorio
 import '../../service_locator.dart';
 import '../widgets_comunes/badge_estado.dart';
 import 'mis_reservas_cubit.dart';
@@ -281,7 +282,7 @@ class _MisReservasViewState extends State<_MisReservasView> {
             _buildInfoRow(
               Icons.table_restaurant,
               'Mesa',
-              'Mesa ${reserva.mesaId}',
+              _NombreMesa(mesaId: reserva.mesaId), // Usar widget asíncrono
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
@@ -331,7 +332,7 @@ class _MisReservasViewState extends State<_MisReservasView> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildInfoRow(IconData icon, String label, dynamic value) {
     return Row(
       children: [
         Icon(icon, size: 20, color: const Color(0xFF7F8C8D)),
@@ -340,14 +341,17 @@ class _MisReservasViewState extends State<_MisReservasView> {
           '$label: ',
           style: const TextStyle(fontSize: 15, color: Color(0xFF7F8C8D)),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2C3E50),
+        if (value is Widget)
+          value
+        else
+          Text(
+            value.toString(),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2C3E50),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -367,9 +371,14 @@ class _MisReservasViewState extends State<_MisReservasView> {
                 Text('ID: ${reserva.id}'),
                 const SizedBox(height: 8),
                 Text('Fecha y Hora: ${dateFormat.format(reserva.fechaHora)}'),
-                const SizedBox(height: 8),
-                Text('Mesa: ${reserva.mesaId}'),
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Text('Mesa: '),
+                  _NombreMesa(mesaId: reserva.mesaId),
+                ],
+              ),
+              const SizedBox(height: 8),
                 Text('Número de Personas: ${reserva.numeroPersonas}'),
                 const SizedBox(height: 8),
                 Text('Cliente: ${reserva.nombreCliente ?? reserva.contactoCliente ?? 'Sin datos'}'),
@@ -890,7 +899,9 @@ class _MisReservasViewState extends State<_MisReservasView> {
             _buildInfoRow(
               Icons.table_restaurant,
               'Mesa',
-              'Mesa ${reserva['mesaId'] ?? 'N/A'}',
+              reserva['mesaId'] != null 
+                  ? _NombreMesa(mesaId: reserva['mesaId']) 
+                  : 'N/A',
             ),
             const SizedBox(height: 8),
             _buildInfoRow(
@@ -906,6 +917,50 @@ class _MisReservasViewState extends State<_MisReservasView> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NombreMesa extends StatelessWidget {
+  final String mesaId;
+
+  const _NombreMesa({required this.mesaId});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: getIt<MesaRepositorio>().obtenerMesaPorId(mesaId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox();
+        }
+
+        /* 
+         * Si hay error o no hay data, se muestra el ID como fallback.
+         * Si hay data (mesa), se muestra el nombre. 
+         * El usuario pidió explicitamente ver el nombre "Mesa: Salón 1".
+         */
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return Text(
+            mesaId,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2C3E50),
+            ),
+          );
+        }
+
+        final mesa = snapshot.data!;
+        return Text(
+          mesa.nombre.isNotEmpty ? mesa.nombre : mesaId,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2C3E50),
+          ),
+        );
+      },
     );
   }
 }
