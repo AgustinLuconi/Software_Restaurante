@@ -53,7 +53,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/mis-reservas',
       name: 'mis-reservas',
-      builder: (context, state) => const MisReservasScreen(),
+      builder: (context, state) {
+        final negocioId = state.extra as String?;
+        return MisReservasScreen(negocioId: negocioId);
+      },
     ),
     GoRoute(
       path: '/dueno',

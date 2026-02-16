@@ -246,7 +246,14 @@ class _PantallaRestauranteView extends StatelessWidget {
             context,
             icon: Icons.event_note,
             title: 'Mis Reservas',
-            onTap: () => context.go('/mis-reservas'),
+            onTap: () {
+               final state = context.read<PantallaRestauranteCubit>().state;
+               String? idNegocio;
+               if (state is PantallaRestauranteExitoso) {
+                 idNegocio = state.negocio.id;
+               }
+               context.push('/mis-reservas', extra: idNegocio);
+            },
           ),
         ),
         const SizedBox(width: 12),

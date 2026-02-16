@@ -20,13 +20,14 @@ class DisponibilidadScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => DisponibilidadCubit()..cargarTodasLasMesas(negocioId),
-      child: const _DisponibilidadView(),
+      child: _DisponibilidadView(negocioId: negocioId),
     );
   }
 }
 
 class _DisponibilidadView extends StatefulWidget {
-  const _DisponibilidadView();
+  final String? negocioId;
+  const _DisponibilidadView({this.negocioId});
 
   @override
   State<_DisponibilidadView> createState() => _DisponibilidadViewState();
@@ -114,7 +115,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                         label: 'Ver Reservas',
                         textColor: Colors.white,
                         onPressed: () {
-                          context.go('/mis-reservas');
+                          context.push('/mis-reservas', extra: widget.negocioId);
                         },
                       ),
                     ),

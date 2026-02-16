@@ -11,19 +11,22 @@ import 'mis_reservas_cubit.dart';
 import 'mis_reservas_estados_de_cubit.dart';
 
 class MisReservasScreen extends StatelessWidget {
-  const MisReservasScreen({super.key});
+  final String? negocioId;
+
+  const MisReservasScreen({super.key, this.negocioId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => MisReservasCubit()..cargarReservas(),
-      child: const _MisReservasView(),
+      child: _MisReservasView(negocioId: negocioId),
     );
   }
 }
 
 class _MisReservasView extends StatefulWidget {
-  const _MisReservasView();
+  final String? negocioId;
+  const _MisReservasView({this.negocioId});
 
   @override
   State<_MisReservasView> createState() => _MisReservasViewState();
@@ -43,7 +46,7 @@ class _MisReservasViewState extends State<_MisReservasView> {
         title: const Text('Mis Reservas'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/restaurante'),
+          onPressed: () => context.pop(),
         ),
       ),
       body: BlocConsumer<MisReservasCubit, MisReservasState>(
@@ -89,6 +92,7 @@ class _MisReservasViewState extends State<_MisReservasView> {
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
+                         // Recargar reservas
                         context.read<MisReservasCubit>().cargarReservas();
                       },
                       style: ElevatedButton.styleFrom(
@@ -136,7 +140,7 @@ class _MisReservasViewState extends State<_MisReservasView> {
                       ),
                       const SizedBox(height: 32),
                       ElevatedButton(
-                        onPressed: () => context.go('/disponibilidad'),
+                        onPressed: () => context.push('/disponibilidad', extra: widget.negocioId),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF27AE60),
                           foregroundColor: Colors.white,
