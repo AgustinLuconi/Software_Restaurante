@@ -981,6 +981,8 @@ class _PantallaDuenoView extends StatelessWidget {
     // Capturar cubit con el contexto válido
     final cubit = context.read<PantallaDuenoCubit>();
 
+    bool obscureText = true;
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -1037,13 +1039,25 @@ class _PantallaDuenoView extends StatelessWidget {
                           const SizedBox(height: 12),
                           TextField(
                             controller: passwordController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Contraseña actual',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.lock),
+                              border: const OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.lock),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscureText
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    obscureText = !obscureText;
+                                  });
+                                },
+                              ),
                               helperText: 'Requerida por seguridad',
                             ),
-                            obscureText: true,
+                            obscureText: obscureText,
                           ),
                           const SizedBox(height: 12),
                           const Text(
