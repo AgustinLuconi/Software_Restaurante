@@ -774,7 +774,9 @@ class _PantallaDuenoView extends StatelessWidget {
 
     String iconoSeleccionado = negocio.icono;
     // Capturar cubit con el contexto válido
+    print('DEBUG: _mostrarEditarIcono - Capturando cubit');
     final cubit = context.read<PantallaDuenoCubit>();
+    print('DEBUG: _mostrarEditarIcono - Cubit capturado: $cubit');
 
     showDialog(
       context: context,
@@ -860,27 +862,50 @@ class _PantallaDuenoView extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () async {
+                    print('DEBUG: Click en Guardar Icono: $iconoSeleccionado');
                     // Usar cubit capturado
                     // final cubit = context.read<PantallaDuenoCubit>();
-                    final exito = await cubit.actualizarIcono(
-                      negocio,
-                      iconoSeleccionado,
-                    );
-                    Navigator.pop(dialogContext);
-                    if (exito) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('✅ Icono actualizado'),
-                          backgroundColor: Color(0xFF27AE60),
-                        ),
+                    print('DEBUG: Llamando a cubit.actualizarIcono');
+                    try {
+                  onPressed: () async {
+                    print('DEBUG: Click en Guardar Icono: $iconoSeleccionado');
+                    // Usar cubit capturado
+                    // final cubit = context.read<PantallaDuenoCubit>();
+                    print('DEBUG: Llamando a cubit.actualizarIcono');
+                    try {
+                      final exito = await cubit.actualizarIcono(
+                        negocio,
+                        iconoSeleccionado,
                       );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('❌ Error al actualizar icono'),
-                          backgroundColor: Color(0xFFE74C3C),
-                        ),
-                      );
+                      print('DEBUG: Resultado actualizarIcono: $exito');
+                      if (!context.mounted) return;
+                      Navigator.pop(dialogContext);
+                      if (exito) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('✅ Icono actualizado'),
+                            backgroundColor: Color(0xFF27AE60),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('❌ Error al actualizar icono'),
+                            backgroundColor: Color(0xFFE74C3C),
+                          ),
+                        );
+                      }
+                    } catch (e, stack) {
+                      print('DEBUG: Error en onPressed actualizarIcono: $e');
+                      print('DEBUG: Stack trace: $stack');
+                      if (context.mounted) {
+                         ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('❌ Error inesperado al guardar'),
+                            backgroundColor: Color(0xFFE74C3C),
+                          ),
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
