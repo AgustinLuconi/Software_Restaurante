@@ -25,4 +25,7 @@ abstract class NegocioRepositorio {
 
   /// Actualizar email del negocio
   Future<bool> actualizarEmail(String negocioId, String nuevoEmail);
+
+  /// Actualizar el password del negocio (Backup o Legacy)
+  Future<bool> actualizarPassword(String negocioId, String nuevaPassword);
 }

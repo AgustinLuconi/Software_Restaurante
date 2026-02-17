@@ -169,6 +169,26 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
   // MÉTODOS DE CONVERSIÓN
   // ============================================================
 
+  @override
+  Future<bool> actualizarPassword(String negocioId, String nuevaPassword) async {
+    try {
+      if (negocioId.isEmpty) {
+        print('❌ Error: ID de negocio vacío para actualizar password');
+        return false;
+      }
+
+      await _negociosRef.doc(negocioId).update({
+        'password': nuevaPassword,
+      });
+
+      print('✅ Password actualizada en Firestore para: $negocioId');
+      return true;
+    } catch (e) {
+      print('❌ Error actualizando password en Firestore: $e');
+      return false;
+    }
+  }
+
   Map<String, dynamic> _negocioToMap(Negocio negocio) {
     return {
       'nombre': negocio.nombre,

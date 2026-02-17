@@ -1278,6 +1278,8 @@ class _PantallaDuenoView extends StatelessWidget {
   }
 
   void _mostrarCambiarContrasena(BuildContext context) {
+    // Capturar cubit del contexto padre antes de abrir el diálogo
+    final cubit = context.read<PantallaDuenoCubit>();
     final auth = getIt<ServicioAutenticacion>();
     final passwordActualController = TextEditingController();
     final passwordNuevaController = TextEditingController();
@@ -1402,8 +1404,7 @@ class _PantallaDuenoView extends StatelessWidget {
                   onPressed: () => Navigator.pop(dialogContext),
                   child: const Text('Cancelar'),
                 ),
-                if (!esGoogle)
-                  ElevatedButton(
+                ElevatedButton(
                     onPressed:
                         isLoading
                             ? null
@@ -1455,46 +1456,78 @@ class _PantallaDuenoView extends StatelessWidget {
                               setState(() => isLoading = true);
 
                               try {
-                                await auth.cambiarPassword(
-                                  passwordActual: passwordActual,
-                                  passwordNueva: passwordNueva,
+                                // 1. Verificar contraseña actual contra BD (siempre)
+                                // 1. Verificar contraseña actual contra BD (siempre)
+                                // Usamos el cubit capturado del contexto padre
+                                final state = cubit.state;
+                                if (state is! PantallaDuenoAutenticado) {
+                                  throw Exception('Negocio no autenticado');
+                                }
+                                final negocio = state.negocio;
+
+                                final authBD = await cubit.negocioRepositorio
+                                    .autenticarNegocio(
+                                  email: negocio.email,
+                                  password: passwordActual,
                                 );
 
-                                // También actualizar en Firestore
-                                final cubit = context.read<PantallaDuenoCubit>();
-                                final state = cubit.state;
-                                if (state is PantallaDuenoAutenticado) {
-                                  await cubit.negocioRepositorio.actualizarNegocio(
-                                    state.negocio.copyWith(),
-                                  );
-                                  // Actualizar el campo password directamente
-                                  await FirebaseFirestore.instance
-                                      .collection('negocios')
-                                      .doc(state.negocio.id)
-                                      .update({'password': passwordNueva});
+                                if (authBD == null) {
+                                  throw Exception('Contraseña actual incorrecta');
                                 }
 
+                                // 2. Si NO es Google, intentar actualizar en Auth
+                                bool authActualizado = false;
+                                if (!esGoogle) {
+                                    try {
+                                      await auth.cambiarPassword(
+                                        passwordActual: passwordActual,
+                                        passwordNueva: passwordNueva,
+                                      );
+                                      authActualizado = true;
+                                    } catch (e) {
+                                      // Si falla auth, decidimos si continuar
+                                      print('⚠️ Error Auth Password: $e');
+                                      // Si es mismatch, continuamos. Si es weak-password, frenamos.
+                                      if (e.toString().contains('weak-password')) rethrow;
+                                    }
+                                }
+
+                                // 3. Actualizar en Firestore (Siempre)
+                                await cubit.negocioRepositorio.actualizarPassword(
+                                  negocio.id,
+                                  passwordNueva,
+                                );
+                                
+                                // Actualizar estado local si existe el método en el negocio (opcional/future proof)
+                                // final negocioActualizado = negocio.copyWith(password: passwordNueva);
+                                // cubit.establecerNegocioAutenticado(negocioActualizado);
+
+                                if (!context.mounted) return;
                                 Navigator.pop(dialogContext);
 
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text(
-                                      '✅ Contraseña actualizada correctamente',
+                                      authActualizado 
+                                        ? '✅ Contraseña actualizada (Auth + BD)' 
+                                        : '✅ Contraseña de respaldo actualizada (Solo BD)',
                                     ),
-                                    backgroundColor: Color(0xFF27AE60),
-                                    duration: Duration(seconds: 3),
+                                    backgroundColor: const Color(0xFF27AE60),
+                                    duration: const Duration(seconds: 4),
                                   ),
                                 );
                               } catch (e) {
                                 setState(() => isLoading = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '❌ ${e.toString().replaceAll('Exception: ', '')}',
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        '❌ ${e.toString().replaceAll('Exception: ', '')}',
+                                      ),
+                                      backgroundColor: const Color(0xFFE74C3C),
                                     ),
-                                    backgroundColor: const Color(0xFFE74C3C),
-                                  ),
-                                );
+                                  );
+                                }
                               }
                             },
                     style: ElevatedButton.styleFrom(
