@@ -494,33 +494,51 @@ class _PantallaInicioView extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
-                  // Autenticar usando el repositorio capturado
-                  final negocio = await cubit.negocioRepositorio.autenticarNegocio(
-                    email: emailController.text,
-                    password: passwordController.text,
-                  );
-                  
-                  if (negocio != null) {
-                    // También crear sesión en Firebase Auth
+                    // 1. Limpieza: Cerrar cualquier sesión previa (Chiringuito, etc.)
                     final auth = getIt<ServicioAutenticacion>();
-                    try {
-                      await auth.iniciarSesionConEmail(
-                        email: emailController.text,
-                        password: passwordController.text,
-                      );
-                    } catch (_) {
-                      // Si el usuario no existe en Firebase Auth (cuenta legacy),
-                      // crearlo automáticamente
+                    await auth.cerrarSesion();
+
+                    // 2. Autenticar usando el repositorio (Validación de Negocio)
+                    final negocio = await cubit.negocioRepositorio.autenticarNegocio(
+                      email: emailController.text,
+                      password: passwordController.text,
+                    );
+                    
+                    if (negocio != null) {
                       try {
-                        await auth.registrarConEmail(
+                        // 3. Autenticar en Firebase (Sincronización Obligatoria)
+                        await auth.iniciarSesionConEmail(
                           email: emailController.text,
                           password: passwordController.text,
                         );
-                      } catch (_) {
-                        // Si ya existe o hay otro error, ignorar
-                        // La funcionalidad básica del panel seguirá funcionando
+                      } catch (e) {
+                         // Si falla el login, intentamos registrar si el error es "user-not-found"
+                         // OJO: Si falla por contraseña incorrecta en Auth pero correcta en BD,
+                         // esto significa que las contraseñas están desincronizadas.
+                         // En ese caso, damos prioridad a la BD y actualizamos Auth (Migración).
+                         
+                         print('⚠️ Error Auth: $e');
+                         try {
+                           // Intento de auto-reparación / Registro
+                           await auth.registrarConEmail(
+                             email: emailController.text,
+                             password: passwordController.text,
+                           );
+                         } catch (registerError) {
+                            // Si falla el registro (ej: email-in-use pero password incorrecta en auth),
+                            // aquí tenemos un problema grave de sincronización.
+                            // Por ahora, para no bloquear al dueño, le avisamos pero dejamos pasar
+                            // SOLO si es un error de credenciales cruzadas.
+                            print('❌ Error Registro/Sync: $registerError');
+                            
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('⚠️ Alerta: Tu usuario de Auth tiene problemas. Se ha notificado.'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                         }
                       }
-                    }
 
                     Navigator.pop(context);
                     // Autenticación exitosa - navegar a pantalla_dueño

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../adaptadores/servicio_autenticacion_firebase.dart';
 import '../../dominio/entidades/historia_restaurante.dart';
 import '../../dominio/entidades/mesa.dart';
@@ -1092,51 +1094,88 @@ class _PantallaDuenoView extends StatelessWidget {
                                 return;
                               }
 
-                              setState(() => isLoading = true);
+                                setState(() => isLoading = true);
 
-                              try {
-                                await auth.cambiarEmail(
-                                  nuevoEmail: nuevoEmail,
-                                  passwordActual: password,
-                                );
+                                try {
+                                  // 1. Verificar contraseña contra BD (Seguridad Real)
+                                  final authBD = await cubit.negocioRepositorio
+                                      .autenticarNegocio(
+                                    email: negocio.email,
+                                    password: password,
+                                  );
 
-                                // Actualizar en Firestore
-                                // Usar cubit capturado
-                                // final cubit = context.read<PantallaDuenoCubit>();
-                                await cubit.negocioRepositorio.actualizarEmail(
-                                  negocio.id,
-                                  nuevoEmail,
-                                );
+                                  if (authBD == null) {
+                                    throw Exception('Contraseña incorrecta (Verificación BD)');
+                                  }
 
-                                // Actualizar estado local para refrescar la pantalla
-                                final negocioActualizado = negocio.copyWith(
-                                  email: nuevoEmail,
-                                );
-                                cubit.establecerNegocioAutenticado(negocioActualizado);
+                                  // 2. Intentar actualizar en Firebase Auth si coincide
+                                  final user = FirebaseAuth.instance.currentUser;
+                                  bool authActualizado = false;
 
-                                Navigator.pop(dialogContext);
+                                  if (user != null &&
+                                      user.email == negocio.email) {
+                                    try {
+                                      await auth.cambiarEmail(
+                                        nuevoEmail: nuevoEmail,
+                                        passwordActual: password,
+                                      );
+                                      authActualizado = true;
+                                    } catch (e) {
+                                      // Si falla Auth pero BD estaba ok, decidimos si continuar
+                                      // En este caso, si falla por credenciales, ya validamos BD arriba.
+                                      // Si falla por "email-already-in-use", eso es bloqueante.
+                                      print('⚠️ Error Auth: $e');
+                                      rethrow; 
+                                    }
+                                  } else {
+                                    print(
+                                        '⚠️ Mismatch: Auth(${user?.email}) != BD(${negocio.email}). Saltando Auth update.');
+                                  }
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      '✅ Revisa tu nuevo email para verificarlo',
-                                    ),
-                                    backgroundColor: Color(0xFF27AE60),
-                                    duration: Duration(seconds: 4),
-                                  ),
-                                );
-                              } catch (e) {
-                                setState(() => isLoading = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '❌ ${e.toString().replaceAll('Exception: ', '')}',
-                                    ),
-                                    backgroundColor: const Color(0xFFE74C3C),
-                                  ),
-                                );
-                              }
-                            },
+                                  // 3. Actualizar en Firestore
+                                  final exito = await cubit.negocioRepositorio
+                                      .actualizarEmail(
+                                    negocio.id,
+                                    nuevoEmail,
+                                  );
+
+                                  if (!context.mounted) return;
+
+                                  if (exito) {
+                                      // Actualizar estado local
+                                      final negocioActualizado = negocio.copyWith(email: nuevoEmail);
+                                      cubit.establecerNegocioAutenticado(negocioActualizado);
+                                  }
+
+                                  Navigator.pop(dialogContext);
+
+                                  if (exito) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            '✅ Email actualizado ${authActualizado ? "(Completo)" : "(Solo BD - Login Legacy)"}'),
+                                        backgroundColor: const Color(0xFF27AE60),
+                                        duration: const Duration(seconds: 4),
+                                      ),
+                                    );
+                                  } else {
+                                    throw Exception(
+                                        'Error al actualizar en base de datos');
+                                  }
+                                } catch (e) {
+                                  setState(() => isLoading = false);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            '❌ Error: ${e.toString().replaceAll("Exception: ", "")}'),
+                                        backgroundColor: const Color(0xFFE74C3C),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3498DB),
                     ),

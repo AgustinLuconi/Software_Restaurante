@@ -487,6 +487,8 @@ class ServicioAutenticacion {
         return Exception('Esta cuenta ha sido deshabilitada');
       case 'operation-not-allowed':
         return Exception('Operación no permitida');
+      case 'invalid-credential':
+        return Exception('Credenciales inválidas. Cierra sesión e intenta nuevamente.');
       default:
         return Exception('Error: ${e.message}');
     }
