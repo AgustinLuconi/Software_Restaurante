@@ -504,12 +504,14 @@ class _PantallaDuenoView extends StatelessWidget {
   void _mostrarEditarTelefono(BuildContext context, negocio) {
     final controller = TextEditingController(text: negocio.telefono);
     String? errorMessage;
+    // Capturar cubit con el contexto válido antes del diálogo
+    final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setState) { // Este context sombrea al externo
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -558,7 +560,7 @@ class _PantallaDuenoView extends StatelessWidget {
                       return;
                     }
 
-                    final cubit = context.read<PantallaDuenoCubit>();
+                    // Usar el cubit capturado
                     final exito = await cubit.actualizarTelefono(
                       negocio,
                       nuevoTelefono,
@@ -771,6 +773,8 @@ class _PantallaDuenoView extends StatelessWidget {
     ];
 
     String iconoSeleccionado = negocio.icono;
+    // Capturar cubit con el contexto válido
+    final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
@@ -856,7 +860,8 @@ class _PantallaDuenoView extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final cubit = context.read<PantallaDuenoCubit>();
+                    // Usar cubit capturado
+                    // final cubit = context.read<PantallaDuenoCubit>();
                     final exito = await cubit.actualizarIcono(
                       negocio,
                       iconoSeleccionado,
@@ -972,6 +977,8 @@ class _PantallaDuenoView extends StatelessWidget {
 
     // Verificar si es login con Google
     final esGoogle = auth.esLoginGoogle;
+    // Capturar cubit con el contexto válido
+    final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
@@ -1079,8 +1086,8 @@ class _PantallaDuenoView extends StatelessWidget {
                                 );
 
                                 // Actualizar en Firestore
-                                final cubit =
-                                    context.read<PantallaDuenoCubit>();
+                                // Usar cubit capturado
+                                // final cubit = context.read<PantallaDuenoCubit>();
                                 await cubit.negocioRepositorio.actualizarEmail(
                                   negocio.id,
                                   nuevoEmail,
