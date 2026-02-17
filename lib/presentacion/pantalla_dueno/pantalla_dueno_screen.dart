@@ -867,12 +867,6 @@ class _PantallaDuenoView extends StatelessWidget {
                     // final cubit = context.read<PantallaDuenoCubit>();
                     print('DEBUG: Llamando a cubit.actualizarIcono');
                     try {
-                  onPressed: () async {
-                    print('DEBUG: Click en Guardar Icono: $iconoSeleccionado');
-                    // Usar cubit capturado
-                    // final cubit = context.read<PantallaDuenoCubit>();
-                    print('DEBUG: Llamando a cubit.actualizarIcono');
-                    try {
                       final exito = await cubit.actualizarIcono(
                         negocio,
                         iconoSeleccionado,

@@ -1,176 +1,120 @@
-[ +148 ms] executing: uname -m
-[  +21 ms] Exit code 0 from: uname -m
+[ +154 ms] executing: uname -m
+[  +18 ms] Exit code 0 from: uname -m
 [   +1 ms] x86_64
-[ +282 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[ +289 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
 [   +1 ms] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
-[   +1 ms] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
-[   +1 ms] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
 [        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
-[  +16 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
-[ +316 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
+[  +17 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[   +2 ms] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[   +2 ms] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[ +385 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
 [   +1 ms] Artifact Instance of 'GradleWrapper' is not required, skipping update.
 [        ] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
-[  +33 ms] Artifact Instance of 'FlutterSdk' is not required, skipping update.
-[   +1 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[  +22 ms] Artifact Instance of 'FlutterSdk' is not required, skipping update.
+[   +2 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
-[   +1 ms] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
-[   +1 ms] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
 [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
-[        ] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'PubDependencies' is not required, skipping update.
-[ +349 ms] Skipping pub get: version match.
-[ +216 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
-[  +54 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
-[  +60 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
-[  +22 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
-[  +18 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
-[  +25 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
-[  +69 ms] Found plugin google_sign_in at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in-6.3.0/
-[  +18 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
-[  +24 ms] Found plugin google_sign_in_ios at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
-[  +38 ms] Found plugin google_sign_in_web at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
-[ +486 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
-[  +19 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
-[  +33 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
-[  +13 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
-[  +12 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
-[  +13 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
-[  +32 ms] Found plugin google_sign_in at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in-6.3.0/
-[   +6 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
-[  +10 ms] Found plugin google_sign_in_ios at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
-[  +14 ms] Found plugin google_sign_in_web at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
-[ +318 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
-[  +14 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
-[  +24 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
-[  +15 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
-[  +12 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
-[  +18 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
-[  +38 ms] Found plugin google_sign_in at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in-6.3.0/
-[   +8 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
-[   +7 ms] Found plugin google_sign_in_ios at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
-[   +8 ms] Found plugin google_sign_in_web at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
-[ +213 ms] Generating /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
-[ +847 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
-[ +193 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
-[  +27 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
-[  +11 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
-[  +66 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
-[  +34 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
+[ +549 ms] Skipping pub get: version match.
+[ +235 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
+[  +53 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
+[  +49 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
+[  +23 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
+[  +14 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
+[  +21 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
+[  +65 ms] Found plugin google_sign_in at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in-6.3.0/
+[  +13 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
+[  +12 ms] Found plugin google_sign_in_ios at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
+[  +27 ms] Found plugin google_sign_in_web at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
+[ +439 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
+[  +21 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
+[  +31 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
+[  +14 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
+[   +8 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
+[  +10 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
 [  +28 ms] Found plugin google_sign_in at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in-6.3.0/
-[   +6 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
+[   +7 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
 [   +6 ms] Found plugin google_sign_in_ios at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
+[  +12 ms] Found plugin google_sign_in_web at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
+[ +291 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
+[  +11 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
+[  +28 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
+[   +9 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
+[   +7 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
+[   +9 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
+[  +31 ms] Found plugin google_sign_in at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in-6.3.0/
+[   +7 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
+[   +5 ms] Found plugin google_sign_in_ios at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
 [  +10 ms] Found plugin google_sign_in_web at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
-[ +157 ms] generated_plugin_registrant.dart not found. Skipping.
+[ +145 ms] Generating /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+[ +664 ms] Found plugin cloud_firestore at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/
+[  +14 ms] Found plugin cloud_firestore_web at /home/agustin/.pub-cache/hosted/pub.dev/cloud_firestore_web-4.4.12/
+[ +193 ms] Found plugin firebase_auth at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/
+[  +10 ms] Found plugin firebase_auth_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_auth_web-5.15.3/
+[  +81 ms] Found plugin firebase_core at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/
+[  +11 ms] Found plugin firebase_core_web at /home/agustin/.pub-cache/hosted/pub.dev/firebase_core_web-2.24.1/
+[  +33 ms] Found plugin google_sign_in at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in-6.3.0/
+[   +7 ms] Found plugin google_sign_in_android at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_android-6.2.1/
+[   +8 ms] Found plugin google_sign_in_ios at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
+[  +15 ms] Found plugin google_sign_in_web at /home/agustin/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
+[ +192 ms] generated_plugin_registrant.dart not found. Skipping.
 [   +5 ms] Compiling lib/main.dart for the Web...
-[  +19 ms] Initializing file store
-[  +33 ms] Done initializing file store
-[ +295 ms] Skipping target: web_entrypoint
-[   +8 ms] Skipping target: gen_localizations
-[   +5 ms] invalidated build due to missing files: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/*/index.html, /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/flutter_bootstrap.js
-[  +10 ms] web_templated_files: Starting due to {InvalidatedReasonKind.outputMissing: The following outputs were missing: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/build/web/*/index.html, InvalidatedReasonKind.inputMissing: The following inputs were missing: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/*/index.html,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/flutter_bootstrap.js}
-[   +6 ms] web_static_assets: Starting due to {InvalidatedReasonKind.outputMissing: The following outputs were missing: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/flutter.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm.js.symbols,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/canvaskit.js.symbols,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/canvaskit.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm_st.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/chromium/canvaskit.js.symbols,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/chromium/canvaskit.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/chromium/canvaskit.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm_st.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/canvaskit.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm_st.js.symbols}
-[+2187 ms] Skipping target: dart2js
-[  +26 ms] web_static_assets: Complete
-[  +60 ms] web_templated_files: Complete
-[  +12 ms] web_release_bundle: Starting due to {}
-[ +645 ms] Manifest contained wildcard assets. Inserting missing file into build graph to force rerun. for more information see #56466.
-[ +147 ms] shaderc command: [/home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/impellerc, --sksl, --iplr, --json, --sl=build/web/assets/shaders/ink_sparkle.frag, --spirv=build/web/assets/shaders/ink_sparkle.frag.spirv, --input=/home/agustin/FlutterSDK/flutter/packages/flutter/lib/src/material/shaders/ink_sparkle.frag, --input-type=frag, --include=/home/agustin/FlutterSDK/flutter/packages/flutter/lib/src/material/shaders, --include=/home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/shader_lib]
-[ +105 ms] Running command: /home/agustin/FlutterSDK/flutter/bin/cache/dart-sdk/bin/dart /home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/const_finder.dart.snapshot --kernel-file /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/app.dill --class-library-uri package:flutter/src/widgets/icon_data.dart --class-name IconData --annotation-class-name _StaticIconProvider --annotation-class-library-uri package:flutter/src/widgets/icon_data.dart
-[+11044 ms] This application cannot tree shake icons fonts. It has non-constant instances of IconData at the following locations:
-[   +6 ms]   - file:///home/agustin/IES%209-010%20/2%C2%B0%20Vera/Practica%20Profesional%20II/SOFTWARE_RESTAURANTE/app_restaurante/lib/adaptadores/adaptador_firestore_historia.dart:77:14
-[  +12 ms] Persisting file store
-[  +45 ms] Done persisting file store
-[  +39 ms] Target web_release_bundle failed: Error: Avoid non-constant invocations of IconData or try to build again with --no-tree-shake-icons.
-           #0      throwToolExit (package:flutter_tools/src/base/common.dart:34:3)
-           #1      IconTreeShaker._findConstants (package:flutter_tools/src/build_system/targets/icon_tree_shaker.dart:326:7)
-           <asynchronous suspension>
-           #2      IconTreeShaker._getIconData (package:flutter_tools/src/build_system/targets/icon_tree_shaker.dart:113:45)
-           <asynchronous suspension>
-           #3      IconTreeShaker.subsetFont (package:flutter_tools/src/build_system/targets/icon_tree_shaker.dart:180:5)
-           <asynchronous suspension>
-           #4      copyAssets.<anonymous closure> (package:flutter_tools/src/build_system/targets/assets.dart:170:20)
-           <asynchronous suspension>
-           #5      Future.wait.<anonymous closure> (dart:async/future.dart:528:21)
-           <asynchronous suspension>
-           #6      copyAssets (package:flutter_tools/src/build_system/targets/assets.dart:132:3)
-           <asynchronous suspension>
-           #7      WebReleaseBundle.build (package:flutter_tools/src/build_system/targets/web.dart:451:29)
-           <asynchronous suspension>
-           #8      _BuildInstance._invokeInternal (package:flutter_tools/src/build_system/build_system.dart:876:9)
-           <asynchronous suspension>
-           #9      Future.wait.<anonymous closure> (dart:async/future.dart:528:21)
-           <asynchronous suspension>
-           #10     _BuildInstance.invokeTarget (package:flutter_tools/src/build_system/build_system.dart:814:32)
-           <asynchronous suspension>
-           #11     FlutterBuildSystem.build (package:flutter_tools/src/build_system/build_system.dart:637:16)
-           <asynchronous suspension>
-           #12     WebBuilder.buildWeb (package:flutter_tools/src/web/compile.dart:93:34)
-           <asynchronous suspension>
-           #13     BuildWebCommand.runCommand (package:flutter_tools/src/commands/build_web.dart:253:5)
-           <asynchronous suspension>
-           #14     FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1558:27)
-           <asynchronous suspension>
-           #15     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
-           <asynchronous suspension>
-           #16     CommandRunner.runCommand (package:args/command_runner.dart:212:13)
-           <asynchronous suspension>
-           #17     FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
-           <asynchronous suspension>
-           #18     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
-           <asynchronous suspension>
-           #19     FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
-           <asynchronous suspension>
-           #20     run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:98:11)
-           <asynchronous suspension>
-           #21     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
-           <asynchronous suspension>
-           #22     main (package:flutter_tools/executable.dart:99:3)
-           <asynchronous suspension>
-
-[  +49 ms] Compiling lib/main.dart for the Web... (completed in 14,7s)
-[   +3 ms] "flutter web" took 18.949ms.
-[ +225 ms] Error: Failed to compile application for the Web.
-[   +1 ms] 
-           #0      throwToolExit (package:flutter_tools/src/base/common.dart:34:3)
-           #1      WebBuilder.buildWeb (package:flutter_tools/src/web/compile.dart:135:7)
-           <asynchronous suspension>
-           #2      BuildWebCommand.runCommand (package:flutter_tools/src/commands/build_web.dart:253:5)
-           <asynchronous suspension>
-           #3      FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1558:27)
-           <asynchronous suspension>
-           #4      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
-           <asynchronous suspension>
-           #5      CommandRunner.runCommand (package:args/command_runner.dart:212:13)
-           <asynchronous suspension>
-           #6      FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
-           <asynchronous suspension>
-           #7      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
-           <asynchronous suspension>
-           #8      FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
-           <asynchronous suspension>
-           #9      run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:98:11)
-           <asynchronous suspension>
-           #10     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
-           <asynchronous suspension>
-           #11     main (package:flutter_tools/executable.dart:99:3)
-           <asynchronous suspension>
-
-
-[   +1 ms] Running 1 shutdown hook
-[   +9 ms] Shutdown hooks complete
-[ +174 ms] exiting with code 1
+[  +17 ms] Initializing file store
+[   +7 ms] Done initializing file store
+[ +149 ms] Skipping target: web_entrypoint
+[   +6 ms] Skipping target: gen_localizations
+[   +7 ms] invalidated build due to missing files: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/*/index.html, /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/flutter_bootstrap.js
+[   +3 ms] web_templated_files: Starting due to {InvalidatedReasonKind.outputMissing: The following outputs were missing: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/build/web/*/index.html, InvalidatedReasonKind.inputMissing: The following inputs were missing: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/*/index.html,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/web/flutter_bootstrap.js}
+[   +5 ms] web_static_assets: Starting due to {InvalidatedReasonKind.outputMissing: The following outputs were missing: /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/flutter.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm.js.symbols,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/canvaskit.js.symbols,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/canvaskit.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm_st.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/chromium/canvaskit.js.symbols,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/chromium/canvaskit.js,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/chromium/canvaskit.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm_st.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/canvaskit.wasm,/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/canvaskit/skwasm_st.js.symbols}
+[  +69 ms] dart2js: Starting due to {}
+[  +29 ms] executing: /home/agustin/FlutterSDK/flutter/bin/cache/dart-sdk/bin/dart compile js --platform-binaries=/home/agustin/FlutterSDK/flutter/bin/cache/flutter_web_sdk/kernel --invoker=flutter_tool -Ddart.vm.product=true -DFLUTTER_WEB_USE_SKIA=true -DFLUTTER_WEB_USE_SKWASM=false -DFLUTTER_WEB_CANVASKIT_URL=https://www.gstatic.com/flutter-canvaskit/18b71d647a292a980abb405ac7d16fe1f0b20434/ --native-null-assertions --no-source-maps -o /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/app.dill --packages=/home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/package_config.json --cfe-only /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/main.dart
+[   +2 ms] web_static_assets: Complete
+[ +104 ms] web_templated_files: Complete
+[+67451 ms] Compiled 48,456,898 input bytes (39,597,787 characters source) to 35,603,136 kernel bytes in 65.3 seconds using N/A MB of memory
+            Dart file .dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/main.dart compiled to dill: .dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/app.dill.
+[   +5 ms] executing: /home/agustin/FlutterSDK/flutter/bin/cache/dart-sdk/bin/dart compile js --platform-binaries=/home/agustin/FlutterSDK/flutter/bin/cache/flutter_web_sdk/kernel --invoker=flutter_tool -Ddart.vm.product=true -DFLUTTER_WEB_USE_SKIA=true -DFLUTTER_WEB_USE_SKWASM=false -DFLUTTER_WEB_CANVASKIT_URL=https://www.gstatic.com/flutter-canvaskit/18b71d647a292a980abb405ac7d16fe1f0b20434/ --native-null-assertions --no-source-maps -O4 -o /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/main.dart.js /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/app.dill
+[+122022 ms] ../../../../../FlutterSDK/flutter/packages/flutter/lib/src/widgets/widget_state.dart:1045:9:
+             Hint: This 'noSuchMethod' implementation is guaranteed to throw an exception. The generated code will be smaller if it is rewritten.
+             Rewrite to 'noSuchMethod(Invocation i) => super.noSuchMethod(i);'.
+               Never noSuchMethod(Invocation invocation) {
+                     ^
+             Compiled 54,289,264 input bytes (9,859,074 characters source) to 3,580,845 characters JavaScript in 120 seconds using N/A MB of memory
+[ +308 ms] dart2js: Complete
+[+2641 ms] web_release_bundle: Starting due to {}
+[ +605 ms] Manifest contained wildcard assets. Inserting missing file into build graph to force rerun. for more information see #56466.
+[ +126 ms] shaderc command: [/home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/impellerc, --sksl, --iplr, --json, --sl=build/web/assets/shaders/ink_sparkle.frag, --spirv=build/web/assets/shaders/ink_sparkle.frag.spirv, --input=/home/agustin/FlutterSDK/flutter/packages/flutter/lib/src/material/shaders/ink_sparkle.frag, --input-type=frag, --include=/home/agustin/FlutterSDK/flutter/packages/flutter/lib/src/material/shaders, --include=/home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/shader_lib]
+[  +84 ms] Running command: /home/agustin/FlutterSDK/flutter/bin/cache/dart-sdk/bin/dart /home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/const_finder.dart.snapshot --kernel-file /home/agustin/IES 9-010 /2° Vera/Practica Profesional II/SOFTWARE_RESTAURANTE/app_restaurante/.dart_tool/flutter_build/2b895b047c2de07e6cc46404a9075afa/app.dill --class-library-uri package:flutter/src/widgets/icon_data.dart --class-name IconData --annotation-class-name _StaticIconProvider --annotation-class-library-uri package:flutter/src/widgets/icon_data.dart
+[+10566 ms] Expected to find fontFamily for constant IconData with codepoint: 9658.0, but found fontFamily: null. This usually means you are relying on the system font. Alternatively, font families in an IconData class can be provided in the assets section of your pubspec.yaml, or you are missing "uses-material-design: true".
+[  +10 ms] Running font-subset: /home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/font-subset build/web/assets/packages/cupertino_icons/assets/CupertinoIcons.ttf /home/agustin/.pub-cache/hosted/pub.dev/cupertino_icons-1.0.8/assets/CupertinoIcons.ttf, using codepoints 62468 62730 62717 62419 62415 62629 62318 optional:32
+[   +3 ms] Running font-subset: /home/agustin/FlutterSDK/flutter/bin/cache/artifacts/engine/linux-x64/font-subset build/web/assets/fonts/MaterialIcons-Regular.otf /home/agustin/FlutterSDK/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf, using codepoints 57490 62832 57706 58332 57502 57501 57496 57694 57695 57657 57882 57504 61453 57634 57498 57926 57704 57491 61061 61060 62834 62833 59283 59282 57499 57500 61069 61068 62842 62841 59291 59290 58011 58012 61575 61576 63348 63349 59797 59798 58372 58370 61930 61927 63708 63705 60157 60154 58771 58189 62328 61752 983402 63526 60555 59975 58814 58813 57846 57862 58727 57686 61764 57402 57920 58710 58283 58195 57783 57677 58084 58252 58873 58502 58648 57424 57689 984453 57403 57912 57738 58513 58531 57898 58825 58739 58566 58644 58133 58892 58675 58173 58530 58121 58286 58136 58291 58674 58519 57921 984452 57548 58768 58890 57791 58289 58701 58258 58272 58630 57720 58161 57545 58162 61464 59070 59069 57415 984310 57785 57423 57918 58986 984763 58978 57659 57782 58704 57506 57787 58306 57632 59121 58750 57627 57879 57411 57420 58290 984374 58514 57919 58132 57740 58680 57807 58253 57946 58256 57618 57604 57808 984362 58948 984428 59033 57911 optional:32
+[  +55 ms] Font asset "CupertinoIcons.ttf" was tree-shaken, reducing it from 257628 to 1472 bytes (99.4% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+[   +6 ms] Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 19620 bytes (98.8% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+[  +21 ms] web_release_bundle: Complete
+[ +462 ms] web_service_worker: Starting due to {}
+[+1800 ms] web_service_worker: Complete
+[ +936 ms] Persisting file store
+[  +43 ms] Done persisting file store
+[ +126 ms] Compiling lib/main.dart for the Web... (completed in 207,6s)
+[   +8 ms] ✓ Built build/web
+[ +219 ms] "flutter web" took 211.975ms.
+[ +211 ms] Running 1 shutdown hook
+[  +12 ms] Shutdown hooks complete
+[ +198 ms] exiting with code 0
