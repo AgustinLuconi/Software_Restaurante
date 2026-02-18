@@ -708,6 +708,32 @@ class _PantallaDuenoView extends StatelessWidget {
     }
   }
 
+  // Helper para obtener label legible del ícono
+  String _obtenerLabelIcono(String nombreIcono) {
+    switch (nombreIcono.toLowerCase()) {
+      case 'sailing':
+        return 'Playa';
+      case 'local_fire_department':
+        return 'Parrilla';
+      case 'local_pizza':
+        return 'Pizzería';
+      case 'ramen_dining':
+        return 'Asiático';
+      case 'coffee':
+        return 'Cafetería';
+      case 'icecream':
+        return 'Heladería';
+      case 'bakery_dining':
+        return 'Panadería';
+      case 'local_bar':
+        return 'Bar';
+      case 'restaurant':
+        return 'Restaurante';
+      default:
+        return 'Restaurante';
+    }
+  }
+
   void _mostrarEditarNombre(BuildContext context, negocio) {
     final controller = TextEditingController(text: negocio.nombre);
 
@@ -775,7 +801,7 @@ class _PantallaDuenoView extends StatelessWidget {
   void _mostrarEditarIcono(BuildContext context, negocio) {
     final iconos = [
       {'nombre': 'restaurant', 'icono': Icons.restaurant, 'label': 'Restaurante'},
-      {'nombre': 'sailing', 'icono': Icons.sailing, 'label': 'Chiringuito/Playa'},
+      {'nombre': 'sailing', 'icono': Icons.sailing, 'label': 'Playa'},
       {'nombre': 'local_fire_department', 'icono': Icons.local_fire_department, 'label': 'Parrilla'},
       {'nombre': 'local_pizza', 'icono': Icons.local_pizza, 'label': 'Pizzería'},
       {'nombre': 'ramen_dining', 'icono': Icons.ramen_dining, 'label': 'Asiático'},
@@ -807,61 +833,49 @@ class _PantallaDuenoView extends StatelessWidget {
               ),
               content: SizedBox(
                 width: double.maxFinite,
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 1,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
+                height: 400, // Altura fija para la lista
+                child: ListView.separated(
                   itemCount: iconos.length,
+                  separatorBuilder: (context, index) => const Divider(),
                   itemBuilder: (context, index) {
                     final item = iconos[index];
                     final esSeleccionado = item['nombre'] == iconoSeleccionado;
-                    return InkWell(
+                    return ListTile(
                       onTap: () {
                         setState(() {
                           iconoSeleccionado = item['nombre'] as String;
                         });
                       },
-                      child: Container(
-                        decoration: BoxDecoration(
+                      leading: Icon(
+                        item['icono'] as IconData,
+                        size: 32,
+                        color: esSeleccionado 
+                            ? const Color(0xFF27AE60)
+                            : Colors.grey[600],
+                      ),
+                      title: Text(
+                        item['label'] as String,
+                        style: TextStyle(
                           color: esSeleccionado 
-                              ? const Color(0xFF27AE60).withOpacity(0.2)
-                              : Colors.grey.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: esSeleccionado 
-                                ? const Color(0xFF27AE60)
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              item['icono'] as IconData,
-                              size: 32,
-                              color: esSeleccionado 
-                                  ? const Color(0xFF27AE60)
-                                  : Colors.grey[600],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              item['label'] as String,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: esSeleccionado 
-                                    ? const Color(0xFF27AE60)
-                                    : Colors.grey[600],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                              ? const Color(0xFF27AE60)
+                              : Colors.black87,
+                          fontWeight: esSeleccionado ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
+                      trailing: esSeleccionado
+                          ? const Icon(Icons.check_circle, color: Color(0xFF27AE60))
+                          : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: esSeleccionado 
+                              ? const Color(0xFF27AE60).withOpacity(0.5)
+                              : Colors.transparent,
+                        ),
+                      ),
+                      tileColor: esSeleccionado 
+                          ? const Color(0xFF27AE60).withOpacity(0.1)
+                          : null,
                     );
                   },
                 ),
@@ -874,7 +888,6 @@ class _PantallaDuenoView extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () async {
                     // Usar cubit capturado
-                    // final cubit = context.read<PantallaDuenoCubit>();
                     final exito = await cubit.actualizarIcono(
                       negocio,
                       iconoSeleccionado,
