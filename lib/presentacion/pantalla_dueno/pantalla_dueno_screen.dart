@@ -332,7 +332,7 @@ class _PantallaDuenoView extends StatelessWidget {
             TarjetaInfo(
               icon: _obtenerIcono(negocio.icono),
               titulo: 'Icono/Logo',
-              subtitulo: negocio.icono,
+              subtitulo: _obtenerLabelIcono(negocio.icono),
               color: const Color(0xFF27AE60),
               onTap: () => _mostrarEditarIcono(context, negocio),
               trailing: IconButton(
