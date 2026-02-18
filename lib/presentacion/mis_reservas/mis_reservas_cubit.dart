@@ -84,8 +84,8 @@ class MisReservasCubit extends Cubit<MisReservasState> {
       await cargarReservas();
     } catch (e) {
       print('❌ Error al cancelar reserva: $e');
-      emit(MisReservasConError('Error al cancelar la reserva: ${e.toString()}'));
-      // Intentar recargar para no dejar la pantalla en error perpetuo si fue parcial
+      emit(ReservaCancelacionError('Error al cancelar: ${e.toString().replaceAll('Exception: ', '')}'));
+      // Recargar para volver al estado Exitoso y mostrar la lista
       try { await cargarReservas(); } catch (_) {}
     }
   }

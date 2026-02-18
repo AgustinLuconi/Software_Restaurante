@@ -59,6 +59,14 @@ class _MisReservasViewState extends State<_MisReservasView> {
                 backgroundColor: Colors.green,
               ),
             );
+          } else if (state is ReservaCancelacionError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.mensaje),
+                backgroundColor: const Color(0xFFE74C3C),
+                duration: const Duration(seconds: 4),
+              ),
+            );
           }
         },
         builder: (context, state) {

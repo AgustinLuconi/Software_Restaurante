@@ -26,3 +26,9 @@ class ReservaCancelada extends MisReservasState {
 
   ReservaCancelada(this.mensaje);
 }
+
+class ReservaCancelacionError extends MisReservasState {
+  final String mensaje;
+
+  ReservaCancelacionError(this.mensaje);
+}
