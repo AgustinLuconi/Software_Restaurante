@@ -272,7 +272,7 @@ class _PantallaInicioView extends StatelessWidget {
                     _mostrarLoginGoogle(context, cubit);
                   },
                   icon: Image.asset(
-                    'images/google_logo.jpeg',
+                    'assets/images/google_logo.jpeg',
                     height: 24,
                     width: 24,
                     errorBuilder: (_, __, ___) => const Icon(Icons.account_circle, size: 24),
@@ -466,7 +466,7 @@ class _PantallaInicioView extends StatelessWidget {
                       _mostrarLoginGoogle(context, cubit);
                     },
                     icon: Image.asset(
-                      'images/google_logo.jpeg',
+                      'assets/images/google_logo.jpeg',
                       height: 24,
                       width: 24,
                       errorBuilder: (_, __, ___) => const Icon(Icons.account_circle, size: 24),
