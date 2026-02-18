@@ -146,8 +146,8 @@ class _PantallaDuenoView extends StatelessWidget {
                         color: colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.restaurant,
+                      child: Icon(
+                        _obtenerIcono(negocio.icono),
                         size: 40,
                         color: Colors.white,
                       ),
