@@ -13,6 +13,8 @@ class Negocio {
   final int minHorasParaCancelar;
   final int maxDiasAnticipacionReserva;
   final int duracionPromedioMinutos;
+  // Estado
+  final bool telefonoVerificado;
 
   Negocio({
     required this.id,
@@ -27,6 +29,7 @@ class Negocio {
     this.minHorasParaCancelar = 24,
     this.maxDiasAnticipacionReserva = 14,
     this.duracionPromedioMinutos = 60,
+    this.telefonoVerificado = false,
   });
 
   Negocio copyWith({
@@ -42,6 +45,7 @@ class Negocio {
     int? minHorasParaCancelar,
     int? maxDiasAnticipacionReserva,
     int? duracionPromedioMinutos,
+    bool? telefonoVerificado,
   }) {
     return Negocio(
       id: id ?? this.id,
@@ -56,6 +60,7 @@ class Negocio {
       minHorasParaCancelar: minHorasParaCancelar ?? this.minHorasParaCancelar,
       maxDiasAnticipacionReserva: maxDiasAnticipacionReserva ?? this.maxDiasAnticipacionReserva,
       duracionPromedioMinutos: duracionPromedioMinutos ?? this.duracionPromedioMinutos,
+      telefonoVerificado: telefonoVerificado ?? this.telefonoVerificado,
     );
   }
 }

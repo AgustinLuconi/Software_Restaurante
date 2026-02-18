@@ -189,6 +189,24 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
     }
   }
 
+  @override
+  Future<bool> actualizarTelefono(String negocioId, String nuevoTelefono, {bool verificado = false}) async {
+    try {
+      if (negocioId.isEmpty) return false;
+
+      await _negociosRef.doc(negocioId).update({
+        'telefono': nuevoTelefono,
+        'telefonoVerificado': verificado,
+      });
+
+      print('✅ Teléfono actualizado en Firestore: $nuevoTelefono (Verificado: $verificado)');
+      return true;
+    } catch (e) {
+      print('❌ Error actualizando teléfono en Firestore: $e');
+      return false;
+    }
+  }
+
   Map<String, dynamic> _negocioToMap(Negocio negocio) {
     return {
       'nombre': negocio.nombre,
@@ -202,6 +220,7 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
       'minHorasParaCancelar': negocio.minHorasParaCancelar,
       'maxDiasAnticipacionReserva': negocio.maxDiasAnticipacionReserva,
       'duracionPromedioMinutos': negocio.duracionPromedioMinutos,
+      'telefonoVerificado': negocio.telefonoVerificado,
     };
   }
 
@@ -219,6 +238,7 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
       minHorasParaCancelar: data['minHorasParaCancelar'] ?? 2,
       maxDiasAnticipacionReserva: data['maxDiasAnticipacionReserva'] ?? 30,
       duracionPromedioMinutos: data['duracionPromedioMinutos'] ?? 60,
+      telefonoVerificado: data['telefonoVerificado'] ?? false,
     );
   }
 }

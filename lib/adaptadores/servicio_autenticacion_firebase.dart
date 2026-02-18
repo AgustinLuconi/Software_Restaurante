@@ -355,13 +355,14 @@ class ServicioAutenticacion {
         throw Exception('No hay usuario autenticado');
       }
 
-      // Vincular teléfono a la cuenta existente
-      await user.linkWithCredential(credential);
+      // Actualizar el teléfono del usuario (método preferido sobre link)
+      await user.updatePhoneNumber(credential);
 
       // Limpiar verificationId
       _verificationId = null;
       _resendToken = null;
     } on FirebaseAuthException catch (e) {
+      print('❌ Error verificando SMS: ${e.code} - ${e.message}');
       switch (e.code) {
         case 'invalid-verification-code':
           throw Exception('Código incorrecto. Verifica e intenta nuevamente');
@@ -371,6 +372,8 @@ class ServicioAutenticacion {
           throw Exception('La verificación expiró. Solicita un nuevo código');
         case 'session-expired':
           throw Exception('La sesión expiró. Solicita un nuevo código');
+        case 'account-exists-with-different-credential':
+          throw Exception('Este número ya está registrado. Intenta con otro.');
         default:
           throw Exception('Error: ${e.message}');
       }

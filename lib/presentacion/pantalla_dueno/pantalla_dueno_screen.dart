@@ -361,12 +361,19 @@ class _PantallaDuenoView extends StatelessWidget {
               icon: Icons.phone,
               titulo: 'Teléfono',
               subtitulo: negocio.telefono,
-              color: colorScheme.secondary,
+              color: const Color(0xFF27AE60), // Usar constante si es posible, o variable local
               onTap: () => _mostrarEditarTelefono(context, negocio),
-              trailing: IconButton(
-                icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
-                onPressed: () => _mostrarEditarTelefono(context, negocio),
-                tooltip: 'Editar',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (negocio.telefonoVerificado)
+                    const BadgeVerificado(),
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Color(0xFF3498DB)),
+                    onPressed: () => _mostrarEditarTelefono(context, negocio),
+                    tooltip: 'Editar',
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -437,14 +444,18 @@ class _PantallaDuenoView extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Botón de verificar teléfono
+            // Botón de verificación de teléfono (separado de la info principal)
             TarjetaInfoConEstado(
-              icon: Icons.phone_android,
+              icon: Icons.verified_user_outlined,
               titulo: 'Verificar Teléfono',
-              subtitulo: _obtenerSubtituloTelefono(),
-              color: const Color(0xFF27AE60),
-              estaVerificado: getIt<ServicioAutenticacion>().telefonoVerificado,
-              onTap: () => _mostrarVerificarTelefono(context, negocio),
+              subtitulo: negocio.telefonoVerificado 
+                  ? 'Tu número está verificado' 
+                  : 'Verifica tu número para mayor seguridad',
+              color: negocio.telefonoVerificado 
+                  ? const Color(0xFF27AE60) 
+                  : const Color(0xFFE67E22),
+              estaVerificado: negocio.telefonoVerificado,
+              onTap: () => _mostrarVerificacionTelefono(context, negocio),
             ),
 
             const SizedBox(height: 24),
@@ -1555,7 +1566,8 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
-  void _mostrarVerificarTelefono(BuildContext context, negocio) {
+  void _mostrarVerificacionTelefono(BuildContext context, dynamic negocio) {
+    final cubit = context.read<PantallaDuenoCubit>();
     final auth = getIt<ServicioAutenticacion>();
     final telefonoController = TextEditingController(text: negocio.telefono);
     final codigoController = TextEditingController();
@@ -1648,6 +1660,14 @@ class _PantallaDuenoView extends StatelessWidget {
 
               try {
                 await auth.verificarCodigoSMS(codigo: codigo);
+                
+                // Si llegamos aquí, Auth se actualizó correctamente
+                await cubit.negocioRepositorio.actualizarTelefono(
+                  negocio.id,
+                  telefonoController.text,
+                  verificado: true,
+                );
+
                 setState(() {
                   verificadoExitosamente = true;
                   isLoading = false;
@@ -1655,7 +1675,7 @@ class _PantallaDuenoView extends StatelessWidget {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('✅ ¡Teléfono verificado exitosamente!'),
+                    content: Text('✅ ¡Teléfono verificado y vinculado!'),
                     backgroundColor: Color(0xFF27AE60),
                     duration: Duration(seconds: 3),
                   ),
@@ -1665,10 +1685,42 @@ class _PantallaDuenoView extends StatelessWidget {
                   if (context.mounted) Navigator.pop(dialogContext);
                 });
               } catch (e) {
-                setState(() {
-                  isLoading = false;
-                  errorMessage = e.toString().replaceAll('Exception: ', '');
-                });
+                // Manejo especial para conflicto de credenciales
+                // Si el error es "account-exists-with-different-credential", significa que 
+                // el código SMS era CORRRECTO (porque Firebase validó la credencial), 
+                // pero no se pudo vincular a la cuenta Auth.
+                // Aceptamos la verificación como válida para el negocio.
+                if (e.toString().contains('account-exists-with-different-credential') || 
+                    e.toString().contains('credential-already-in-use')) {
+                  
+                  await cubit.negocioRepositorio.actualizarTelefono(
+                    negocio.id,
+                    telefonoController.text,
+                    verificado: true,
+                  );
+
+                  setState(() {
+                    verificadoExitosamente = true;
+                    isLoading = false;
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Teléfono verificado (Vinculado a otra cuenta)'),
+                      backgroundColor: Color(0xFFF39C12), // Naranja de advertencia
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+
+                  Future.delayed(const Duration(seconds: 3), () {
+                    if (context.mounted) Navigator.pop(dialogContext);
+                  });
+                } else {
+                  setState(() {
+                    isLoading = false;
+                    errorMessage = e.toString().replaceAll('Exception: ', '');
+                  });
+                }
               }
             }
 

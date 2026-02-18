@@ -28,4 +28,7 @@ abstract class NegocioRepositorio {
 
   /// Actualizar el password del negocio (Backup o Legacy)
   Future<bool> actualizarPassword(String negocioId, String nuevaPassword);
+
+  /// Actualizar el teléfono y su estado de verificación
+  Future<bool> actualizarTelefono(String negocioId, String nuevoTelefono, {bool verificado = false});
 }
