@@ -199,12 +199,13 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         orElse: () => mesas.first,
       );
 
-      // Enviar email de confirmación al cliente
-      print('📧 Enviando email de confirmación...');
+      // Enviar email de confirmación al cliente y al dueño
+      print('📧 Enviando emails de notificación...');
       await _servicioEmail.notificarReservaConfirmada(
         reserva,
         nombreNegocio: nombreNegocio,
         nombreMesa: mesa.nombre,
+        emailDueno: _negocioActual?.email,
       );
       
       print('✅ Proceso de reserva completado exitosamente');
