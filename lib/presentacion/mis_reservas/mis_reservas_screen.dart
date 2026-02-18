@@ -299,8 +299,34 @@ class _MisReservasViewState extends State<_MisReservasView> {
               '${reserva.numeroPersonas}',
             ),
 
-            // Botones de acción
-            if (reserva.estado != EstadoReserva.cancelada) ...[
+            // Botones de acción o Estado Finalizado
+            if (reserva.fechaHora.isBefore(DateTime.now()) && reserva.estado != EstadoReserva.cancelada) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Reserva Finalizada', // O "Completada"
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (reserva.estado != EstadoReserva.cancelada) ...[
               const SizedBox(height: 16),
               Row(
                 children: [
