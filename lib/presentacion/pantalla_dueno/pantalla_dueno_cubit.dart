@@ -58,7 +58,11 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
 
   Future<bool> actualizarTelefono(Negocio negocio, String nuevoTelefono) async {
     try {
-      final negocioActualizado = negocio.copyWith(telefono: nuevoTelefono);
+      // Al cambiar el teléfono, se pierde el estado de verificado
+      final negocioActualizado = negocio.copyWith(
+        telefono: nuevoTelefono,
+        telefonoVerificado: false,
+      );
       final exito = await negocioRepositorio.actualizarNegocio(
         negocioActualizado,
       );
