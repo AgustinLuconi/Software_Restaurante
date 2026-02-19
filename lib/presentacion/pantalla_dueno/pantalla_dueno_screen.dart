@@ -3836,9 +3836,12 @@ class _PantallaDuenoView extends StatelessWidget {
         context,
         MaterialPageRoute(
           builder:
-              (_) => EditorHistoriaScreen(
-                negocioId: negocioId,
-                historiaInicial: historia,
+              (_) => BlocProvider.value(
+                value: cubit,
+                child: EditorHistoriaScreen(
+                  negocioId: negocioId,
+                  historiaInicial: historia,
+                ),
               ),
         ),
       );
