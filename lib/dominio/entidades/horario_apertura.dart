@@ -16,7 +16,18 @@ class IntervaloHorario {
   bool contieneHora(int hora, int minuto) {
     final minutosTotales = hora * 60 + minuto;
     final minutosInicio = horaInicio * 60 + minutoInicio;
-    final minutosFin = horaFin * 60 + minutoFin;
+    int minutosFin = horaFin * 60 + minutoFin;
+    
+    // Si el horario cruza la medianoche
+    if (minutosFin < minutosInicio || (minutosFin == minutosInicio && minutosFin == 0)) {
+       minutosFin += 24 * 60;
+       
+       // Si la hora a consultar también está pasada la medianoche pero es menor al inicio
+       if (minutosTotales < minutosInicio) {
+          final adjustedMinutosTotales = minutosTotales + 24 * 60;
+          return adjustedMinutosTotales >= minutosInicio && adjustedMinutosTotales < minutosFin;
+       }
+    }
     
     return minutosTotales >= minutosInicio && minutosTotales < minutosFin;
   }

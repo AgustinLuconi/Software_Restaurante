@@ -31,4 +31,7 @@ abstract class NegocioRepositorio {
 
   /// Actualizar el teléfono y su estado de verificación
   Future<bool> actualizarTelefono(String negocioId, String nuevoTelefono, {bool verificado = false});
+
+  /// Actualizar la lista de zonas del negocio
+  Future<bool> actualizarZonas(String negocioId, List<String> zonas);
 }

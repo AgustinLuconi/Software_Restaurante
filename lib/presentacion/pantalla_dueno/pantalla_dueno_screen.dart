@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../adaptadores/servicio_autenticacion_firebase.dart';
 import '../../dominio/entidades/historia_restaurante.dart';
 import '../../dominio/entidades/mesa.dart';
+import '../../dominio/entidades/negocio.dart';
 import '../../dominio/entidades/reserva.dart';
 import '../../service_locator.dart';
 import '../widgets_comunes/tarjeta_accion_gradiente.dart';
@@ -257,6 +258,19 @@ class _PantallaDuenoView extends StatelessWidget {
                         colors: [Color(0xFFE67E22), Color(0xFFD35400)],
                       ),
                       onTap: () => _mostrarGestionHorarios(context, negocio),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 150,
+                    child: TarjetaAccionGradiente(
+                      icon: Icons.map,
+                      title: 'Zonas',
+                      subtitle: 'Sectores',
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8E44AD), Color(0xFF9B59B6)],
+                      ),
+                      onTap: () => _mostrarGestionZonas(context, negocio),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -2564,8 +2578,34 @@ class _PantallaDuenoView extends StatelessWidget {
               ],
             ),
 
-            // Botón de cancelar (solo si no está cancelada)
-            if (reserva.estado != EstadoReserva.cancelada) ...[
+            // Botones de acción o Estado Finalizado
+            if (reserva.fechaHora.isBefore(DateTime.now()) && reserva.estado != EstadoReserva.cancelada) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Reserva Finalizada',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (reserva.estado != EstadoReserva.cancelada) ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -2741,6 +2781,197 @@ class _PantallaDuenoView extends StatelessWidget {
               ),
             ],
           ),
+    );
+  }
+
+  void _mostrarGestionZonas(BuildContext context, Negocio negocio) {
+    // Capturar el cubit antes del diálogo
+    final cubit = context.read<PantallaDuenoCubit>();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        // Inicializar estado local fuera del builder para que persista
+        final List<String> zonasEditables = List.from(negocio.zonas);
+        if (zonasEditables.isEmpty) {
+          zonasEditables.addAll(['Salón', 'Terraza']);
+        }
+        final nuevaZonaController = TextEditingController();
+
+        return StatefulBuilder(
+          builder: (statefulContext, setState) {
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.map, color: Color(0xFF9B59B6)),
+                  SizedBox(width: 12),
+                  Text('Gestionar Zonas'),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    // Input para nuevas zonas
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: nuevaZonaController,
+                            decoration: const InputDecoration(
+                              hintText: 'Nueva zona (ej: Jardín)',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {
+                            final nueva = nuevaZonaController.text.trim();
+                            if (nueva.isNotEmpty) {
+                              // Verificar duplicados (case insensitive)
+                              if (!zonasEditables.any((z) => z.toLowerCase() == nueva.toLowerCase())) {
+                                setState(() {
+                                  zonasEditables.add(nueva);
+                                  nuevaZonaController.clear();
+                                  // Actualizar variable local del negocio para reflejar cambios visuales inmediatos si fuera necesario, 
+                                  // pero aquí solo editamos la lista temporal.
+                                });
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('La zona ya existe'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.add_circle, size: 28),
+                          color: const Color(0xFF27AE60),
+                          tooltip: 'Agregar',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        'Zonas Disponibles',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                    // Lista de zonas
+                    Expanded(
+                      child: zonasEditables.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No hay zonas definidas',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: zonasEditables.length,
+                              itemBuilder: (ctx, index) {
+                                final zona = zonasEditables[index];
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  elevation: 1,
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: const Icon(
+                                      Icons.location_on,
+                                      color: Color(0xFF9B59B6),
+                                    ),
+                                    title: Text(zona),
+                                    trailing: IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          zonasEditables.removeAt(index);
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (zonasEditables.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Debe haber al menos una zona'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Guardar cambios usando el cubit
+                    // Aquí llamamos al método que implementamos en el cubit
+                     final exito = await cubit.actualizarZonas(
+                       negocio,
+                       zonasEditables,
+                     );
+
+                    if (context.mounted) {
+                      Navigator.pop(dialogContext);
+                      
+                      if (exito) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('✅ Zonas actualizadas'),
+                            backgroundColor: Color(0xFF27AE60),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('❌ Error al actualizar zonas'),
+                            backgroundColor: Color(0xFFE74C3C),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9B59B6),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Guardar Cambios'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -2932,120 +3163,150 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
-  void _mostrarAgregarMesa(BuildContext context, negocio) {
+  void _mostrarAgregarMesa(BuildContext context, Negocio negocio) {
     final nombreController = TextEditingController();
     final capacidadController = TextEditingController();
+    // Valor inicial para la zona (primera disponible o Salón por defecto)
+    String zonaSeleccionada = negocio.zonas.isNotEmpty ? negocio.zonas.first : 'Salón';
+    
     // Capturar el cubit FUERA del diálogo
     final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.add_circle, color: Color(0xFF27AE60)),
-              SizedBox(width: 12),
-              Text('Agregar Mesa'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nombreController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de la Mesa',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.table_bar),
-                  hintText: 'Ej: Mesa 5',
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.add_circle, color: Color(0xFF27AE60)),
+                  SizedBox(width: 12),
+                  Text('Agregar Mesa'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nombreController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre de la Mesa',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.table_bar),
+                      hintText: 'Ej: Mesa 5',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: capacidadController,
+                    decoration: const InputDecoration(
+                      labelText: 'Capacidad (personas)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.people),
+                      hintText: 'Ej: 4',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: zonaSeleccionada,
+                    decoration: const InputDecoration(
+                      labelText: 'Zona',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.location_on),
+                    ),
+                    items: negocio.zonas.map((String zona) {
+                      return DropdownMenuItem<String>(
+                        value: zona,
+                        child: Text(zona),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          zonaSeleccionada = newValue;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: capacidadController,
-                decoration: const InputDecoration(
-                  labelText: 'Capacidad (personas)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.people),
-                  hintText: 'Ej: 4',
+                ElevatedButton(
+                  onPressed: () async {
+                    final nombre = nombreController.text.trim();
+                    final capacidadStr = capacidadController.text.trim();
+
+                    if (nombre.isEmpty || capacidadStr.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Por favor completa todos los campos'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final capacidad = int.tryParse(capacidadStr);
+                    if (capacidad == null || capacidad < 1) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'La capacidad debe ser un número válido mayor a 0',
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Cerrar el diálogo
+                    Navigator.pop(dialogContext);
+
+                    // Ejecutar la acción (usando el cubit capturado arriba)
+                    final nuevaMesa = await cubit.agregarMesa(
+                      negocio.id,
+                      nombre,
+                      capacidad,
+                      zonaSeleccionada,
+                    );
+
+                    if (nuevaMesa != null && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '✅ ${nuevaMesa.nombre} agregada correctamente',
+                          ),
+                          backgroundColor: const Color(0xFF27AE60),
+                        ),
+                      );
+                      // Reabrir el diálogo de gestión de mesas
+                      _mostrarGestionMesas(context, negocio);
+                    } else if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('❌ Error al agregar mesa'),
+                          backgroundColor: Color(0xFFE74C3C),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF27AE60),
+                  ),
+                  child: const Text('Agregar'),
                 ),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final nombre = nombreController.text.trim();
-                final capacidadStr = capacidadController.text.trim();
-
-                if (nombre.isEmpty || capacidadStr.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Por favor completa todos los campos'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                  return;
-                }
-
-                final capacidad = int.tryParse(capacidadStr);
-                if (capacidad == null || capacidad < 1) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'La capacidad debe ser un número válido mayor a 0',
-                      ),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                  return;
-                }
-
-                // Cerrar el diálogo
-                Navigator.pop(dialogContext);
-
-                // Ejecutar la acción (usando el cubit capturado arriba)
-                final nuevaMesa = await cubit.agregarMesa(
-                  negocio.id,
-                  nombre,
-                  capacidad,
-                );
-
-                if (nuevaMesa != null && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '✅ ${nuevaMesa.nombre} agregada correctamente',
-                      ),
-                      backgroundColor: const Color(0xFF27AE60),
-                    ),
-                  );
-                  // Reabrir el diálogo de gestión de mesas
-                  _mostrarGestionMesas(context, negocio);
-                } else if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('❌ Error al agregar mesa'),
-                      backgroundColor: Color(0xFFE74C3C),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF27AE60),
-              ),
-              child: const Text('Agregar'),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
@@ -3053,7 +3314,7 @@ class _PantallaDuenoView extends StatelessWidget {
 
   void _mostrarEditarMesa(
     BuildContext context,
-    negocio,
+    Negocio negocio,
     Mesa mesa,
     StateSetter setState,
   ) {
@@ -3061,114 +3322,163 @@ class _PantallaDuenoView extends StatelessWidget {
     final capacidadController = TextEditingController(
       text: mesa.capacidad.toString(),
     );
+    // Verificar si la zona actual aun existe en el negocio, si no, agregarla temporalmente o usar default
+    // Importante: mesa.zona es String ahora
+    String zonaSeleccionada = mesa.zona;
+    if (!negocio.zonas.contains(zonaSeleccionada)) {
+        // Si es una zona legacy o eliminada, la permitimos en el dropdown?
+        // O mejor, la forzamos a ser una de las válidas si el usuario edita?
+        // Para simplificar, si no está, usamos la primera disponible, 
+        // pero idealmente deberíamos agregarla a la lista del dropdown aunque sea temporalmente.
+        if (negocio.zonas.isNotEmpty) {
+             // Si la zona de la mesa no está en la lista del negocio (ej: fue borrada),
+             // mantenemos la actual SOLO si queremos mostrarla, pero el dropdown
+             // necesita que el valor esté en items.
+             // Opción: agregarla temporalmente a la lista de items del dropdown.
+        }
+    }
+    
     // Capturar el cubit FUERA del diálogo
     final cubit = context.read<PantallaDuenoCubit>();
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.edit, color: Color(0xFF3498DB)),
-              SizedBox(width: 12),
-              Text('Editar Mesa'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nombreController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de la Mesa',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.table_bar),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: capacidadController,
-                decoration: const InputDecoration(
-                  labelText: 'Capacidad (personas)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.people),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final nombre = nombreController.text.trim();
-                final capacidadStr = capacidadController.text.trim();
-
-                if (nombre.isEmpty || capacidadStr.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Por favor completa todos los campos'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                  return;
+        return StatefulBuilder(
+            builder: (context, setState) {
+                // Preparamos los items del dropdown asegurando que la zona actual esté presente
+                final zonasItems = List<String>.from(negocio.zonas);
+                if (!zonasItems.contains(zonaSeleccionada) && zonaSeleccionada.isNotEmpty) {
+                    zonasItems.add(zonaSeleccionada);
                 }
-
-                final capacidad = int.tryParse(capacidadStr);
-                if (capacidad == null || capacidad < 1) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'La capacidad debe ser un número válido mayor a 0',
+                
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  title: const Row(
+                    children: [
+                      Icon(Icons.edit, color: Color(0xFF3498DB)),
+                      SizedBox(width: 12),
+                      Text('Editar Mesa'),
+                    ],
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nombreController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre de la Mesa',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.table_bar),
+                        ),
                       ),
-                      backgroundColor: Colors.orange,
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: capacidadController,
+                        decoration: const InputDecoration(
+                          labelText: 'Capacidad (personas)',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.people),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: zonaSeleccionada,
+                        decoration: const InputDecoration(
+                          labelText: 'Zona',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on),
+                        ),
+                        items: zonasItems.map((String zona) {
+                          return DropdownMenuItem<String>(
+                            value: zona,
+                            child: Text(zona),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              zonaSeleccionada = newValue;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Cancelar'),
                     ),
-                  );
-                  return;
-                }
-
-                final mesaActualizada = mesa.copyWith(
-                  nombre: nombre,
-                  capacidad: capacidad,
+                    ElevatedButton(
+                      onPressed: () async {
+                        final nombre = nombreController.text.trim();
+                        final capacidadStr = capacidadController.text.trim();
+    
+                        if (nombre.isEmpty || capacidadStr.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Por favor completa todos los campos'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+    
+                        final capacidad = int.tryParse(capacidadStr);
+                        if (capacidad == null || capacidad < 1) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'La capacidad debe ser un número válido mayor a 0',
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+    
+                        final mesaActualizada = mesa.copyWith(
+                          nombre: nombre,
+                          capacidad: capacidad,
+                          zona: zonaSeleccionada,
+                        );
+    
+                        // Cerrar el diálogo
+                        Navigator.pop(dialogContext);
+    
+                        // Ejecutar la acción (usando el cubit capturado arriba)
+                        final exito = await cubit.actualizarMesa(mesaActualizada);
+    
+                        if (exito && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Mesa actualizada correctamente'),
+                              backgroundColor: Color(0xFF27AE60),
+                            ),
+                          );
+                          // Reabrir el diálogo de gestión de mesas
+                          _mostrarGestionMesas(context, negocio);
+                        } else if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('❌ Error al actualizar mesa'),
+                              backgroundColor: Color(0xFFE74C3C),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3498DB),
+                      ),
+                      child: const Text('Guardar'),
+                    ),
+                  ],
                 );
-
-                // Cerrar el diálogo
-                Navigator.pop(dialogContext);
-
-                // Ejecutar la acción (usando el cubit capturado arriba)
-                final exito = await cubit.actualizarMesa(mesaActualizada);
-
-                if (exito && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('✅ Mesa actualizada correctamente'),
-                      backgroundColor: Color(0xFF27AE60),
-                    ),
-                  );
-                  // Reabrir el diálogo de gestión de mesas
-                  _mostrarGestionMesas(context, negocio);
-                } else if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('❌ Error al actualizar mesa'),
-                      backgroundColor: Color(0xFFE74C3C),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3498DB),
-              ),
-              child: const Text('Guardar'),
-            ),
-          ],
+            }
         );
       },
     );

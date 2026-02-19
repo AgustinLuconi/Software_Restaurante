@@ -38,7 +38,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   String?
   _intervaloSeleccionado; // Cambio: ahora guardamos el intervalo como String
   int _numeroPersonas = 2;
-  ZonaMesa? _zonaSeleccionada; // Nueva variable para la zona
+  String? _zonaSeleccionada; // Nueva variable para la zona (String)
   Future<List<String>>? _intervalosFuture; // Cache del Future de intervalos
 
   @override
@@ -377,10 +377,17 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   Widget _buildSelectorZona() {
     return BlocBuilder<DisponibilidadCubit, DisponibilidadState>(
       builder: (context, state) {
-        // Obtener zonas desde las mesas ya cargadas
-        List<ZonaMesa> zonas = [];
+        // Obtener zonas
+        Set<String> zonas = {};
         if (state is DisponibilidadExitosa) {
-          zonas = state.mesasDisponibles.map((m) => m.zona).toSet().toList();
+           // Obtener TODAS las zonas registradas en el negocio para que aparezcan incluso
+           // si aún no tienen mesas asignadas.
+           if (state.negocio != null && state.negocio!.zonas.isNotEmpty) {
+             zonas = state.negocio!.zonas.toSet();
+           } else {
+             // Fallback si por alguna razón no tenemos el negocio
+             zonas = state.mesasDisponibles.map((m) => m.zona).toSet();
+           }
         }
 
         return Card(
@@ -390,9 +397,9 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                IconoCircular(
+                const IconoCircular(
                   icon: Icons.location_on,
-                  color: const Color(0xFF9B59B6),
+                  color: Color(0xFF9B59B6),
                   size: 24,
                   padding: 8,
                   borderRadius: 8,
@@ -412,7 +419,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                               'Cargando zonas...',
                               style: TextStyle(color: Colors.grey),
                             )
-                          : DropdownButton<ZonaMesa>(
+                          : DropdownButton<String>(
                               value: _zonaSeleccionada,
                               hint: const Text('Seleccionar zona'),
                               isExpanded: true,
@@ -421,7 +428,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                               dropdownColor: Colors.white,
                               focusColor: Colors.transparent,
                               items: zonas.map((zona) {
-                                return DropdownMenuItem<ZonaMesa>(
+                                return DropdownMenuItem<String>(
                                   value: zona,
                                   child: Row(
                                     children: [
@@ -431,7 +438,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                                         color: _obtenerColorZona(zona),
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(zona.nombre),
+                                      Text(zona),
                                     ],
                                   ),
                                 );
@@ -453,35 +460,26 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
     );
   }
 
-  IconData _obtenerIconoZona(ZonaMesa zona) {
-    switch (zona) {
-      case ZonaMesa.terraza:
-        return Icons.deck;
-      case ZonaMesa.salon:
-        return Icons.chair;
-      case ZonaMesa.jardin:
-        return Icons.grass;
-      case ZonaMesa.barraBar:
-        return Icons.local_bar;
-      case ZonaMesa.vip:
-        return Icons.star;
-    }
+  IconData _obtenerIconoZona(String zona) {
+    final z = zona.toLowerCase();
+    if (z.contains('terraza')) return Icons.deck;
+    if (z.contains('salon') || z.contains('salón')) return Icons.chair;
+    if (z.contains('jardin') || z.contains('jardín')) return Icons.grass;
+    if (z.contains('bar')) return Icons.local_bar;
+    if (z.contains('vip')) return Icons.star;
+    return Icons.table_restaurant;
   }
 
-  Color _obtenerColorZona(ZonaMesa zona) {
-    switch (zona) {
-      case ZonaMesa.terraza:
-        return const Color(0xFFE67E22);
-      case ZonaMesa.salon:
-        return const Color(0xFF3498DB);
-      case ZonaMesa.jardin:
-        return const Color(0xFF27AE60);
-      case ZonaMesa.barraBar:
-        return const Color(0xFF9B59B6);
-      case ZonaMesa.vip:
-        return const Color(0xFFF1C40F);
-    }
+  Color _obtenerColorZona(String zona) {
+    final z = zona.toLowerCase();
+    if (z.contains('terraza')) return const Color(0xFFE67E22);
+    if (z.contains('salon') || z.contains('salón')) return const Color(0xFF3498DB);
+    if (z.contains('jardin') || z.contains('jardín')) return const Color(0xFF27AE60);
+    if (z.contains('bar')) return const Color(0xFF9B59B6);
+    if (z.contains('vip')) return const Color(0xFFF1C40F);
+    return Colors.grey;
   }
+
 
   Widget _buildSelectorFecha() {
     return Card(
@@ -775,7 +773,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
   /// Widget que muestra la mesa encontrada automáticamente en la zona
   Widget _buildTarjetaMesaEncontrada(
     Mesa mesa,
-    ZonaMesa zona,
+    String zona,
     DateTime? fecha,
     String? intervaloSeleccionado,
     int numeroPersonas,
@@ -826,7 +824,7 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                         ),
                       ),
                       Text(
-                        'Zona: ${zona.nombre}',
+                        'Zona: $zona',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],

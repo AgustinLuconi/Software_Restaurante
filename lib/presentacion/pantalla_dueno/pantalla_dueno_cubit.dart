@@ -101,6 +101,20 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     }
   }
 
+  Future<bool> actualizarZonas(Negocio negocio, List<String> zonas) async {
+    try {
+      final exito = await negocioRepositorio.actualizarZonas(negocio.id, zonas);
+      if (exito) {
+        final negocioActualizado = negocio.copyWith(zonas: zonas);
+        emit(PantallaDuenoAutenticado(negocioActualizado));
+      }
+      return exito;
+    } catch (e) {
+      emit(PantallaDuenoConError('Error al actualizar zonas: $e'));
+      return false;
+    }
+  }
+
   Future<bool> actualizarNombre(
     Negocio negocio,
     String nuevoNombre,
@@ -249,6 +263,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     String negocioId,
     String nombre,
     int capacidad,
+    String zona,
   ) async {
     try {
       final nuevaMesa = Mesa(
@@ -256,6 +271,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
         nombre: nombre,
         capacidad: capacidad,
         negocioId: negocioId,
+        zona: zona,
       );
       return await mesaRepositorio.agregarMesa(nuevaMesa);
     } catch (e) {

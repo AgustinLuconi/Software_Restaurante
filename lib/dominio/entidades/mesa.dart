@@ -1,30 +1,16 @@
-/// Zonas disponibles para las mesas del restaurante
-enum ZonaMesa {
-  terraza('Terraza', 'Área al aire libre con vista'),
-  salon('Salón', 'Interior climatizado'),
-  jardin('Jardín', 'Área verde exterior'),
-  barraBar('Barra/Bar', 'Junto a la barra'),
-  vip('VIP', 'Zona exclusiva');
-
-  final String nombre;
-  final String descripcion;
-  
-  const ZonaMesa(this.nombre, this.descripcion);
-}
-
 class Mesa {
 	final String id;
 	final String nombre;
 	final int capacidad;
 	final String negocioId;
-	final ZonaMesa zona;
+	final String zona;
 
 	Mesa({
 		required this.id,
 		required this.nombre,
 		required this.capacidad,
 		required this.negocioId,
-		this.zona = ZonaMesa.salon,
+		this.zona = 'Salón',
 	});
 
 	bool puedeAcomodar(int numeroPersonas) {
@@ -48,7 +34,7 @@ class Mesa {
 		String? nombre,
 		int? capacidad,
 		String? negocioId,
-		ZonaMesa? zona,
+		String? zona,
 	}) {
 		return Mesa(
 			id: id ?? this.id,

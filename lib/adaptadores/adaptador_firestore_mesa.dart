@@ -101,7 +101,7 @@ class MesaRepositorioFirestore implements MesaRepositorio {
   }
 
   @override
-  Future<List<ZonaMesa>> obtenerZonasDisponibles(String negocioId) async {
+  Future<List<String>> obtenerZonasDisponibles(String negocioId) async {
     try {
       final mesas = await obtenerMesasPorNegocio(negocioId);
       final zonas = mesas.map((m) => m.zona).toSet().toList();
@@ -114,7 +114,7 @@ class MesaRepositorioFirestore implements MesaRepositorio {
 
   @override
   Future<Mesa?> buscarMesaDisponibleEnZona({
-    required ZonaMesa zona,
+    required String zona,
     required DateTime fecha,
     required DateTime hora,
     required int numeroPersonas,
@@ -161,34 +161,29 @@ class MesaRepositorioFirestore implements MesaRepositorio {
       'nombre': mesa.nombre,
       'capacidad': mesa.capacidad,
       'negocioId': mesa.negocioId,
-      'zona': mesa.zona.name,
+      'zona': mesa.zona,
     };
   }
 
   Mesa _mapToMesa(String id, Map<String, dynamic> data) {
+    // Migración simple para viejos registros que podrían usar enum names
+    String zona = data['zona'] ?? 'Salón';
+    // Si la zona viene en minúsculas como 'terraza' (del enum viejo), capitalizarla o dejarla tal cual.
+    // Para simplificar, asumimos que el usuario editará las zonas si es necesario.
+    // Un pequeño helper para capitalizar la primera letra si parece ser un valor legacy
+    if (['terraza', 'salon', 'jardin', 'vip'].contains(zona.toLowerCase())) {
+       zona = zona[0].toUpperCase() + zona.substring(1);
+       if (zona == 'Salon') zona = 'Salón';
+       if (zona == 'Jardin') zona = 'Jardín';
+       if (zona == 'Barrabar') zona = 'Barra/Bar';
+    }
+
     return Mesa(
       id: id,
       nombre: data['nombre'] ?? '',
       capacidad: data['capacidad'] ?? 2,
       negocioId: data['negocioId'] ?? '',
-      zona: _stringToZona(data['zona']),
+      zona: zona,
     );
-  }
-
-  ZonaMesa _stringToZona(String? zona) {
-    switch (zona) {
-      case 'terraza':
-        return ZonaMesa.terraza;
-      case 'salon':
-        return ZonaMesa.salon;
-      case 'jardin':
-        return ZonaMesa.jardin;
-      case 'barraBar':
-        return ZonaMesa.barraBar;
-      case 'vip':
-        return ZonaMesa.vip;
-      default:
-        return ZonaMesa.salon;
-    }
   }
 }

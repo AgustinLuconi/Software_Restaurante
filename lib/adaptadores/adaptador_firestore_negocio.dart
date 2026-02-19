@@ -207,6 +207,19 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
     }
   }
 
+  @override
+  Future<bool> actualizarZonas(String negocioId, List<String> zonas) async {
+    try {
+      await _negociosRef.doc(negocioId).update({
+        'zonas': zonas,
+      });
+      return true;
+    } catch (e) {
+      print('❌ Error actualizando zonas: $e');
+      return false;
+    }
+  }
+
   Map<String, dynamic> _negocioToMap(Negocio negocio) {
     return {
       'nombre': negocio.nombre,
@@ -221,24 +234,49 @@ class NegocioRepositorioFirestore implements NegocioRepositorio {
       'maxDiasAnticipacionReserva': negocio.maxDiasAnticipacionReserva,
       'duracionPromedioMinutos': negocio.duracionPromedioMinutos,
       'telefonoVerificado': negocio.telefonoVerificado,
+      'zonas': negocio.zonas,
     };
   }
 
   Negocio _mapToNegocio(String id, Map<String, dynamic> data) {
+    int safeInt(dynamic value, int defaultValue) {
+      if (value == null) return defaultValue;
+      if (value is int) return value;
+      if (value is double) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? defaultValue;
+      return defaultValue;
+    }
+
+    bool safeBool(dynamic value, bool defaultValue) {
+      if (value == null) return defaultValue;
+      if (value is bool) return value;
+      if (value is String) return value.toLowerCase() == 'true';
+      return defaultValue;
+    }
+
+    List<String> safeList(dynamic value, List<String> defaultValue) {
+      if (value == null) return defaultValue;
+      if (value is List) {
+        return value.map((e) => e.toString()).toList();
+      }
+      return defaultValue;
+    }
+
     return Negocio(
       id: id,
-      nombre: data['nombre'] ?? '',
-      nombreResponsable: data['nombreResponsable'] ?? '',
-      email: data['email'] ?? '',
-      telefono: data['telefono'] ?? '',
-      direccion: data['direccion'] ?? '',
-      descripcion: data['descripcion'] ?? '',
-      especialidad: data['especialidad'] ?? '',
-      icono: data['icono'] ?? 'restaurant',
-      minHorasParaCancelar: data['minHorasParaCancelar'] ?? 2,
-      maxDiasAnticipacionReserva: data['maxDiasAnticipacionReserva'] ?? 30,
-      duracionPromedioMinutos: data['duracionPromedioMinutos'] ?? 60,
-      telefonoVerificado: data['telefonoVerificado'] ?? false,
+      nombre: data['nombre']?.toString() ?? '',
+      nombreResponsable: data['nombreResponsable']?.toString() ?? '',
+      email: data['email']?.toString() ?? '',
+      telefono: data['telefono']?.toString() ?? '',
+      direccion: data['direccion']?.toString() ?? '',
+      descripcion: data['descripcion']?.toString() ?? '',
+      especialidad: data['especialidad']?.toString() ?? '',
+      icono: data['icono']?.toString() ?? 'restaurant',
+      minHorasParaCancelar: safeInt(data['minHorasParaCancelar'], 24),
+      maxDiasAnticipacionReserva: safeInt(data['maxDiasAnticipacionReserva'], 14),
+      duracionPromedioMinutos: safeInt(data['duracionPromedioMinutos'], 60),
+      telefonoVerificado: safeBool(data['telefonoVerificado'], false),
+      zonas: safeList(data['zonas'], ['Salón', 'Terraza']),
     );
   }
 }

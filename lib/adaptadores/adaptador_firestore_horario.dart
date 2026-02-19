@@ -83,8 +83,13 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
       var horaActual = intervalo.horaInicio;
       var minutoActual = intervalo.minutoInicio;
 
-      while (horaActual < intervalo.horaFin ||
-          (horaActual == intervalo.horaFin && minutoActual < intervalo.minutoFin)) {
+      var horaFinCalculo = intervalo.horaFin;
+      if (horaFinCalculo < intervalo.horaInicio || (horaFinCalculo == intervalo.horaInicio && intervalo.minutoFin <= intervalo.minutoInicio)) {
+        horaFinCalculo += 24;
+      }
+
+      while (horaActual < horaFinCalculo ||
+          (horaActual == horaFinCalculo && minutoActual < intervalo.minutoFin)) {
         
         var horaFin = horaActual;
         var minutoFin = minutoActual + intervaloMinutos;
@@ -148,9 +153,9 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
         mapa[dia.nombreDia] = 'Sin horario';
       } else {
         mapa[dia.nombreDia] = dia.intervalos.map((i) {
-          final hi = (i.horaInicio % 24).toString().padLeft(2, '0');
+          final hi = i.horaInicio.toString().padLeft(2, '0');
           final mi = i.minutoInicio.toString().padLeft(2, '0');
-          final hf = (i.horaFin % 24).toString().padLeft(2, '0');
+          final hf = i.horaFin.toString().padLeft(2, '0');
           final mf = i.minutoFin.toString().padLeft(2, '0');
           return '$hi:$mi - $hf:$mf';
         }).join(' / ');
@@ -215,10 +220,10 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
 
         if (inicio != null && fin != null) {
           intervalos.add(IntervaloHorario(
-            horaInicio: inicio.hour,
-            minutoInicio: inicio.minute,
-            horaFin: fin.hour,
-            minutoFin: fin.minute,
+            horaInicio: inicio.hora,
+            minutoInicio: inicio.minuto,
+            horaFin: fin.hora,
+            minutoFin: fin.minuto,
           ));
         }
       } catch (e) {
@@ -229,9 +234,8 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
     return intervalos;
   }
 
-  /// Intenta parsear texto a TimeOfDay (usando DateTime temporalmente)
-  /// Acepta: "9", "09", "9:00", "09:30", "930" (quizás no este último por ambigüedad)
-  DateTime? _parsearHoraMinuto(String texto) {
+  /// Intenta parsear texto a hora y minuto
+  ({int hora, int minuto})? _parsearHoraMinuto(String texto) {
     if (texto.isEmpty) return null;
     
     try {
@@ -239,7 +243,7 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
       if (!texto.contains(':')) {
         final hora = int.parse(texto);
         if (hora >= 0 && hora <= 24) {
-          return DateTime(2000, 1, 1, hora, 0);
+          return (hora: hora == 24 ? 0 : hora, minuto: 0);
         }
         return null;
       }
@@ -250,7 +254,7 @@ class HorarioAperturaRepositorioFirestore implements HorarioAperturaRepositorio 
         final hora = int.parse(partes[0]);
         final minuto = int.parse(partes[1]);
         if (hora >= 0 && hora <= 24 && minuto >= 0 && minuto < 60) {
-          return DateTime(2000, 1, 1, hora, minuto);
+          return (hora: hora == 24 ? 0 : hora, minuto: minuto);
         }
       }
     } catch (_) {}

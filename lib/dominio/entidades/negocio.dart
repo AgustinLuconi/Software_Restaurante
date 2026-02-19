@@ -14,6 +14,8 @@ class Negocio {
   final int maxDiasAnticipacionReserva;
   final int duracionPromedioMinutos;
   // Estado
+  // Configuración de Zonas
+  final List<String> zonas;
   final bool telefonoVerificado;
 
   Negocio({
@@ -30,6 +32,7 @@ class Negocio {
     this.maxDiasAnticipacionReserva = 14,
     this.duracionPromedioMinutos = 60,
     this.telefonoVerificado = false,
+    this.zonas = const ['Salón', 'Terraza'], // Default minimal zones
   });
 
   Negocio copyWith({
@@ -46,6 +49,7 @@ class Negocio {
     int? maxDiasAnticipacionReserva,
     int? duracionPromedioMinutos,
     bool? telefonoVerificado,
+    List<String>? zonas,
   }) {
     return Negocio(
       id: id ?? this.id,
@@ -61,6 +65,7 @@ class Negocio {
       maxDiasAnticipacionReserva: maxDiasAnticipacionReserva ?? this.maxDiasAnticipacionReserva,
       duracionPromedioMinutos: duracionPromedioMinutos ?? this.duracionPromedioMinutos,
       telefonoVerificado: telefonoVerificado ?? this.telefonoVerificado,
+      zonas: zonas ?? this.zonas,
     );
   }
 }

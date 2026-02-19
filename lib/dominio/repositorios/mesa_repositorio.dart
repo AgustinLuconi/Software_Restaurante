@@ -9,13 +9,13 @@ abstract class MesaRepositorio {
 	Future<bool> eliminarMesa(String mesaId);
 	
 	/// Obtiene las zonas disponibles en el restaurante
-	Future<List<ZonaMesa>> obtenerZonasDisponibles(String negocioId);
+	Future<List<String>> obtenerZonasDisponibles(String negocioId);
 	
 	/// Busca automáticamente una mesa disponible en la zona especificada
 	/// Retorna la mejor mesa disponible (la que mejor se ajusta al número de personas)
 	/// o null si no hay mesas disponibles en esa zona
 	Future<Mesa?> buscarMesaDisponibleEnZona({
-		required ZonaMesa zona,
+		required String zona,
 		required DateTime fecha,
 		required DateTime hora,
 		required int numeroPersonas,

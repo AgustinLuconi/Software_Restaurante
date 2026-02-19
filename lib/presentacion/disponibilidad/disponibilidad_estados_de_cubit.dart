@@ -42,7 +42,7 @@ class ReservaCreada extends DisponibilidadState {
 /// Estado cuando se encuentra una mesa disponible en la zona seleccionada
 class MesaEncontrada extends DisponibilidadState {
   final Mesa mesa;
-  final ZonaMesa zona;
+  final String zona;
   final int duracionPromedioMinutos;
 
   MesaEncontrada(this.mesa, this.zona, this.duracionPromedioMinutos);

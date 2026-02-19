@@ -85,11 +85,11 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   }
 
   /// Obtiene las zonas disponibles del restaurante
-  Future<List<ZonaMesa>> obtenerZonasDisponibles() async {
+  Future<List<String>> obtenerZonasDisponibles() async {
     try {
-      final id = _negocioActual?.id ?? _negocioId;
-      if (id == null) return [];
-      return await _mesaRepositorio.obtenerZonasDisponibles(id);
+      final nid = _negocioActual?.id ?? _negocioId;
+      if (nid == null) return [];
+      return await _mesaRepositorio.obtenerZonasDisponibles(nid);
     } catch (e) {
       return [];
     }
@@ -97,7 +97,8 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
 
   /// Busca automáticamente una mesa disponible en la zona especificada
   Future<void> buscarMesaEnZona({
-    required ZonaMesa zona,
+    required String zona,
+
     required DateTime fecha,
     required DateTime hora,
     required int numeroPersonas,
@@ -117,7 +118,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       if (mesa == null) {
         emit(
           DisponibilidadConError(
-            'No hay mesas disponibles en ${zona.nombre} para $numeroPersonas personas en ese horario.\n\n'
+            'No hay mesas disponibles en $zona para $numeroPersonas personas en ese horario.\n\n'
             'Intenta con otra zona o un horario diferente.',
           ),
         );
