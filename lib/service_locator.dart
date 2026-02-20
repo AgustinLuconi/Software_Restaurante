@@ -93,14 +93,16 @@ void setupServiceLocator() {
       mesaRepositorio: getIt<MesaRepositorio>(),
       horarioAperturaRepositorio: getIt<HorarioAperturaRepositorio>(),
       negocioRepositorio: getIt<NegocioRepositorio>(),
+      servicioEmail: getIt<ServicioEmail>(),
     ),
   );
 
-  // CancelarReserva
   getIt.registerFactory(
     () => CancelarReserva(
       getIt<ReservaRepositorio>(),
       negocioRepositorio: getIt<NegocioRepositorio>(),
+      mesaRepositorio: getIt<MesaRepositorio>(),
+      servicioEmail: getIt<ServicioEmail>(),
     ),
   );
 
@@ -115,7 +117,7 @@ void setupServiceLocator() {
       getIt<NegocioRepositorio>(),
       getIt<MesaRepositorio>(),
       getIt<ReservaRepositorio>(),
-      getIt<ServicioEmail>(),
+      getIt<CancelarReserva>(),
       getIt<HorarioAperturaRepositorio>(),
       getIt<HistoriaRepositorio>(),
     ),

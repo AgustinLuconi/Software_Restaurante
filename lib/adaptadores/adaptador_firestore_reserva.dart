@@ -53,6 +53,23 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
   }
 
   @override
+  Future<void> actualizarReserva(Reserva reserva) async {
+    try {
+      await _reservasRef.doc(reserva.id).update({
+        'estado': _estadoToString(reserva.estado),
+        'numeroPersonas': reserva.numeroPersonas,
+        'contactoCliente': reserva.contactoCliente,
+        'nombreCliente': reserva.nombreCliente,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ Reserva actualizada: ${reserva.id}');
+    } catch (e) {
+      print('❌ Error actualizando reserva: $e');
+      rethrow;
+    }
+  }
+
+  @override
   Future<Reserva?> obtenerReservaPorId(String reservaId) async {
     try {
       final doc = await _reservasRef.doc(reservaId).get();

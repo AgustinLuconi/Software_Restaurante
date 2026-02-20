@@ -47,3 +47,7 @@ class MesaEncontrada extends DisponibilidadState {
 
   MesaEncontrada(this.mesa, this.zona, this.duracionPromedioMinutos);
 }
+
+/// Estado mientras se procesa la creación de la reserva (post-verificación SMS)
+class ProcesandoReserva extends DisponibilidadState {}
+

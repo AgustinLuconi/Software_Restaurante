@@ -4,6 +4,7 @@ abstract class ReservaRepositorio {
 	Future<Reserva> crearReserva(Reserva reserva);
 	Future<List<Reserva>> obtenerReserva();
 	Future<void> cancelarReserva(String reservaId);
+	Future<void> actualizarReserva(Reserva reserva);
 	Future<Reserva?> obtenerReservaPorId(String reservaId);
 	
 	/// Obtiene las reservas activas (confirmadas o pendientes) para una mesa específica en una fecha y hora

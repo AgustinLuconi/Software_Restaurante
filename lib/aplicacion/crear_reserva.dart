@@ -3,18 +3,21 @@ import '../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../dominio/repositorios/mesa_repositorio.dart';
 import '../dominio/repositorios/negocio_repositorio.dart';
 import '../dominio/repositorios/reserva_repositorio.dart';
+import '../adaptadores/servicio_email.dart';
 
 class CrearReserva {
   final ReservaRepositorio reservaRepositorio;
   final MesaRepositorio? mesaRepositorio;
   final HorarioAperturaRepositorio? horarioAperturaRepositorio;
   final NegocioRepositorio? negocioRepositorio;
+  final ServicioEmail? servicioEmail;
 
   CrearReserva(
     this.reservaRepositorio, {
     this.mesaRepositorio,
     this.horarioAperturaRepositorio,
     this.negocioRepositorio,
+    this.servicioEmail,
   });
 
   Future<Reserva> ejecutar(
@@ -25,7 +28,7 @@ class CrearReserva {
     String? contactoCliente,
     String? nombreCliente,
     EstadoReserva estadoInicial = EstadoReserva.pendiente,
-    required String negocioId, // ID del negocio - ahora es requerido
+    required String negocioId,
   }) async {
     final now = DateTime.now();
     final fechaHora = DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute);
@@ -36,12 +39,16 @@ class CrearReserva {
     // Obtener configuración del negocio
     int maxDiasAnticipacion = 14; // Valor por defecto
     int duracionMinutos = 60; // Valor por defecto
+    String nombreNegocio = 'Restaurante';
+    String? emailDueno;
     
     if (negocioRepositorio != null) {
       final negocio = await negocioRepositorio!.obtenerNegocioPorId(negocioId);
       if (negocio != null) {
         maxDiasAnticipacion = negocio.maxDiasAnticipacionReserva;
         duracionMinutos = negocio.duracionPromedioMinutos;
+        nombreNegocio = negocio.nombre;
+        emailDueno = negocio.email;
       }
     }
     
@@ -56,12 +63,15 @@ class CrearReserva {
     }
     
     // Validar que la mesa tenga capacidad adecuada para el número de personas
+    String nombreMesa = 'Mesa';
     if (mesaRepositorio != null) {
       final mesa = await mesaRepositorio!.obtenerMesaPorId(mesaId);
       
       if (mesa == null) {
         throw Exception('La mesa seleccionada no existe.');
       }
+      
+      nombreMesa = mesa.nombre;
       
       // Verificar que la mesa puede acomodar al grupo
       if (!mesa.puedeAcomodar(numeroPersonas)) {
@@ -124,6 +134,23 @@ class CrearReserva {
     );
     // Firestore genera el ID automáticamente
     final reserva = await reservaRepositorio.crearReserva(reservaTemporal);
+
+    // Enviar emails de notificación si el servicio está disponible
+    if (servicioEmail != null) {
+      try {
+        await servicioEmail!.notificarReservaConfirmada(
+          reserva,
+          nombreNegocio: nombreNegocio,
+          nombreMesa: nombreMesa,
+          emailDueno: emailDueno,
+        );
+        print('📧 Emails de confirmación enviados desde caso de uso CrearReserva');
+      } catch (e) {
+        // No fallar la creación si el email falla
+        print('⚠️ Error enviando email de confirmación (reserva creada correctamente): $e');
+      }
+    }
+
     return reserva;
   }
 }

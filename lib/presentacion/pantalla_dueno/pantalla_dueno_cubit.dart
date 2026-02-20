@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../aplicacion/cancelar_reserva.dart';
 import '../../dominio/entidades/mesa.dart';
 import '../../dominio/entidades/negocio.dart';
 import '../../dominio/entidades/reserva.dart';
@@ -8,14 +9,13 @@ import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/reserva_repositorio.dart';
 import '../../dominio/repositorios/historia_repositorio.dart';
 import '../../dominio/entidades/historia_restaurante.dart';
-import '../../adaptadores/servicio_email.dart';
 import 'pantalla_dueno_estados_de_cubit.dart';
 
 class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
   final NegocioRepositorio negocioRepositorio;
   final MesaRepositorio mesaRepositorio;
   final ReservaRepositorio reservaRepositorio;
-  final ServicioEmail servicioEmail;
+  final CancelarReserva cancelarReservaUseCase;
   final HorarioAperturaRepositorio horarioAperturaRepositorio;
   final HistoriaRepositorio historiaRepositorio;
 
@@ -23,7 +23,7 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
     this.negocioRepositorio,
     this.mesaRepositorio,
     this.reservaRepositorio,
-    this.servicioEmail,
+    this.cancelarReservaUseCase,
     this.horarioAperturaRepositorio,
     this.historiaRepositorio,
   ) : super(const PantallaDuenoInicial());
@@ -315,69 +315,20 @@ class PantallaDuenoCubit extends Cubit<PantallaDuenoState> {
   }
 
   // Métodos para administrar reservas
-  Future<bool> confirmarReserva(String reservaId) async {
-    try {
-      final reservas = await reservaRepositorio.obtenerReserva();
-      final reserva = reservas.firstWhere((r) => r.id == reservaId);
-      reserva.confirmar();
-
-      // Obtener nombre del negocio y mesa para el email
-      final state = this.state;
-      final nombreNegocio =
-          state is PantallaDuenoAutenticado
-              ? state.negocio.nombre
-              : 'Restaurante';
-      final mesas = await mesaRepositorio.obtenerMesas();
-      final mesa = mesas.firstWhere(
-        (m) => m.id == reserva.mesaId,
-        orElse: () => mesas.first,
-      );
-
-      // Enviar email al cliente
-      await servicioEmail.notificarReservaConfirmada(
-        reserva,
-        nombreNegocio: nombreNegocio,
-        nombreMesa: mesa.nombre,
-      );
-
-      return true;
-    } catch (e) {
-      emit(PantallaDuenoConError('Error al confirmar reserva: $e'));
-      return false;
-    }
-  }
-
+  /// Cancelar reserva como administrador del restaurante.
+  /// Delega la cancelación y el envío de emails al caso de uso CancelarReserva.
   Future<bool> cancelarReservaAdmin(String reservaId, {String? motivo}) async {
     try {
-      final reservas = await reservaRepositorio.obtenerReserva();
-      final reserva = reservas.firstWhere((r) => r.id == reservaId);
-
-      print('🔍 Cancelando reserva: ${reserva.id}');
-      print('🔍 Contacto Cliente: ${reserva.contactoCliente}');
-
-      await reservaRepositorio.cancelarReserva(reservaId);
-
-      // Obtener nombre del negocio y mesa para el email
       final state = this.state;
-      final nombreNegocio =
-          state is PantallaDuenoAutenticado
-              ? state.negocio.nombre
-              : 'Restaurante';
-      final mesas = await mesaRepositorio.obtenerMesas();
-      final mesa = mesas.firstWhere(
-        (m) => m.id == reserva.mesaId,
-        orElse: () => mesas.first,
-      );
+      final negocioId = state is PantallaDuenoAutenticado
+          ? state.negocio.id
+          : 'default';
 
-      // Enviar email al cliente informando la cancelación
-      await servicioEmail.notificarReservaCanceladaPorRestaurante(
-        reserva,
-        nombreNegocio: nombreNegocio,
-        nombreMesa: mesa.nombre,
+      await cancelarReservaUseCase.ejecutarComoAdmin(
+        reservaId,
+        negocioId: negocioId,
         motivo: motivo,
       );
-
-      print('✅ Email de cancelación enviado a: ${reserva.contactoCliente}');
 
       return true;
     } catch (e) {

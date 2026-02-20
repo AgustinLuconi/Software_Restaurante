@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -479,14 +479,6 @@ class _PantallaDuenoView extends StatelessWidget {
     );
   }
 
-  String _obtenerSubtituloTelefono() {
-    final auth = getIt<ServicioAutenticacion>();
-    if (auth.telefonoVerificado) {
-      final telefono = auth.telefonoVerificadoNumero ?? '';
-      return 'Verificado: $telefono';
-    }
-    return 'Verifica tu número para mayor seguridad';
-  }
 
   void _mostrarConfirmacionCerrarSesion(BuildContext context) {
     showDialog(

@@ -7,7 +7,6 @@ import '../../dominio/entidades/reserva.dart';
 import '../../dominio/repositorios/horario_apertura_repositorio.dart';
 import '../../dominio/repositorios/mesa_repositorio.dart';
 import '../../dominio/repositorios/negocio_repositorio.dart';
-import '../../adaptadores/servicio_email.dart';
 import '../../service_locator.dart';
 import 'disponibilidad_estados_de_cubit.dart';
 
@@ -15,7 +14,6 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
   final MesaRepositorio _mesaRepositorio;
   final NegocioRepositorio _negocioRepositorio;
   final CrearReserva _crearReserva;
-  final ServicioEmail _servicioEmail;
   final HorarioAperturaRepositorio _horarioAperturaRepo;
 
   /// Negocio cacheado para acceso rápido
@@ -26,7 +24,6 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     : _mesaRepositorio = getIt<MesaRepositorio>(),
       _negocioRepositorio = getIt<NegocioRepositorio>(),
       _crearReserva = getIt<CrearReserva>(),
-      _servicioEmail = getIt<ServicioEmail>(),
       _horarioAperturaRepo = getIt<HorarioAperturaRepositorio>(),
       super(DisponibilidadInicial());
 
@@ -166,7 +163,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
     required int numeroPersonas,
   }) async {
     try {
-      emit(DisponibilidadCargando());
+      emit(ProcesandoReserva());
       
       print('🔄 Creando reserva verificada por SMS...');
       print('   📧 Email: $emailCliente');
@@ -178,37 +175,23 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
       print('   👥 Personas: $numeroPersonas');
 
       // Crear reserva directamente CONFIRMADA (ya fue verificado por SMS)
+      // El caso de uso CrearReserva se encarga de:
+      //   1. Validar reglas de negocio
+      //   2. Guardar en Firestore con estado confirmada
+      //   3. Enviar emails de confirmación al cliente y al dueño
       final negocioId = _negocioActual?.id ?? _negocioId ?? 'default';
       final reserva = await _crearReserva.ejecutar(
         mesaId,
         fecha,
         hora,
         numeroPersonas,
-        contactoCliente: emailCliente, // Email para notificaciones
+        contactoCliente: emailCliente,
         nombreCliente: nombreCliente,
         estadoInicial: EstadoReserva.confirmada,
         negocioId: negocioId,
       );
       
       print('✅ Reserva creada con ID: ${reserva.id}');
-
-      // Obtener nombre del negocio y mesa para los emails
-      final nombreNegocio = _negocioActual?.nombre ?? 'Restaurante';
-      final mesas = await _mesaRepositorio.obtenerMesas();
-      final mesa = mesas.firstWhere(
-        (m) => m.id == mesaId,
-        orElse: () => mesas.first,
-      );
-
-      // Enviar email de confirmación al cliente y al dueño
-      print('📧 Enviando emails de notificación...');
-      await _servicioEmail.notificarReservaConfirmada(
-        reserva,
-        nombreNegocio: nombreNegocio,
-        nombreMesa: mesa.nombre,
-        emailDueno: _negocioActual?.email,
-      );
-      
       print('✅ Proceso de reserva completado exitosamente');
 
       emit(

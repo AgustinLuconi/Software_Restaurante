@@ -134,6 +134,27 @@ class _DisponibilidadViewState extends State<_DisponibilidadView> {
                   );
                 }
 
+                if (state is ProcesandoReserva) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Procesando reserva...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF7F8C8D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
                 if (state is DisponibilidadConError) {
                   return _buildErrorCard(state.mensaje);
                 }
