@@ -13,6 +13,8 @@ class Reserva {
 	EstadoReserva estado;
 	final String? contactoCliente; // Email del cliente para notificaciones
 	final String? nombreCliente; // Nombre opcional del cliente
+	final String? telefonoCliente; // Teléfono verificado del cliente
+	final String? negocioId; // ID del restaurante donde se hizo la reserva
 
 	Reserva({
 		required this.id,
@@ -23,6 +25,8 @@ class Reserva {
 		this.estado = EstadoReserva.pendiente,
 		this.contactoCliente,
 		this.nombreCliente,
+		this.telefonoCliente,
+		this.negocioId,
 	});
 
 	/// Hora de finalización calculada de la reserva
@@ -47,6 +51,8 @@ class Reserva {
 		EstadoReserva? estado,
 		String? contactoCliente,
 		String? nombreCliente,
+		String? telefonoCliente,
+		String? negocioId,
 	}) {
 		return Reserva(
 			id: id ?? this.id,
@@ -57,6 +63,8 @@ class Reserva {
 			estado: estado ?? this.estado,
 			contactoCliente: contactoCliente ?? this.contactoCliente,
 			nombreCliente: nombreCliente ?? this.nombreCliente,
+			telefonoCliente: telefonoCliente ?? this.telefonoCliente,
+			negocioId: negocioId ?? this.negocioId,
 		);
 	}
 }

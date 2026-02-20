@@ -147,6 +147,27 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
     }
   }
 
+  @override
+  Future<List<Reserva>> obtenerReservasPorTelefonoYNegocio({
+    required String telefonoCliente,
+    required String negocioId,
+  }) async {
+    try {
+      final snapshot = await _reservasRef
+          .where('telefonoCliente', isEqualTo: telefonoCliente)
+          .where('negocioId', isEqualTo: negocioId)
+          .orderBy('fechaHora', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => _mapToReserva(doc.id, doc.data()))
+          .toList();
+    } catch (e) {
+      print('❌ Error obteniendo reservas por teléfono y negocio: $e');
+      return [];
+    }
+  }
+
   // ============================================================
   // MÉTODOS DE CONVERSIÓN
   // ============================================================
@@ -160,6 +181,8 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
       'estado': _estadoToString(reserva.estado),
       'contactoCliente': reserva.contactoCliente,
       'nombreCliente': reserva.nombreCliente,
+      'telefonoCliente': reserva.telefonoCliente,
+      'negocioId': reserva.negocioId,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -175,6 +198,8 @@ class ReservaRepositorioFirestore implements ReservaRepositorio {
       estado: _stringToEstado(data['estado']),
       contactoCliente: data['contactoCliente'],
       nombreCliente: data['nombreCliente'],
+      telefonoCliente: data['telefonoCliente'],
+      negocioId: data['negocioId'],
     );
   }
 

@@ -1,49 +1,72 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../aplicacion/cancelar_reserva.dart';
-import '../../aplicacion/obtener_reserva.dart';
+import '../../dominio/repositorios/reserva_repositorio.dart';
 import '../../service_locator.dart';
 import 'mis_reservas_estados_de_cubit.dart';
 
 class MisReservasCubit extends Cubit<MisReservasState> {
-  final ObtenerReserva _obtenerReserva;
   final CancelarReserva _cancelarReserva;
+  final ReservaRepositorio _reservaRepositorio;
+
+  /// Teléfono verificado del cliente actual
+  String? _telefonoVerificado;
+  String? get telefonoVerificado => _telefonoVerificado;
+
+  /// NegocioId del restaurante actual
+  String? _negocioId;
+  String? get negocioId => _negocioId;
 
   MisReservasCubit()
-      : _obtenerReserva = getIt<ObtenerReserva>(),
-        _cancelarReserva = getIt<CancelarReserva>(),
+      : _cancelarReserva = getIt<CancelarReserva>(),
+        _reservaRepositorio = getIt<ReservaRepositorio>(),
         super(MisReservasInicial());
 
-  Future<void> cargarReservas() async {
+  /// Carga las reservas filtradas por teléfono verificado y negocioId
+  Future<void> cargarReservasFiltradas({
+    required String telefono,
+    required String negocioId,
+  }) async {
     try {
       emit(MisReservasCargando());
-      final reservas = await _obtenerReserva.ejecutar();
+      _telefonoVerificado = telefono;
+      _negocioId = negocioId;
+
+      final reservas = await _reservaRepositorio.obtenerReservasPorTelefonoYNegocio(
+        telefonoCliente: telefono,
+        negocioId: negocioId,
+      );
       emit(MisReservasExitoso(reservas));
     } catch (e) {
       emit(MisReservasConError('Error al cargar las reservas: ${e.toString()}'));
     }
   }
 
-  Future<void> cancelarReserva(String reservaId, {String? negocioId}) async {
+  /// Recargar usando los filtros anteriores
+  Future<void> recargarReservas() async {
+    if (_telefonoVerificado != null && _negocioId != null) {
+      await cargarReservasFiltradas(
+        telefono: _telefonoVerificado!,
+        negocioId: _negocioId!,
+      );
+    }
+  }
+
+  Future<void> cancelarReserva(String reservaId) async {
     try {
       emit(MisReservasCargando());
 
-      // El caso de uso CancelarReserva se encarga de:
-      //   1. Validar reglas de negocio (horas mínimas, estado válido, etc.)
-      //   2. Cancelar en Firestore
-      //   3. Enviar emails de notificación al cliente y al dueño
-      final idNegocio = negocioId ?? 'default';
+      final idNegocio = _negocioId ?? 'default';
       await _cancelarReserva.ejecutar(reservaId, negocioId: idNegocio);
 
       emit(ReservaCancelada('Reserva cancelada exitosamente'));
       
-      // Recargar las reservas
-      await cargarReservas();
+      // Recargar las reservas filtradas
+      await recargarReservas();
     } catch (e) {
       print('❌ Error al cancelar reserva: $e');
       emit(ReservaCancelacionError('Error al cancelar: ${e.toString().replaceAll('Exception: ', '')}'));
-      // Recargar para volver al estado Exitoso y mostrar la lista
-      try { await cargarReservas(); } catch (_) {}
+      try { await recargarReservas(); } catch (_) {}
     }
   }
 }

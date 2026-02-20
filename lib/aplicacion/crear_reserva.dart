@@ -27,6 +27,7 @@ class CrearReserva {
     int numeroPersonas, {
     String? contactoCliente,
     String? nombreCliente,
+    String? telefonoCliente,
     EstadoReserva estadoInicial = EstadoReserva.pendiente,
     required String negocioId,
   }) async {
@@ -131,6 +132,8 @@ class CrearReserva {
       estado: estadoInicial,
       contactoCliente: contactoCliente,
       nombreCliente: nombreCliente,
+      telefonoCliente: telefonoCliente,
+      negocioId: negocioId,
     );
     // Firestore genera el ID automáticamente
     final reserva = await reservaRepositorio.crearReserva(reservaTemporal);

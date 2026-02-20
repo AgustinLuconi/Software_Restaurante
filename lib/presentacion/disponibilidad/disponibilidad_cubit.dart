@@ -187,6 +187,7 @@ class DisponibilidadCubit extends Cubit<DisponibilidadState> {
         numeroPersonas,
         contactoCliente: emailCliente,
         nombreCliente: nombreCliente,
+        telefonoCliente: telefonoVerificado,
         estadoInicial: EstadoReserva.confirmada,
         negocioId: negocioId,
       );

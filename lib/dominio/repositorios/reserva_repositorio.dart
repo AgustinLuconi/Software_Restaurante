@@ -22,4 +22,10 @@ abstract class ReservaRepositorio {
 		required DateTime hora,
 		required int duracionMinutos,
 	});
+
+	/// Obtiene las reservas de un cliente (por teléfono) en un restaurante específico
+	Future<List<Reserva>> obtenerReservasPorTelefonoYNegocio({
+		required String telefonoCliente,
+		required String negocioId,
+	});
 }
